@@ -10,13 +10,14 @@ import { TutorDrawer } from './src/components/TutorDrawer';
 import { PrivacyBadgeModal } from './src/components/PrivacyBadgeModal';
 import { BookPage, ReadingSessionResult, SupportedLanguage } from './src/types';
 import { SAMPLE_BOOK_PAGES } from './src/data/sampleBooks';
-import { getReadingStats } from './src/services/storageService';
+import { getReadingStats, getStarsCount } from './src/services/storageService';
 
 export default function App() {
   const [language, setLanguage] = useState<SupportedLanguage>('en');
   const [activeTab, setActiveTab] = useState<'reading' | 'report' | 'scan'>('reading');
   const [currentPage, setCurrentPage] = useState<BookPage>(SAMPLE_BOOK_PAGES[0]);
   const [streakDays, setStreakDays] = useState<number>(3);
+  const [starsCount, setStarsCount] = useState<number>(45);
 
   // Modals state
   const [cameraModalVisible, setCameraModalVisible] = useState<boolean>(false);
@@ -28,14 +29,16 @@ export default function App() {
   const [currentSessionResult, setCurrentSessionResult] = useState<ReadingSessionResult | null>(null);
 
   useEffect(() => {
-    loadStreak();
+    loadStatsAndStars();
   }, []);
 
-  const loadStreak = async () => {
+  const loadStatsAndStars = async () => {
     const stats = await getReadingStats();
     if (stats.streakDays) {
       setStreakDays(stats.streakDays);
     }
+    const stars = await getStarsCount();
+    setStarsCount(stars);
   };
 
   const handleSelectLanguage = (newLang: SupportedLanguage) => {
@@ -85,6 +88,7 @@ export default function App() {
             }
           }}
           streakDays={streakDays}
+          starsCount={starsCount}
           onOpenPrivacy={() => setPrivacyModalVisible(true)}
         />
 
@@ -107,6 +111,7 @@ export default function App() {
               onOpenWordExplainer={handleOpenWordExplainer}
               onPageCompleted={handlePageCompleted}
               onOpenScan={() => setCameraModalVisible(true)}
+              onStarsEarned={(newTotal) => setStarsCount(newTotal)}
             />
           </View>
         )}

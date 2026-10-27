@@ -7,6 +7,7 @@ import {
   Modal,
   ActivityIndicator,
   ScrollView,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ComprehensionQuestion, ReadingSessionResult, WordExplanation, SupportedLanguage } from '../types';
@@ -16,7 +17,9 @@ import {
   generateComprehensionQuiz,
 } from '../services/metaApi';
 import { speakText, speakWordPhonetically, playChime } from '../services/ttsService';
+import { addStars } from '../services/storageService';
 import { getTranslation } from '../i18n/translations';
+import { SparkyMascot } from './SparkyMascot';
 
 interface TutorDrawerProps {
   visible: boolean;
@@ -46,6 +49,7 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
   // Word Explainer state
   const [explanation, setExplanation] = useState<WordExplanation | null>(null);
   const [loadingWord, setLoadingWord] = useState(false);
+  const [activeSyllable, setActiveSyllable] = useState<string | null>(null);
 
   // Spoken feedback state
   const [spokenFeedback, setSpokenFeedback] = useState<string>('');
@@ -74,6 +78,7 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
     if (!selectedWord) return;
     setLoadingWord(true);
     setExplanation(null);
+    setActiveSyllable(null);
     try {
       const res = await explainWordWithMuseSpark(selectedWord, sentenceContext || selectedWord, language);
       setExplanation(res);
@@ -92,7 +97,6 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
     try {
       const feedback = await generateTutorSpokenFeedback(sessionResult);
       setSpokenFeedback(feedback);
-      // Speak tutor feedback with warm kid voice
       setIsPlayingAudio(true);
       speakText(feedback, language, 0.88, () => setIsPlayingAudio(false));
     } catch (e) {
@@ -117,14 +121,15 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
     }
   };
 
-  const handleSelectOption = (questionIdx: number, optionIdx: number) => {
-    if (selectedAnswers[questionIdx] !== undefined) return; // already answered
+  const handleSelectOption = async (questionIdx: number, optionIdx: number) => {
+    if (selectedAnswers[questionIdx] !== undefined) return;
     const updated = { ...selectedAnswers, [questionIdx]: optionIdx };
     setSelectedAnswers(updated);
 
     const isCorrect = optionIdx === questions[questionIdx].correctIndex;
     if (isCorrect) {
       playChime('correct');
+      await addStars(2); // +2 stars per correct quiz answer
     } else {
       playChime('tap');
     }
@@ -147,21 +152,50 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
     speakText(text, language, 0.88, () => setIsPlayingAudio(false));
   };
 
+  const handleTapSyllable = (syl: string) => {
+    setActiveSyllable(syl);
+    playChime('tap');
+    speakText(syl, language, 0.75);
+    setTimeout(() => setActiveSyllable(null), 800);
+  };
+
+  const getSyllableList = (sylString: string) => {
+    return sylString
+      .split(/[·\-\s]+/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+  };
+
+  const getMascotMood = () => {
+    if (mode === 'celebrate' || quizScore === questions.length) return 'celebrating';
+    if (loadingWord || loadingQuiz || loadingFeedback) return 'thinking';
+    return 'encouraging';
+  };
+
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.backdrop}>
         <View style={styles.sheetContainer}>
-          {/* Top Bar with Mascot */}
+          {/* Top Grab Handle */}
+          <View style={styles.handleBar} />
+
+          {/* Top Bar with Sparky Mascot */}
           <View style={styles.sheetHeader}>
             <View style={styles.tutorAvatarBadge}>
-              <Text style={styles.avatarEmoji}>✨</Text>
+              <SparkyMascot size="small" mood={getMascotMood()} onPress={() => playChime('sparkle')} />
               <View>
-                <Text style={styles.tutorName}>{t.tutorTitle}</Text>
-                <Text style={styles.modelPowered}>Meta Muse Spark 1.3</Text>
+                <View style={styles.headerTitleRow}>
+                  <Text style={styles.tutorName}>{t.tutorTitle}</Text>
+                  <View style={styles.aiBadge}>
+                    <Ionicons name="sparkles" size={10} color="#6366f1" />
+                    <Text style={styles.aiBadgeText}>Meta Muse Spark</Text>
+                  </View>
+                </View>
+                <Text style={styles.modelPowered}>Meta Model API • muse-spark-1.3</Text>
               </View>
             </View>
 
-            <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
+            <TouchableOpacity style={styles.closeBtn} onPress={onClose} activeOpacity={0.7}>
               <Ionicons name="close" size={22} color="#475569" />
             </TouchableOpacity>
           </View>
@@ -170,57 +204,89 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
             {/* 1. WORD EXPLAINER MODE */}
             {mode === 'explain' && (
               <View style={styles.explainSection}>
+                {/* Word Banner with 3D Listen Button */}
                 <View style={styles.wordHeaderCard}>
-                  <Text style={styles.targetWordDisplay}>{selectedWord}</Text>
+                  <View>
+                    <Text style={styles.targetWordLabel}>Word Practice</Text>
+                    <Text style={styles.targetWordDisplay}>{selectedWord}</Text>
+                  </View>
                   <TouchableOpacity
                     style={styles.listenWordButton}
                     onPress={() => selectedWord && speakWordPhonetically(selectedWord, language)}
+                    activeOpacity={0.8}
                   >
-                    <Ionicons name="volume-high" size={20} color="#ea580c" />
+                    <Ionicons name="volume-high" size={20} color="#ffffff" />
                     <Text style={styles.listenWordText}>{t.pronounceAudio}</Text>
                   </TouchableOpacity>
                 </View>
 
                 {loadingWord ? (
                   <View style={styles.loadingBox}>
-                    <ActivityIndicator size="large" color="#ea580c" />
+                    <ActivityIndicator size="large" color="#6366f1" />
                     <Text style={styles.loadingText}>
                       {language === 'es'
-                        ? 'Sparky está pensando la mejor explicación para ti...'
+                        ? 'Sparky está preparando la mejor explicación para ti...'
                         : language === 'fr'
-                        ? "Sparky prépare la meilleure explication pour toi..."
+                        ? 'Sparky prépare la meilleure explication pour toi...'
                         : language === 'pt'
                         ? 'Sparky está preparando a melhor explicação...'
-                        : 'Sparky is thinking of the best explanation for you...'}
+                        : 'Sparky is thinking of the best kid-friendly explanation...'}
                     </Text>
                   </View>
                 ) : explanation ? (
                   <View style={styles.explanationCards}>
-                    {/* Syllables */}
+                    {/* Interactive Syllable Chips */}
                     <View style={styles.syllablesCard}>
-                      <Text style={styles.cardSmallLabel}>{t.wordSyllables.toUpperCase()}:</Text>
-                      <Text style={styles.syllablesText}>{explanation.syllables}</Text>
+                      <Text style={styles.cardSmallLabel}>
+                        🗣️ {t.wordSyllables.toUpperCase()} (TAP TO HEAR):
+                      </Text>
+                      <View style={styles.syllablesChipRow}>
+                        {getSyllableList(explanation.syllables).map((syl, sIdx) => {
+                          const isSylActive = activeSyllable === syl;
+                          return (
+                            <TouchableOpacity
+                              key={sIdx}
+                              style={[styles.syllableChip, isSylActive && styles.syllableChipActive]}
+                              onPress={() => handleTapSyllable(syl)}
+                              activeOpacity={0.75}
+                            >
+                              <Text
+                                style={[
+                                  styles.syllableChipText,
+                                  isSylActive && styles.syllableChipTextActive,
+                                ]}
+                              >
+                                {syl}
+                              </Text>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
                     </View>
 
-                    {/* Simple Meaning */}
+                    {/* Simple Kid Meaning */}
                     <View style={styles.meaningCard}>
                       <View style={styles.iconHeadingRow}>
-                        <Ionicons name="bulb" size={18} color="#d97706" />
+                        <View style={[styles.iconCircleMini, { backgroundColor: '#fef3c7' }]}>
+                          <Ionicons name="bulb" size={16} color="#d97706" />
+                        </View>
                         <Text style={styles.cardHeading}>{t.wordMeaning}</Text>
                       </View>
                       <Text style={styles.meaningText}>{explanation.simpleMeaning}</Text>
                     </View>
 
-                    {/* Fun Example */}
+                    {/* Fun Example Analogy */}
                     <View style={styles.exampleCard}>
                       <View style={styles.iconHeadingRow}>
-                        <Ionicons name="sparkles" size={18} color="#2563eb" />
+                        <View style={[styles.iconCircleMini, { backgroundColor: '#eff6ff' }]}>
+                          <Ionicons name="sparkles" size={16} color="#2563eb" />
+                        </View>
                         <Text style={styles.cardHeading}>{t.wordExample}</Text>
                       </View>
                       <Text style={styles.exampleText}>"{explanation.funExample}"</Text>
                     </View>
 
-                    {/* Encouragement */}
+                    {/* Warm Encouragement Card */}
                     <View style={styles.cheerCard}>
                       <Text style={styles.cheerText}>🌟 {explanation.encouragement}</Text>
                     </View>
@@ -238,9 +304,12 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
                   <Text style={styles.celebrateSubtitle}>
                     {t.celebrationSubtitle} ({sessionResult.totalWords} {t.wordsRead.toLowerCase()})
                   </Text>
+                  <View style={styles.starsRewardPill}>
+                    <Text style={styles.starsRewardText}>+10 Stars Added! ⭐</Text>
+                  </View>
                 </View>
 
-                {/* Score Pills */}
+                {/* Score Gauges */}
                 <View style={styles.statsPillRow}>
                   <View style={styles.statPill}>
                     <Text style={styles.statPillValue}>{sessionResult.accuracyPercent}%</Text>
@@ -256,38 +325,37 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
                   </View>
                 </View>
 
-                {/* Spoken Feedback Card */}
+                {/* Spoken Feedback from Meta Muse Spark */}
                 <View style={styles.spokenFeedbackCard}>
                   <View style={styles.spokenHeaderRow}>
                     <View style={styles.spokenHeaderLeft}>
-                      <Ionicons name="chatbubble-ellipses" size={20} color="#ea580c" />
+                      <Ionicons name="chatbubble-ellipses" size={20} color="#6366f1" />
                       <Text style={styles.spokenTitle}>{t.spokenFeedbackTitle}</Text>
                     </View>
                     <TouchableOpacity
                       style={styles.replayAudioBtn}
                       onPress={() => spokenFeedback && handlePlayVoice(spokenFeedback)}
+                      activeOpacity={0.8}
                     >
                       <Ionicons
                         name={isPlayingAudio ? 'volume-high' : 'play'}
                         size={16}
-                        color="#ea580c"
+                        color="#ffffff"
                       />
                       <Text style={styles.replayAudioText}>
-                        {isPlayingAudio
-                          ? '...'
-                          : t.listenToSparky}
+                        {isPlayingAudio ? 'Speaking...' : t.listenToSparky}
                       </Text>
                     </TouchableOpacity>
                   </View>
 
                   {loadingFeedback ? (
-                    <ActivityIndicator size="small" color="#ea580c" />
+                    <ActivityIndicator size="small" color="#6366f1" />
                   ) : (
                     <Text style={styles.feedbackBodyText}>"{spokenFeedback}"</Text>
                   )}
                 </View>
 
-                {/* Next Steps Buttons */}
+                {/* Action Buttons */}
                 <View style={styles.actionButtonsCol}>
                   <TouchableOpacity
                     style={styles.quizActionBtn}
@@ -325,7 +393,7 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
 
                 {loadingQuiz ? (
                   <View style={styles.loadingBox}>
-                    <ActivityIndicator size="large" color="#ea580c" />
+                    <ActivityIndicator size="large" color="#6366f1" />
                     <Text style={styles.loadingText}>
                       {language === 'es'
                         ? 'Sparky está creando preguntas entretenidas...'
@@ -333,7 +401,7 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
                         ? 'Sparky crée les questions du quiz...'
                         : language === 'pt'
                         ? 'Sparky está criando as perguntas...'
-                        : 'Sparky is crafting fun questions...'}
+                        : 'Sparky is crafting fun questions with Meta Muse Spark...'}
                     </Text>
                   </View>
                 ) : (
@@ -345,7 +413,7 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
                       return (
                         <View key={q.id || qIdx} style={styles.questionCard}>
                           <Text style={styles.questionNumber}>
-                            {language === 'es' ? `Pregunta ${qIdx + 1}` : language === 'fr' ? `Question ${qIdx + 1}` : language === 'pt' ? `Pergunta ${qIdx + 1}` : `Question ${qIdx + 1}`}
+                            Question {qIdx + 1}
                           </Text>
                           <Text style={styles.questionText}>{q.question}</Text>
 
@@ -368,9 +436,11 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
                                   disabled={answered}
                                   activeOpacity={0.8}
                                 >
-                                  <Text style={styles.optionLetter}>
-                                    {String.fromCharCode(65 + optIdx)}
-                                  </Text>
+                                  <View style={styles.optionLetterBadge}>
+                                    <Text style={styles.optionLetter}>
+                                      {String.fromCharCode(65 + optIdx)}
+                                    </Text>
+                                  </View>
                                   <Text style={styles.optionLabel}>{opt}</Text>
                                   {answered && isCorrect && (
                                     <Ionicons name="checkmark-circle" size={20} color="#15803d" />
@@ -399,24 +469,12 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
                           {quizScore === questions.length ? '🌟 🏆 🌟' : '👏 💡'}
                         </Text>
                         <Text style={styles.quizScoreTitle}>
-                          {language === 'es'
-                            ? `¡Obtuviste ${quizScore} de ${questions.length} correctas!`
-                            : language === 'fr'
-                            ? `Tu as obtenu ${quizScore} sur ${questions.length} correctes !`
-                            : language === 'pt'
-                            ? `Você acertou ${quizScore} de ${questions.length}!`
-                            : `You scored ${quizScore} out of ${questions.length}!`}
+                          You scored {quizScore} out of {questions.length}!
                         </Text>
                         <Text style={styles.quizScoreDesc}>
                           {quizScore === questions.length
                             ? t.quizPassed
-                            : (language === 'es'
-                              ? '¡Muy buen intento! La práctica diaria hace al maestro.'
-                              : language === 'fr'
-                              ? "Super effort ! La pratique quotidienne fait les grands lecteurs."
-                              : language === 'pt'
-                              ? 'Muito bem! A prática diária constrói uma leitura brilhante.'
-                              : 'Great job! Daily practice builds reading comprehension.')}
+                            : 'Great effort! Daily practice builds reading comprehension.'}
                         </Text>
                       </View>
                     )}
@@ -434,57 +492,80 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.6)',
+    backgroundColor: 'rgba(15, 23, 42, 0.65)',
     justifyContent: 'flex-end',
   },
   sheetContainer: {
     backgroundColor: '#ffffff',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    maxHeight: '85%',
-    minHeight: '45%',
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    maxHeight: '88%',
+    minHeight: '48%',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 10,
+    shadowOffset: { width: 0, height: -6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    elevation: 12,
+  },
+  handleBar: {
+    width: 44,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: '#cbd5e1',
+    alignSelf: 'center',
+    marginTop: 10,
+    marginBottom: 4,
   },
   sheetHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    justifyContent: 'space-between',
+    paddingHorizontal: 22,
+    paddingVertical: 14,
     borderBottomWidth: 1,
     borderBottomColor: '#f1f5f9',
   },
   tutorAvatarBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 12,
   },
-  avatarEmoji: {
-    fontSize: 26,
-    backgroundColor: '#fef3c7',
-    padding: 6,
-    borderRadius: 16,
-    borderWidth: 1.5,
-    borderColor: '#f59e0b',
+  headerTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   tutorName: {
-    fontSize: 16,
-    fontWeight: '800',
+    fontSize: 18,
+    fontWeight: '900',
     color: '#0f172a',
+  },
+  aiBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#f5f3ff',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#ddd6fe',
+  },
+  aiBadgeText: {
+    color: '#6366f1',
+    fontSize: 10,
+    fontWeight: '800',
   },
   modelPowered: {
     fontSize: 11,
-    color: '#2563eb',
-    fontWeight: '600',
+    color: '#64748b',
+    marginTop: 1,
+    fontWeight: '500',
   },
   closeBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     backgroundColor: '#f1f5f9',
     alignItems: 'center',
     justifyContent: 'center',
@@ -493,189 +574,238 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sheetContent: {
-    padding: 20,
-    gap: 16,
+    padding: 22,
+    paddingBottom: 40,
   },
   explainSection: {
-    gap: 14,
+    gap: 16,
   },
   wordHeaderCard: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#fff7ed',
+    justifyContent: 'space-between',
+    backgroundColor: '#f8fafc',
+    borderRadius: 20,
     padding: 16,
-    borderRadius: 16,
     borderWidth: 1.5,
-    borderColor: '#fed7aa',
+    borderColor: '#e2e8f0',
+  },
+  targetWordLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#64748b',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   targetWordDisplay: {
     fontSize: 26,
     fontWeight: '900',
-    color: '#9a3412',
-    letterSpacing: -0.5,
-    textTransform: 'capitalize',
+    color: '#1e293b',
+    marginTop: 2,
   },
   listenWordButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#ffffff',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#fdba74',
+    backgroundColor: '#6366f1',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 16,
+    borderBottomWidth: 3,
+    borderBottomColor: '#4338ca',
   },
   listenWordText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#ea580c',
+    color: '#ffffff',
+    fontSize: 13,
+    fontWeight: '800',
   },
   loadingBox: {
-    paddingVertical: 32,
     alignItems: 'center',
-    gap: 12,
+    justifyContent: 'center',
+    paddingVertical: 40,
+    gap: 14,
   },
   loadingText: {
-    fontSize: 13,
+    fontSize: 14,
     color: '#64748b',
+    fontWeight: '600',
     textAlign: 'center',
+    maxWidth: 280,
   },
   explanationCards: {
-    gap: 12,
+    gap: 14,
   },
   syllablesCard: {
-    backgroundColor: '#f8fafc',
-    padding: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
+    backgroundColor: '#eff6ff',
+    borderRadius: 18,
+    padding: 14,
+    borderWidth: 1.5,
+    borderColor: '#bfdbfe',
   },
   cardSmallLabel: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '800',
-    color: '#64748b',
-    letterSpacing: 0.5,
+    color: '#1e40af',
+    marginBottom: 8,
   },
-  syllablesText: {
-    fontSize: 20,
+  syllablesChipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  syllableChip: {
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: '#93c5fd',
+    borderBottomWidth: 3,
+    borderBottomColor: '#60a5fa',
+  },
+  syllableChipActive: {
+    backgroundColor: '#2563eb',
+    borderColor: '#1d4ed8',
+  },
+  syllableChipText: {
+    fontSize: 16,
     fontWeight: '800',
-    color: '#0f172a',
-    letterSpacing: 3,
-    marginTop: 4,
+    color: '#1e3a8a',
+  },
+  syllableChipTextActive: {
+    color: '#ffffff',
   },
   meaningCard: {
-    backgroundColor: '#fefce8',
-    padding: 14,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#fef08a',
+    backgroundColor: '#fffbeb',
+    borderRadius: 18,
+    padding: 16,
+    borderWidth: 1.5,
+    borderColor: '#fde68a',
   },
   iconHeadingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    marginBottom: 6,
+    gap: 8,
+    marginBottom: 8,
+  },
+  iconCircleMini: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   cardHeading: {
     fontSize: 13,
-    fontWeight: '700',
-    color: '#334155',
+    fontWeight: '800',
+    color: '#0f172a',
   },
   meaningText: {
-    fontSize: 14,
-    color: '#451a03',
-    lineHeight: 20,
-    fontWeight: '500',
+    fontSize: 15,
+    color: '#78350f',
+    lineHeight: 22,
+    fontWeight: '600',
   },
   exampleCard: {
-    backgroundColor: '#eff6ff',
-    padding: 14,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#bfdbfe',
+    backgroundColor: '#f0fdf4',
+    borderRadius: 18,
+    padding: 16,
+    borderWidth: 1.5,
+    borderColor: '#bbf7d0',
   },
   exampleText: {
-    fontSize: 14,
-    color: '#1e3a8a',
+    fontSize: 15,
     fontStyle: 'italic',
-    lineHeight: 20,
+    color: '#166534',
+    lineHeight: 22,
+    fontWeight: '600',
   },
   cheerCard: {
-    backgroundColor: '#ecfdf5',
-    padding: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#a7f3d0',
+    backgroundColor: '#faf5ff',
+    borderRadius: 18,
+    padding: 14,
+    borderWidth: 1.5,
+    borderColor: '#e9d5ff',
+    alignItems: 'center',
   },
   cheerText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#065f46',
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#6b21a8',
     textAlign: 'center',
   },
   celebrateSection: {
     gap: 16,
-    alignItems: 'center',
   },
   celebrateHeader: {
     alignItems: 'center',
-    gap: 6,
+    paddingVertical: 10,
   },
   celebrateEmoji: {
-    fontSize: 32,
+    fontSize: 34,
+    marginBottom: 6,
   },
   celebrateTitle: {
     fontSize: 22,
     fontWeight: '900',
     color: '#0f172a',
-    textAlign: 'center',
   },
   celebrateSubtitle: {
     fontSize: 13,
     color: '#64748b',
-    textAlign: 'center',
+    marginTop: 4,
+    fontWeight: '600',
+  },
+  starsRewardPill: {
+    backgroundColor: '#fef3c7',
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 14,
+    marginTop: 10,
+    borderWidth: 1.5,
+    borderColor: '#fde68a',
+  },
+  starsRewardText: {
+    fontSize: 13,
+    fontWeight: '900',
+    color: '#b45309',
   },
   statsPillRow: {
     flexDirection: 'row',
-    gap: 12,
-    width: '100%',
-    justifyContent: 'center',
+    gap: 10,
   },
   statPill: {
     flex: 1,
     backgroundColor: '#f8fafc',
-    borderRadius: 14,
+    borderRadius: 16,
     paddingVertical: 12,
     alignItems: 'center',
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#e2e8f0',
   },
   statPillValue: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: '900',
     color: '#0f172a',
   },
   statPillLabel: {
-    fontSize: 11,
+    fontSize: 10,
+    fontWeight: '700',
     color: '#64748b',
-    fontWeight: '600',
     marginTop: 2,
   },
   spokenFeedbackCard: {
-    width: '100%',
-    backgroundColor: '#fff7ed',
-    borderRadius: 16,
+    backgroundColor: '#f5f3ff',
+    borderRadius: 20,
     padding: 16,
     borderWidth: 1.5,
-    borderColor: '#fed7aa',
+    borderColor: '#ddd6fe',
   },
   spokenHeaderRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    justifyContent: 'space-between',
+    marginBottom: 10,
   },
   spokenHeaderLeft: {
     flexDirection: 'row',
@@ -683,54 +813,48 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   spokenTitle: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '800',
-    color: '#9a3412',
+    color: '#4338ca',
   },
   replayAudioBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#ffffff',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#fdba74',
+    gap: 5,
+    backgroundColor: '#6366f1',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 14,
   },
   replayAudioText: {
+    color: '#ffffff',
     fontSize: 11,
-    fontWeight: '700',
-    color: '#ea580c',
+    fontWeight: '800',
   },
   feedbackBodyText: {
-    fontSize: 14,
-    color: '#431407',
-    lineHeight: 20,
-    fontStyle: 'italic',
+    fontSize: 15,
+    color: '#312e81',
+    lineHeight: 22,
+    fontWeight: '600',
   },
   actionButtonsCol: {
-    width: '100%',
     gap: 10,
-    marginTop: 8,
+    marginTop: 6,
   },
   quizActionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: '#ea580c',
+    backgroundColor: '#6366f1',
     paddingVertical: 14,
-    borderRadius: 16,
-    shadowColor: '#ea580c',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 3,
+    borderRadius: 20,
+    borderBottomWidth: 4,
+    borderBottomColor: '#4338ca',
   },
   quizActionText: {
     color: '#ffffff',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '800',
   },
   reportActionBtn: {
@@ -739,25 +863,25 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     backgroundColor: '#f1f5f9',
-    paddingVertical: 12,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#cbd5e1',
+    paddingVertical: 13,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: '#e2e8f0',
   },
   reportActionText: {
     color: '#0f172a',
-    fontSize: 13,
-    fontWeight: '700',
+    fontSize: 14,
+    fontWeight: '800',
   },
   quizSection: {
-    gap: 14,
+    gap: 16,
   },
   quizHeader: {
-    marginBottom: 4,
+    marginBottom: 8,
   },
   quizTitle: {
     fontSize: 18,
-    fontWeight: '800',
+    fontWeight: '900',
     color: '#0f172a',
   },
   quizSubtitle: {
@@ -770,23 +894,23 @@ const styles = StyleSheet.create({
   },
   questionCard: {
     backgroundColor: '#ffffff',
-    borderRadius: 16,
+    borderRadius: 20,
     padding: 16,
     borderWidth: 1.5,
     borderColor: '#e2e8f0',
-    gap: 10,
   },
   questionNumber: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#ea580c',
+    color: '#6366f1',
     textTransform: 'uppercase',
   },
   questionText: {
     fontSize: 15,
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#0f172a',
-    lineHeight: 21,
+    marginVertical: 10,
+    lineHeight: 22,
   },
   optionsList: {
     gap: 8,
@@ -795,77 +919,83 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1.5,
+    borderBottomWidth: 3.5,
+    borderColor: '#e2e8f0',
+    borderBottomColor: '#cbd5e1',
+    backgroundColor: '#f8fafc',
     gap: 10,
   },
-  optionBtn: {
-    backgroundColor: '#f8fafc',
-    borderColor: '#e2e8f0',
-  },
+  optionBtn: {},
   optionBtnCorrect: {
-    backgroundColor: '#f0fdf4',
-    borderColor: '#22c55e',
+    backgroundColor: '#ecfdf5',
+    borderColor: '#6ee7b7',
+    borderBottomColor: '#10b981',
   },
   optionBtnIncorrect: {
     backgroundColor: '#fef2f2',
-    borderColor: '#ef4444',
+    borderColor: '#fca5a5',
+    borderBottomColor: '#ef4444',
   },
-  optionLetter: {
+  optionLetterBadge: {
     width: 26,
     height: 26,
     borderRadius: 13,
-    backgroundColor: '#e2e8f0',
-    textAlign: 'center',
-    lineHeight: 26,
-    fontWeight: '800',
+    backgroundColor: '#ffffff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#cbd5e1',
+  },
+  optionLetter: {
     fontSize: 12,
+    fontWeight: '900',
     color: '#334155',
   },
   optionLabel: {
     flex: 1,
-    fontSize: 13,
+    fontSize: 14,
+    fontWeight: '700',
     color: '#1e293b',
-    fontWeight: '600',
   },
   explanationBox: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
     gap: 6,
     backgroundColor: '#f0f9ff',
     padding: 10,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#bae6fd',
-    marginTop: 4,
+    borderRadius: 12,
+    marginTop: 10,
   },
   explanationBoxText: {
     flex: 1,
     fontSize: 12,
     color: '#0369a1',
+    fontWeight: '600',
     lineHeight: 16,
   },
   quizScoreCard: {
-    backgroundColor: '#fffbeb',
-    borderRadius: 16,
-    padding: 20,
     alignItems: 'center',
-    borderWidth: 1.5,
+    backgroundColor: '#fffbeb',
+    padding: 20,
+    borderRadius: 22,
+    borderWidth: 2,
     borderColor: '#fde68a',
-    gap: 6,
   },
   quizScoreEmoji: {
-    fontSize: 28,
+    fontSize: 32,
+    marginBottom: 6,
   },
   quizScoreTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '900',
-    color: '#78350f',
+    color: '#0f172a',
   },
   quizScoreDesc: {
-    fontSize: 12,
-    color: '#92400e',
+    fontSize: 13,
+    color: '#78350f',
     textAlign: 'center',
-    lineHeight: 17,
+    marginTop: 4,
+    fontWeight: '600',
   },
 });

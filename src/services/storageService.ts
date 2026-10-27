@@ -68,6 +68,28 @@ export async function getReadingStats() {
   };
 }
 
+const STORAGE_KEY_STARS = '@Sparky_reading_stars';
+
+export async function getStarsCount(): Promise<number> {
+  try {
+    const raw = await AsyncStorage.getItem(STORAGE_KEY_STARS);
+    return raw ? parseInt(raw, 10) : 45; // default 45 welcome stars
+  } catch (e) {
+    return 45;
+  }
+}
+
+export async function addStars(amount: number): Promise<number> {
+  try {
+    const current = await getStarsCount();
+    const next = current + amount;
+    await AsyncStorage.setItem(STORAGE_KEY_STARS, String(next));
+    return next;
+  } catch (e) {
+    return 45;
+  }
+}
+
 async function updateStreak() {
   try {
     const raw = await AsyncStorage.getItem(STORAGE_KEY_STREAK);
@@ -77,3 +99,4 @@ async function updateStreak() {
     // ignore
   }
 }
+

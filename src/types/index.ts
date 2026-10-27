@@ -76,3 +76,6 @@ export interface OCRResult {
   confidence: number;
   words: string[];
 }
+
+export type MascotMood = 'idle' | 'listening' | 'celebrating' | 'thinking' | 'encouraging';
+
