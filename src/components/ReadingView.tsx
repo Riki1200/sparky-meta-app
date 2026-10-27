@@ -6,7 +6,6 @@ import {
   TouchableOpacity,
   ScrollView,
   Platform,
-  Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { BookPage, WordToken, ReadingSessionResult, ReadingErrorDetail, SupportedLanguage } from '../types';
@@ -55,16 +54,14 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
   const timerIntervalRef = useRef<any>(null);
   const simulationTimerRef = useRef<any>(null);
 
-  // Initialize tokens when page changes
   useEffect(() => {
     resetPageReading();
   }, [page]);
 
-  // Setup speech controller
   useEffect(() => {
     speechControllerRef.current = new SpeechRecognitionController(language);
 
-    speechControllerRef.current.onWordSpoken = (spokenText, isFinal) => {
+    speechControllerRef.current.onWordSpoken = (spokenText) => {
       setRecentSpokenText(spokenText);
       handleSpeechInput(spokenText);
     };
@@ -125,7 +122,6 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
     speechControllerRef.current?.stopListening();
   };
 
-  // Process live speech inputs
   const handleSpeechInput = (spokenPhrase: string) => {
     if (currentIndex >= tokens.length) return;
 
@@ -149,7 +145,6 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
         setErrorsList((prev) => [...prev, result.error!]);
       }
 
-      // Check if page finished
       if (result.nextIndex >= tokens.length) {
         finishReadingSession(result.updatedTokens, [
           ...errorsList,
@@ -159,7 +154,6 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
     }
   };
 
-  // Recalculate WPM
   useEffect(() => {
     if (elapsedSeconds > 2 && currentIndex > 0) {
       const calculatedWpm = Math.round((currentIndex / elapsedSeconds) * 60);
@@ -185,7 +179,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
     const finalAccuracy =
       totalWords > 0 ? Math.round((correctCount / totalWords) * 100) : 100;
     const finalWpm =
-      elapsedSeconds > 2 ? Math.round((totalWords / elapsedSeconds) * 60) : 65;
+      elapsedSeconds > 2 ? Math.round((totalWords / elapsedSeconds) * 60) : 68;
 
     const sessionResult: ReadingSessionResult = {
       id: `session_${Date.now()}`,
@@ -193,7 +187,12 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
       pageTitle: page.title,
       bookSource: page.source,
       language,
-      date: new Date().toLocaleDateString(),
+      date: new Date().toLocaleDateString(language === 'es' ? 'es-DO' : 'en-US', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
       durationSeconds: Math.max(1, elapsedSeconds),
       totalWords,
       correctWords: correctCount,
@@ -212,13 +211,9 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
 
     setTimeout(() => {
       onPageCompleted(sessionResult);
-    }, 1500);
+    }, 1400);
   };
 
-  /**
-   * Interactive Simulator for Hackathon & Demos:
-   * Real-time read-along detecting pauses and mispronunciations.
-   */
   const handleSimulateChildReading = () => {
     if (isSimulating) {
       if (simulationTimerRef.current) clearTimeout(simulationTimerRef.current);
@@ -245,11 +240,10 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
       }
 
       const currentWord = allTokens[simIndex].word;
-      let delay = 650; // comfortable child pace
+      let delay = 650;
 
-      // Inject 1 hesitation at word index 2 or 3
       if (simIndex === 2 && allTokens.length > 4) {
-        delay = 2100; // >1.8s hesitation pause
+        delay = 2100;
         allTokens[simIndex] = {
           ...allTokens[simIndex],
           status: 'hesitation',
@@ -263,9 +257,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
           syllables: allTokens[simIndex].syllables,
         });
         playChime('tap');
-      }
-      // Inject 1 mispronunciation at word index 5
-      else if (simIndex === 5 && allTokens.length > 6) {
+      } else if (simIndex === 5 && allTokens.length > 6) {
         allTokens[simIndex] = {
           ...allTokens[simIndex],
           status: 'mispronounced',
@@ -279,9 +271,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
           syllables: allTokens[simIndex].syllables,
         });
         playChime('tap');
-      }
-      // Standard correct word
-      else {
+      } else {
         allTokens[simIndex] = {
           ...allTokens[simIndex],
           status: 'correct',
@@ -300,18 +290,13 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
   };
 
   const handleWordTap = (token: WordToken) => {
-    // Speak word aloud phonetically
     speakText(token.word, language, 0.85);
-    // Open Meta Muse Spark explainer
     onOpenWordExplainer(token.word, page.text);
   };
 
-  // Calculate live stats
   const correctCount = tokens.filter((t) => t.status === 'correct').length;
   const currentAccuracy =
-    currentIndex > 0
-      ? Math.round((correctCount / currentIndex) * 100)
-      : 100;
+    currentIndex > 0 ? Math.round((correctCount / currentIndex) * 100) : 100;
 
   const getMascotMood = () => {
     if (showConfetti) return 'celebrating';
@@ -322,159 +307,66 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
   const getMascotPrompt = () => {
     if (showConfetti) {
       return language === 'es'
-        ? '¡Increíble lectura! ¡Ganaste 10 estrellas! ⭐🎉'
-        : language === 'fr'
-        ? 'Lecture incroyable ! Tu as gagné 10 étoiles ! ⭐🎉'
-        : language === 'pt'
-        ? 'Leitura incrível! Você ganhou 10 estrelas! ⭐🎉'
+        ? '¡Excelente lectura! ¡Ganaste 10 estrellas! ⭐🎉'
         : 'Incredible reading! You earned 10 stars! ⭐🎉';
     }
     if (isListening || isSimulating) {
       return language === 'es'
-        ? '¡Te estoy escuchando! Lee con voz clara... 🎧'
-        : language === 'fr'
-        ? "Je t'écoute ! Lis bien à voix haute... 🎧"
-        : language === 'pt'
-        ? 'Estou te ouvindo! Leia com voz clara... 🎧'
-        : "I'm listening! Read aloud clearly... 🎧";
+        ? '¡Te escucho! Lee con voz clara y tranquila... 🎧'
+        : 'I am listening! Read aloud with confidence... 🎧';
     }
     return language === 'es'
-      ? '¡Toca cualquier palabra para escucharla o pulsa "Leer en Voz Alta"! 📖'
-      : language === 'fr'
-      ? 'Touche un mot pour l’écouter ou clique sur "Lire à voix haute" ! 📖'
-      : language === 'pt'
-      ? 'Toque em uma palavra para ouvi-la ou clique em "Ler em Voz Alta"! 📖'
-      : 'Tap any word to hear how it sounds or press "Read Aloud"! 📖';
+      ? "Toca cualquier palabra para escucharla o pulsa 'Leer en Voz Alta' 📖"
+      : "Tap any word to hear it or tap 'Read Aloud' 📖";
   };
 
   const progressPercent = tokens.length > 0 ? (currentIndex / tokens.length) * 100 : 0;
 
   return (
     <View style={styles.container}>
-      {/* Celebration Confetti when page is completed */}
       <CelebrationConfetti active={showConfetti} />
 
-      {/* Top Book Header & Live Gauges HUD */}
-      <View style={styles.hudCard}>
-        <View style={styles.hudTopRow}>
-          <View style={styles.bookMeta}>
-            <View style={styles.gradeBadge}>
-              <Text style={styles.gradeBadgeText}>{page.gradeLevel}</Text>
-            </View>
-            <Text style={styles.pageTitle} numberOfLines={1}>
-              {page.title}
-            </Text>
-            <Text style={styles.pageSource} numberOfLines={1}>
-              {page.source}
-            </Text>
-          </View>
-
-          <TouchableOpacity
-            style={styles.scanPageIconBtn}
-            onPress={onOpenScan}
-            activeOpacity={0.8}
-          >
-            <Ionicons name="camera" size={16} color="#ea580c" />
-            <Text style={styles.scanPageIconText}>{t.navScan}</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Live Gauges Cards */}
-        <View style={styles.gaugesRow}>
-          <View style={styles.gaugeItem}>
-            <View style={[styles.gaugeIconCircle, { backgroundColor: '#eff6ff' }]}>
-              <Ionicons name="speedometer" size={15} color="#2563eb" />
-            </View>
-            <View>
-              <Text style={styles.gaugeValue}>{wpm || '--'}</Text>
-              <Text style={styles.gaugeLabel}>{t.speedWpm}</Text>
-            </View>
-          </View>
-
-          <View style={styles.gaugeItem}>
-            <View style={[styles.gaugeIconCircle, { backgroundColor: '#ecfdf5' }]}>
-              <Ionicons name="checkmark-circle" size={15} color="#10b981" />
-            </View>
-            <View>
-              <Text style={styles.gaugeValue}>{currentAccuracy}%</Text>
-              <Text style={styles.gaugeLabel}>{t.accuracyLabel}</Text>
-            </View>
-          </View>
-
-          <View style={styles.gaugeItem}>
-            <View style={[styles.gaugeIconCircle, { backgroundColor: '#fff7ed' }]}>
-              <Ionicons name="time" size={15} color="#ea580c" />
-            </View>
-            <View>
-              <Text style={styles.gaugeValue}>{elapsedSeconds}s</Text>
-              <Text style={styles.gaugeLabel}>{t.timeLabel}</Text>
-            </View>
-          </View>
-
-          <View style={styles.gaugeItem}>
-            <View style={[styles.gaugeIconCircle, { backgroundColor: '#faf5ff' }]}>
-              <Ionicons name="book" size={15} color="#8b5cf6" />
-            </View>
-            <View>
-              <Text style={styles.gaugeValue}>
-                {currentIndex}/{tokens.length}
-              </Text>
-              <Text style={styles.gaugeLabel}>{t.wordsRead}</Text>
-            </View>
+      {/* Modern Compact Live HUD Bar (Only 38px, zero vertical waste) */}
+      <View style={styles.miniHudBar}>
+        <View style={styles.hudLeft}>
+          <Text style={styles.hudCountText}>
+            {currentIndex}/{tokens.length} {language === 'es' ? 'palabras' : 'words'}
+          </Text>
+          <View style={styles.hudProgressTrack}>
+            <View style={[styles.hudProgressFill, { width: `${progressPercent}%` }]} />
           </View>
         </View>
 
-        {/* Modern Progress Bar with Milestones */}
-        <View style={styles.progressBarWrapper}>
-          <View style={styles.progressBarBg}>
-            <View
-              style={[
-                styles.progressBarFill,
-                { width: `${progressPercent}%` },
-              ]}
-            />
+        <View style={styles.hudRight}>
+          <View style={styles.hudStatPillBlue}>
+            <Ionicons name="speedometer-outline" size={12} color="#0284c7" />
+            <Text style={styles.hudStatTextBlue}>{wpm || '--'} WPM</Text>
           </View>
-          <View style={styles.milestoneContainer}>
-            <Text style={[styles.milestoneStar, progressPercent >= 50 && styles.milestoneStarActive]}>
-              ⭐
-            </Text>
-            <Text style={[styles.milestoneStar, progressPercent >= 100 && styles.milestoneStarActive]}>
-              🏆
-            </Text>
+          <View style={styles.hudStatPillGreen}>
+            <Ionicons name="checkmark-circle-outline" size={12} color="#059669" />
+            <Text style={styles.hudStatTextGreen}>{currentAccuracy}%</Text>
           </View>
         </View>
       </View>
 
-      {/* Main Reading Surface */}
+      {/* Main Content Area */}
       <ScrollView
-        style={styles.paperScrollView}
-        contentContainerStyle={styles.paperScrollContent}
+        style={styles.scrollArea}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
       >
-        {/* Animated Mascot Sparky Banner with speech bubble */}
-        <View style={styles.mascotBannerContainer}>
+        {/* Sparky Friendly Tutor Banner */}
+        <View style={styles.mascotRow}>
           <SparkyMascot
-            size="medium"
+            size="small"
             mood={getMascotMood()}
             speechBubbleText={getMascotPrompt()}
             language={language}
           />
         </View>
 
-        {/* Tactile Book Paper Surface */}
+        {/* Elevated Tactile Reading Paper Board */}
         <View style={styles.paperCard}>
-          {/* Book Binding Top Ribbon */}
-          <View style={styles.paperHeader}>
-            <View style={styles.paperBookmark}>
-              <Ionicons name="book" size={14} color="#6366f1" />
-              <Text style={styles.paperBookmarkText}>{t.readAloudPrompt}</Text>
-            </View>
-            <View style={styles.paperTipBadge}>
-              <Ionicons name="finger-print-outline" size={13} color="#64748b" />
-              <Text style={styles.tapTip}>{t.readingTapHint}</Text>
-            </View>
-          </View>
-
-          {/* Interactive Word Chips (Duolingo Tactile 3D Tiles) */}
           <View style={styles.tokensContainer}>
             {tokens.map((token, idx) => {
               const isCurrent = idx === currentIndex && (isListening || isSimulating);
@@ -485,7 +377,6 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
 
               return (
                 <View key={token.id || idx} style={styles.tokenWrapper}>
-                  {/* Floating Spark Indicator above Current Word */}
                   {isCurrent && (
                     <View style={styles.currentSparkIndicator}>
                       <Text style={styles.sparkEmoji}>✨</Text>
@@ -517,19 +408,18 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
                       {token.display}
                     </Text>
 
-                    {/* Status Emojis for instant kid comprehension */}
                     {isHesitation && (
-                      <View style={styles.miniHesitationTag}>
+                      <View style={styles.miniTagHesitation}>
                         <Text style={styles.miniTagText}>⏳</Text>
                       </View>
                     )}
                     {isMispronounced && (
-                      <View style={styles.miniMispronouncedTag}>
+                      <View style={styles.miniTagMispronounced}>
                         <Text style={styles.miniTagText}>👂</Text>
                       </View>
                     )}
                     {isCorrect && (
-                      <View style={styles.miniCorrectTag}>
+                      <View style={styles.miniTagCorrect}>
                         <Text style={styles.miniTagText}>✓</Text>
                       </View>
                     )}
@@ -539,57 +429,60 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
             })}
           </View>
 
-          {/* Friendly Visual Legend */}
-          <View style={styles.legendContainer}>
+          {/* Discreet Color Legend */}
+          <View style={styles.legendRow}>
             <View style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: '#10b981' }]} />
-              <Text style={styles.legendText}>{t.legendCorrect}</Text>
+              <Text style={styles.legendLabel}>{t.legendCorrect}</Text>
             </View>
             <View style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: '#f59e0b' }]} />
-              <Text style={styles.legendText}>{t.legendHesitation}</Text>
+              <Text style={styles.legendLabel}>{t.legendHesitation}</Text>
             </View>
             <View style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: '#f43f5e' }]} />
-              <Text style={styles.legendText}>{t.legendMispronounced}</Text>
-            </View>
-            <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: '#818cf8' }]} />
-              <Text style={styles.legendText}>{t.legendSkipped}</Text>
+              <Text style={styles.legendLabel}>{t.legendMispronounced}</Text>
             </View>
           </View>
         </View>
 
-        {/* Live speech feedback pill */}
+        {/* Live speech heard transcript pill */}
         {recentSpokenText ? (
-          <View style={styles.liveTranscriptPill}>
-            <Ionicons name="mic" size={16} color="#ea580c" />
-            <Text style={styles.liveTranscriptText} numberOfLines={1}>
-              {language === 'es' ? 'Escuchado: ' : language === 'fr' ? 'Entendu : ' : language === 'pt' ? 'Ouvido: ' : 'Heard: '}"{recentSpokenText}"
+          <View style={styles.liveTranscriptBox}>
+            <Ionicons name="mic" size={14} color="#ea580c" />
+            <Text style={styles.liveTranscriptLabel}>
+              {language === 'es' ? 'Escuchado: ' : 'Heard: '}
+            </Text>
+            <Text style={styles.liveTranscriptPhrase} numberOfLines={1}>
+              "{recentSpokenText}"
             </Text>
           </View>
         ) : null}
+
+        {/* Spacing for floating dock */}
+        <View style={{ height: 90 }} />
       </ScrollView>
 
-      {/* Bottom Sticky Control Dock (Duolingo 3D Tactile Buttons) */}
-      <View style={styles.controlsDock}>
-        {/* Restart Button */}
+      {/* Modern Floating Action Dock */}
+      <View style={styles.floatingDock}>
+        {/* Reset / Restart */}
         <TouchableOpacity
-          style={styles.iconCircleBtn}
+          style={styles.dockIconCircle}
           onPress={() => {
             playChime('tap');
             resetPageReading();
           }}
           activeOpacity={0.7}
+          accessibilityLabel="Reset reading page"
         >
-          <Ionicons name="refresh" size={22} color="#64748b" />
+          <Ionicons name="refresh" size={20} color="#64748b" />
         </TouchableOpacity>
 
-        {/* Big Central Read Aloud Button */}
+        {/* Hero Mic Read-Aloud Button */}
         <TouchableOpacity
           style={[
-            styles.micButton,
-            (isListening || isSimulating) && styles.micButtonListening,
+            styles.heroMicButton,
+            (isListening || isSimulating) && styles.heroMicButtonActive,
           ]}
           onPress={() => {
             if (isListening || isSimulating) {
@@ -599,58 +492,41 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
               startReadingSession();
             }
           }}
-          activeOpacity={0.8}
+          activeOpacity={0.85}
         >
           <Ionicons
             name={isListening || isSimulating ? 'stop-circle' : 'mic'}
-            size={26}
+            size={22}
             color="#ffffff"
           />
-          <Text style={styles.micButtonText}>
+          <Text style={styles.heroMicText}>
             {isListening || isSimulating
-              ? t.stopReadingBtn
-              : t.startReadingBtn}
+              ? (language === 'es' ? 'Pausar' : 'Stop')
+              : (language === 'es' ? 'Leer en Voz Alta' : 'Read Aloud')}
           </Text>
-          {(isListening || isSimulating) && (
-            <View style={styles.livePillPulse}>
-              <Text style={styles.livePillText}>LIVE</Text>
-            </View>
-          )}
         </TouchableOpacity>
 
-        {/* Simulation / Hackathon Demo Button */}
+        {/* 1-Click Simulation Demo */}
         <TouchableOpacity
           style={[
-            styles.simButton,
-            isSimulating && styles.simButtonActive,
+            styles.dockSimButton,
+            isSimulating && styles.dockSimButtonActive,
           ]}
           onPress={handleSimulateChildReading}
           activeOpacity={0.75}
         >
           <Ionicons
             name={isSimulating ? 'pause' : 'play-forward'}
-            size={18}
+            size={16}
             color={isSimulating ? '#ffffff' : '#ea580c'}
           />
           <Text
             style={[
-              styles.simButtonText,
-              isSimulating && styles.simButtonTextActive,
+              styles.dockSimText,
+              isSimulating && styles.dockSimTextActive,
             ]}
           >
-            {isSimulating ? 'Pause' : t.simulateDemoBtn}
-          </Text>
-        </TouchableOpacity>
-
-        {/* Finish & Evaluate Button */}
-        <TouchableOpacity
-          style={styles.finishBtn}
-          onPress={() => finishReadingSession(tokens, errorsList)}
-          activeOpacity={0.8}
-        >
-          <Ionicons name="checkmark-done" size={20} color="#ffffff" />
-          <Text style={styles.finishBtnText}>
-            {t.tabFeedback}
+            {isSimulating ? 'Pausa' : 'Simular'}
           </Text>
         </TouchableOpacity>
       </View>
@@ -662,311 +538,217 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8fafc',
+    position: 'relative',
   },
-  hudCard: {
+  miniHudBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     backgroundColor: '#ffffff',
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 7,
     borderBottomWidth: 1,
     borderBottomColor: '#e2e8f0',
   },
-  hudTopRow: {
+  hudLeft: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
-  },
-  bookMeta: {
+    gap: 8,
     flex: 1,
-    marginRight: 10,
+    maxWidth: 240,
   },
-  gradeBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#eff6ff',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#bfdbfe',
-    marginBottom: 4,
-  },
-  gradeBadgeText: {
-    color: '#1d4ed8',
-    fontSize: 10,
-    fontWeight: '800',
-  },
-  pageTitle: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: '#0f172a',
-  },
-  pageSource: {
-    fontSize: 11,
-    color: '#64748b',
-    marginTop: 1,
-  },
-  scanPageIconBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    backgroundColor: '#fff7ed',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 14,
-    borderWidth: 1.5,
-    borderColor: '#fed7aa',
-  },
-  scanPageIconText: {
-    color: '#c2410c',
+  hudCountText: {
     fontSize: 11,
     fontWeight: '800',
+    color: '#475569',
   },
-  gaugesRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#f8fafc',
-    borderRadius: 14,
-    padding: 8,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    marginBottom: 10,
-    gap: 6,
-  },
-  gaugeItem: {
+  hudProgressTrack: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-  },
-  gaugeIconCircle: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  gaugeValue: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: '#0f172a',
-  },
-  gaugeLabel: {
-    fontSize: 9,
-    color: '#64748b',
-    fontWeight: '600',
-  },
-  progressBarWrapper: {
-    position: 'relative',
-    marginTop: 2,
-  },
-  progressBarBg: {
-    height: 8,
+    height: 5,
     backgroundColor: '#e2e8f0',
-    borderRadius: 4,
+    borderRadius: 3,
     overflow: 'hidden',
   },
-  progressBarFill: {
+  hudProgressFill: {
     height: '100%',
-    backgroundColor: '#6366f1',
-    borderRadius: 4,
+    backgroundColor: '#ea580c',
+    borderRadius: 3,
   },
-  milestoneContainer: {
-    position: 'absolute',
-    top: -6,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: '48%',
-    pointerEvents: 'none',
-  },
-  milestoneStar: {
-    fontSize: 11,
-    opacity: 0.35,
-  },
-  milestoneStarActive: {
-    opacity: 1,
-  },
-  paperScrollView: {
-    flex: 1,
-  },
-  paperScrollContent: {
-    padding: 16,
-    paddingBottom: 110,
-  },
-  mascotBannerContainer: {
-    marginBottom: 14,
-  },
-  paperCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 24,
-    padding: 20,
-    borderWidth: 1.5,
-    borderColor: '#e2e8f0',
-    shadowColor: '#6366f1',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    elevation: 3,
-  },
-  paperHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 18,
-    paddingBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  paperBookmark: {
+  hudRight: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#eff6ff',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 12,
   },
-  paperBookmarkText: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: '#4338ca',
-  },
-  paperTipBadge: {
+  hudStatPillBlue: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    backgroundColor: '#f0f9ff',
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#bae6fd',
   },
-  tapTip: {
+  hudStatTextBlue: {
     fontSize: 11,
-    color: '#64748b',
-    fontWeight: '500',
+    fontWeight: '800',
+    color: '#0369a1',
+  },
+  hudStatPillGreen: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#ecfdf5',
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#a7f3d0',
+  },
+  hudStatTextGreen: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#047857',
+  },
+  scrollArea: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: 16,
+    gap: 12,
+    maxWidth: 760,
+    width: '100%',
+    alignSelf: 'center',
+  },
+  mascotRow: {
+    marginVertical: 2,
+  },
+  paperCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 22,
+    padding: 20,
+    borderWidth: 1.5,
+    borderColor: '#e2e8f0',
+    shadowColor: '#0f172a',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 3,
   },
   tokensContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    alignItems: 'center',
-    lineHeight: 34,
+    gap: 8,
+    lineHeight: 46,
+    paddingVertical: 6,
   },
   tokenWrapper: {
     position: 'relative',
-    margin: 4,
+    alignItems: 'center',
   },
   currentSparkIndicator: {
     position: 'absolute',
-    top: -16,
-    left: '35%',
+    top: -20,
+    alignSelf: 'center',
     zIndex: 10,
   },
   sparkEmoji: {
-    fontSize: 14,
+    fontSize: 16,
   },
   wordButton: {
-    backgroundColor: '#ffffff',
-    borderRadius: 14,
-    paddingHorizontal: 12,
-    paddingVertical: 9,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+    backgroundColor: '#f8fafc',
     borderWidth: 1.5,
-    borderColor: '#e2e8f0',
-    borderBottomWidth: 3.5,
-    borderBottomColor: '#cbd5e1',
+    borderColor: 'transparent',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 2,
-    elevation: 1,
+    gap: 4,
+  },
+  wordText: {
+    fontSize: 23,
+    fontWeight: '600',
+    color: '#1e293b',
+    letterSpacing: -0.3,
   },
   wordCurrent: {
-    backgroundColor: '#f5f3ff',
-    borderColor: '#a5b4fc',
-    borderBottomColor: '#6366f1',
-    borderWidth: 2,
-    borderBottomWidth: 4,
-    shadowColor: '#6366f1',
+    borderColor: '#f59e0b',
+    backgroundColor: '#fef3c7',
+    shadowColor: '#f59e0b',
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
-    shadowRadius: 5,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  wordTextCurrent: {
+    color: '#78350f',
+    fontWeight: '800',
   },
   wordCorrect: {
     backgroundColor: '#ecfdf5',
-    borderColor: '#6ee7b7',
-    borderBottomColor: '#10b981',
-  },
-  wordHesitation: {
-    backgroundColor: '#fef3c7',
-    borderColor: '#fde68a',
-    borderBottomColor: '#f59e0b',
-  },
-  wordMispronounced: {
-    backgroundColor: '#ffe4e6',
-    borderColor: '#fecdd3',
-    borderBottomColor: '#f43f5e',
-  },
-  wordSkipped: {
-    backgroundColor: '#ede9fe',
-    borderColor: '#ddd6fe',
-    borderBottomColor: '#818cf8',
-  },
-  wordText: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#1e293b',
-    letterSpacing: 0.4,
-  },
-  wordTextCurrent: {
-    color: '#4338ca',
-    fontWeight: '900',
+    borderColor: '#a7f3d0',
   },
   wordTextCorrect: {
-    color: '#047857',
+    color: '#065f46',
+    fontWeight: '700',
+  },
+  wordHesitation: {
+    backgroundColor: '#fefce8',
+    borderColor: '#fef08a',
   },
   wordTextHesitation: {
-    color: '#b45309',
+    color: '#854d0e',
+    fontWeight: '700',
+  },
+  wordMispronounced: {
+    backgroundColor: '#fff1f2',
+    borderColor: '#fecdd3',
   },
   wordTextMispronounced: {
-    color: '#be123c',
+    color: '#9f1239',
+    fontWeight: '700',
+    textDecorationLine: 'underline',
+  },
+  wordSkipped: {
+    backgroundColor: '#f5f3ff',
+    borderColor: '#ddd6fe',
+    borderStyle: 'dashed',
   },
   wordTextSkipped: {
-    color: '#6366f1',
-    textDecorationLine: 'line-through',
+    color: '#5b21b6',
+    opacity: 0.7,
   },
-  miniCorrectTag: {
-    backgroundColor: '#10b981',
-    borderRadius: 8,
-    width: 14,
-    height: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
+  miniTagHesitation: {
+    backgroundColor: '#fde047',
+    borderRadius: 5,
+    paddingHorizontal: 3,
   },
-  miniHesitationTag: {
-    backgroundColor: '#fef3c7',
-    borderRadius: 8,
+  miniTagMispronounced: {
+    backgroundColor: '#fca5a5',
+    borderRadius: 5,
+    paddingHorizontal: 3,
   },
-  miniMispronouncedTag: {
-    backgroundColor: '#ffe4e6',
-    borderRadius: 8,
+  miniTagCorrect: {
+    backgroundColor: '#86efac',
+    borderRadius: 5,
+    paddingHorizontal: 3,
   },
   miniTagText: {
     fontSize: 9,
-    color: '#ffffff',
     fontWeight: '800',
   },
-  legendContainer: {
+  legendRow: {
     flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
-    justifyContent: 'space-around',
-    marginTop: 22,
-    paddingTop: 14,
+    gap: 16,
+    marginTop: 18,
+    paddingTop: 12,
     borderTopWidth: 1,
     borderTopColor: '#f1f5f9',
     flexWrap: 'wrap',
-    gap: 8,
   },
   legendItem: {
     flexDirection: 'row',
@@ -974,153 +756,115 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   legendDot: {
-    width: 8,
-    height: 8,
+    width: 7,
+    height: 7,
     borderRadius: 4,
   },
-  legendText: {
+  legendLabel: {
     fontSize: 11,
     color: '#64748b',
     fontWeight: '600',
   },
-  liveTranscriptPill: {
+  liveTranscriptBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    backgroundColor: '#ffffff',
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    borderRadius: 18,
-    marginTop: 12,
-    borderWidth: 1.5,
+    gap: 6,
+    backgroundColor: '#fff7ed',
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 14,
+    borderWidth: 1,
     borderColor: '#fed7aa',
-    shadowColor: '#ea580c',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    alignSelf: 'center',
   },
-  liveTranscriptText: {
-    fontSize: 12,
-    color: '#9a3412',
+  liveTranscriptLabel: {
+    fontSize: 11,
     fontWeight: '700',
+    color: '#ea580c',
   },
-  controlsDock: {
+  liveTranscriptPhrase: {
+    fontSize: 11,
+    color: '#9a3412',
+    fontStyle: 'italic',
+    maxWidth: 240,
+  },
+  floatingDock: {
     position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: '#ffffff',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#e2e8f0',
+    bottom: 16,
+    alignSelf: 'center',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 30,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    shadowColor: '#0f172a',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
     elevation: 8,
+    ...(Platform.OS === 'web'
+      ? {
+          backdropFilter: 'blur(16px)',
+        }
+      : {}),
   },
-  iconCircleBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+  dockIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: '#f1f5f9',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: '#e2e8f0',
-    borderBottomWidth: 3,
-    borderBottomColor: '#cbd5e1',
   },
-  micButton: {
-    flex: 2,
+  heroMicButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
     gap: 8,
-    backgroundColor: '#10b981', // Vibrant Emerald green
+    backgroundColor: '#ea580c',
     paddingVertical: 12,
-    borderRadius: 24,
-    borderBottomWidth: 4,
-    borderBottomColor: '#059669',
-    shadowColor: '#10b981',
+    paddingHorizontal: 22,
+    borderRadius: 25,
+    shadowColor: '#ea580c',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.3,
     shadowRadius: 6,
     elevation: 4,
-    position: 'relative',
   },
-  micButtonListening: {
-    backgroundColor: '#f43f5e', // Vibrant coral crimson
-    borderBottomColor: '#be123c',
-    shadowColor: '#f43f5e',
+  heroMicButtonActive: {
+    backgroundColor: '#dc2626',
+    shadowColor: '#dc2626',
   },
-  micButtonText: {
+  heroMicText: {
     color: '#ffffff',
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '900',
-    letterSpacing: 0.3,
+    letterSpacing: -0.2,
   },
-  livePillPulse: {
-    backgroundColor: 'rgba(255,255,255,0.3)',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-  },
-  livePillText: {
-    color: '#ffffff',
-    fontSize: 9,
-    fontWeight: '900',
-  },
-  simButton: {
+  dockSimButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
     backgroundColor: '#fff7ed',
-    paddingHorizontal: 12,
-    paddingVertical: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
     borderRadius: 20,
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: '#fed7aa',
-    borderBottomWidth: 3,
-    borderBottomColor: '#fdba74',
   },
-  simButtonActive: {
+  dockSimButtonActive: {
     backgroundColor: '#ea580c',
     borderColor: '#ea580c',
-    borderBottomColor: '#c2410c',
   },
-  simButtonText: {
+  dockSimText: {
+    fontSize: 12,
+    fontWeight: '800',
     color: '#ea580c',
-    fontSize: 12,
-    fontWeight: '800',
   },
-  simButtonTextActive: {
+  dockSimTextActive: {
     color: '#ffffff',
-  },
-  finishBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    backgroundColor: '#6366f1',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderRadius: 20,
-    borderBottomWidth: 3,
-    borderBottomColor: '#4338ca',
-    shadowColor: '#6366f1',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  finishBtnText: {
-    color: '#ffffff',
-    fontSize: 12,
-    fontWeight: '800',
   },
 });
