@@ -1,4 +1,5 @@
 import { ComprehensionQuestion, ReadingSessionResult, WordExplanation, SupportedLanguage } from '../types';
+import { convertAudioBlobToWav16kMono } from './audioUtils';
 
 export const META_API_CONFIG = {
   baseUrl: process.env.EXPO_PUBLIC_META_API_BASE_URL || 'https://api.meta.ai/v1',
@@ -418,21 +419,43 @@ KESİNLİKLE geçerli bir JSON dizisi ile yanıt ver:
 }
 
 /**
- * Cloud fallback for speech recognition via Muse Voice Transcribe (Meta Model API).
+ * Speech recognition via Muse Voice Transcribe (Meta Model API).
+ * Accepts any audio Blob/ArrayBuffer, converts it to 16kHz mono 16-bit PCM WAV,
+ * and calls https://api.meta.ai/v1/asr/transcribe with strictly conforming multipart parts.
  */
 export async function transcribeAudioWithMuseVoice(
-  audioData: string | Blob,
+  audioData: Blob | ArrayBuffer,
   language: SupportedLanguage = 'en'
 ): Promise<string> {
+  if (!META_API_CONFIG.apiKey) {
+    console.warn('transcribeAudioWithMuseVoice skipped: No Meta API key configured');
+    return '';
+  }
+
   try {
-    const formData = new FormData();
-    if (typeof audioData === 'string') {
-      formData.append('audio_base64', audioData);
+    let wavBlob: Blob;
+    if (audioData instanceof Blob) {
+      if (audioData.type === 'audio/wav' || audioData.type === 'audio/x-wav') {
+        wavBlob = audioData;
+      } else {
+        wavBlob = await convertAudioBlobToWav16kMono(audioData);
+      }
     } else {
-      formData.append('file', audioData, 'recording.wav');
+      wavBlob = new Blob([audioData], { type: 'audio/wav' });
     }
-    formData.append('model', META_API_CONFIG.voiceModel);
-    formData.append('language', language);
+
+    const formData = new FormData();
+    const requestPayload = {
+      model: META_API_CONFIG.voiceModel,
+      audioEncoding: 'WAV',
+      language,
+    };
+
+    formData.append(
+      'request',
+      new Blob([JSON.stringify(requestPayload)], { type: 'application/json' })
+    );
+    formData.append('audio', wavBlob, 'audio.wav');
 
     const response = await fetch(`${META_API_CONFIG.baseUrl}/asr/transcribe`, {
       method: 'POST',
@@ -444,12 +467,82 @@ export async function transcribeAudioWithMuseVoice(
 
     if (response.ok) {
       const data = await response.json();
-      return data.text || data.transcription || '';
+      return (data.transcript || data.text || '').trim();
+    } else {
+      const errText = await response.text();
+      console.warn('Muse Voice Transcribe API returned status:', response.status, errText);
     }
   } catch (err) {
-    console.warn('Muse Voice Transcribe API fallback not reachable, continuing with device recognition:', err);
+    console.warn('Muse Voice Transcribe API request failed:', err);
   }
   return '';
+}
+
+/**
+ * Answer a child's curious voice question about the story using Muse Spark.
+ */
+export async function answerChildVoiceQuestionWithSparky(
+  question: string,
+  storyContext: string,
+  language: SupportedLanguage = 'en'
+): Promise<string> {
+  const systemPromptMap: Record<SupportedLanguage, string> = {
+    en: `You are "Sparky", a warm, playful, and patient Meta Muse Spark AI reading tutor for children aged 6 to 10.
+A child just asked you a question with their own voice about the story they are reading.
+Answer in 2-3 enthusiastic, clear, and age-appropriate sentences. Encourage their curiosity!`,
+    es: `Eres "Sparky", el tutor de lectura paciente, cariñoso y divertido de Meta Muse Spark para niños de 6 a 10 años.
+Un niño te acaba de hacer una pregunta con su propia voz sobre el cuento que está leyendo.
+Respóndele en 2 o 3 oraciones muy claras, entusiastas, con ternura y adaptadas a su edad. ¡Felicita su curiosidad!`,
+    fr: `Tu es "Sparky", le tuteur de lecture bienveillant et joyeux de Meta Muse Spark pour enfants de 6 à 10 ans.
+Un enfant vient de te poser une question avec sa voix sur l'histoire.
+Réponds en 2-3 phrases simples, chaleureuses et enthousiastes. Félicite sa curiosité !`,
+    pt: `Você é "Sparky", o tutor de leitura carinhoso e alegre da Meta Muse Spark para crianças de 6 a 10 anos.
+Uma criança acabou de fazer uma pergunta com a voz dela sobre a história.
+Responda em 2 a 3 frases claras, calorosas e fáceis de entender. Elogie a curiosidade dela!`,
+    de: `Du bist "Sparky", der herzliche und spielerische KI-Lesetutor von Meta Muse Spark für Kinder von 6 bis 10 Jahren.
+Ein Kind hat dir gerade mit seiner Stimme eine Frage zur Geschichte gestellt.
+Antworte in 2-3 einfachen, fröhlichen und kindgerechten Sätzen. Lobe seine Neugier!`,
+    it: `Sei "Sparky", il tutor di lettura affettuoso e giocoso di Meta Muse Spark per bambini di 6-10 anni.
+Un bambino ti ha appena fatto una domanda a voce sulla storia.
+Rispondi in 2-3 frasi semplici, incoraggianti e adatte alla sua età. Premia la sua curiosità!`,
+    nl: `Je bent "Sparky", de lieve en vrolijke AI-leestutor van Meta Muse Spark voor kinderen van 6 tot 10 jaar.
+Een kind heeft zojuist met eigen stem een vraag gesteld over het verhaal.
+Antwoord in 2-3 eenvoudige, warme en enthousiaste zinnen. Prijs de nieuwsgierigheid!`,
+    pl: `Jesteś "Sparky", ciepłym i radosnym korepetytorem czytania Meta Muse Spark dla dzieci w wieku 6-10 lat.
+Dziecko zadało ci właśnie głosowo pytanie o czytaną bajkę.
+Odpowiedz w 2-3 prostych, pogodnych zdaniach dopasowanych do dziecka. Pochwal jego ciekawość!`,
+    tr: `Sen 6-10 yaş arası çocuklar için sevecen ve neşeli Meta Muse Spark okuma eğitmeni "Sparky"sin.
+Bir çocuk okuduğu masal hakkında sana kendi sesiyle bir soru sordu.
+Çocuğun anlayacağı 2-3 tatlı, net ve cesaretlendirici cümleyle yanıt ver. Merakını kutla!`,
+  };
+
+  const systemPrompt = systemPromptMap[language] || systemPromptMap.en;
+  const userPrompt = `Story context: "${storyContext}"\nChild's voice question: "${question}"`;
+
+  try {
+    const answer = await callMuseSpark(
+      [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      500
+    );
+    return answer;
+  } catch (err) {
+    console.warn('Sparky voice Q&A fallback:', err);
+    const fallbacks: Record<SupportedLanguage, string> = {
+      en: `That's a wonderful question! In our story, every page holds secrets to explore. Keep reading to see what happens next!`,
+      es: `¡Qué gran pregunta! En esta historia cada página tiene sorpresas mágicas. ¡Sigamos leyendo para descubrir más juntos!`,
+      fr: `Quelle belle question ! Dans cette histoire, chaque page réserve des surprises. Continuons à lire pour tout découvrir !`,
+      pt: `Que pergunta fantástica! Nessa história cada página guarda surpresas mágicas. Vamos continuar lendo juntos!`,
+      de: `Was für eine tolle Frage! In dieser Geschichte hält jede Seite neue Geheimnisse bereit. Lass uns weiterlesen!`,
+      it: `Che bella domanda! In questa storia ogni pagina racchiude segreti magici. Continuiamo a leggere insieme!`,
+      nl: `Wat een prachtige vraag! In dit verhaal heeft elke bladzijde leuke verrassingen. Laten we snel verder lezen!`,
+      pl: `Wspaniałe pytanie! W tej opowieści każda strona kryje niezwykłe niespodzianki. Czytajmy dalej, by odkryć więcej!`,
+      tr: `Ne harika bir soru! Bu masalda her sayfa sihirli sürprizlerle dolu. Neler olacağını görmek için okumaya devam edelim!`,
+    };
+    return fallbacks[language] || fallbacks.en;
+  }
 }
 
 /**

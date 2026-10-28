@@ -17,6 +17,8 @@ import {
   explainWordWithMuseSpark,
   generateTutorSpokenFeedback,
   generateComprehensionQuiz,
+  transcribeAudioWithMuseVoice,
+  answerChildVoiceQuestionWithSparky,
 } from '../services/metaApi';
 import { speakText, speakWordPhonetically, playChime } from '../services/ttsService';
 import { addStars } from '../services/storageService';
@@ -27,7 +29,7 @@ import { SparkyMascot } from './SparkyMascot';
 
 interface TutorDrawerProps {
   visible: boolean;
-  mode: 'explain' | 'celebrate' | 'quiz';
+  mode: 'explain' | 'celebrate' | 'quiz' | 'ask';
   selectedWord?: string;
   sentenceContext?: string;
   sessionResult?: ReadingSessionResult;
@@ -35,6 +37,7 @@ interface TutorDrawerProps {
   language: SupportedLanguage;
   onClose: () => void;
   onViewReport?: () => void;
+  onSwitchMode?: (newMode: 'explain' | 'celebrate' | 'quiz' | 'ask') => void;
 }
 
 export const TutorDrawer: React.FC<TutorDrawerProps> = ({
@@ -47,6 +50,7 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
   language,
   onClose,
   onViewReport,
+  onSwitchMode,
 }) => {
   const t = getTranslation(language);
   const { theme, themeMode } = useTheme();
@@ -67,6 +71,15 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
   const [loadingQuiz, setLoadingQuiz] = useState(false);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({});
   const [quizScore, setQuizScore] = useState<number | null>(null);
+
+  // Voice Ask state (Meta Muse Voice Transcribe + Muse Spark)
+  const [isRecordingQuestion, setIsRecordingQuestion] = useState(false);
+  const [isTranscribingQuestion, setIsTranscribingQuestion] = useState(false);
+  const [isAnsweringQuestion, setIsAnsweringQuestion] = useState(false);
+  const [userQuestionTranscript, setUserQuestionTranscript] = useState('');
+  const [sparkyAnswerText, setSparkyAnswerText] = useState('');
+  const voiceRecorderRef = React.useRef<any>(null);
+  const voiceChunksRef = React.useRef<Blob[]>([]);
 
   useEffect(() => {
     if (!visible) return;
@@ -173,9 +186,89 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
       .filter(Boolean);
   };
 
+  const startVoiceQuestionRecording = async () => {
+    if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
+      console.warn('Microphone not supported on this device');
+      return;
+    }
+
+    try {
+      setUserQuestionTranscript('');
+      setSparkyAnswerText('');
+      voiceChunksRef.current = [];
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      voiceRecorderRef.current = recorder;
+
+      recorder.ondataavailable = (e: any) => {
+        if (e.data && e.data.size > 0) {
+          voiceChunksRef.current.push(e.data);
+        }
+      };
+
+      recorder.start(500);
+      setIsRecordingQuestion(true);
+      playChime('tap');
+    } catch (err) {
+      console.warn('Could not start voice question recording:', err);
+      setIsRecordingQuestion(false);
+    }
+  };
+
+  const stopVoiceQuestionRecording = async () => {
+    setIsRecordingQuestion(false);
+    if (voiceRecorderRef.current && voiceRecorderRef.current.state !== 'inactive') {
+      try {
+        voiceRecorderRef.current.stop();
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    setIsTranscribingQuestion(true);
+    playChime('tap');
+
+    setTimeout(async () => {
+      try {
+        const audioBlob = new Blob(voiceChunksRef.current, { type: 'audio/webm' });
+        const transcribedText = await transcribeAudioWithMuseVoice(audioBlob, language);
+
+        setIsTranscribingQuestion(false);
+
+        if (transcribedText) {
+          setUserQuestionTranscript(transcribedText);
+          setIsAnsweringQuestion(true);
+
+          const answer = await answerChildVoiceQuestionWithSparky(
+            transcribedText,
+            pageText || sentenceContext || selectedWord || '',
+            language
+          );
+
+          setSparkyAnswerText(answer);
+          setIsAnsweringQuestion(false);
+          playChime('sparkle');
+          speakText(answer, language, 0.88);
+        } else {
+          setUserQuestionTranscript('...');
+          setSparkyAnswerText(
+            language === 'es'
+              ? '¡No pude escucharte bien! Intenta de nuevo hablando cerca del micrófono.'
+              : 'I could not hear clearly! Try speaking closer to the microphone.'
+          );
+        }
+      } catch (err) {
+        console.warn('Voice Q&A workflow error:', err);
+        setIsTranscribingQuestion(false);
+        setIsAnsweringQuestion(false);
+      }
+    }, 400);
+  };
+
   const getMascotMood = () => {
     if (mode === 'celebrate' || quizScore === questions.length) return 'celebrating';
-    if (loadingWord || loadingQuiz || loadingFeedback) return 'thinking';
+    if (loadingWord || loadingQuiz || loadingFeedback || isTranscribingQuestion || isAnsweringQuestion) return 'thinking';
+    if (isRecordingQuestion) return 'encouraging';
     return 'encouraging';
   };
 
@@ -195,16 +288,72 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
                   <Text style={styles.tutorName}>{t.tutorTitle}</Text>
                   <View style={styles.aiBadge}>
                     <Ionicons name="sparkles" size={10} color="#6366f1" />
-                    <Text style={styles.aiBadgeText}>Meta Muse Spark</Text>
+                    <Text style={styles.aiBadgeText}>
+                      {mode === 'ask' ? 'Muse Voice + Spark' : 'Meta Muse Spark'}
+                    </Text>
                   </View>
                 </View>
-                <Text style={styles.modelPowered}>Meta Model API • muse-spark-1.3</Text>
+                <Text style={styles.modelPowered}>
+                  {mode === 'ask'
+                    ? 'Meta Model API • muse-voice-transcribe-1.0'
+                    : 'Meta Model API • muse-spark-1.3'}
+                </Text>
               </View>
             </View>
 
             <TouchableOpacity style={styles.closeBtn} onPress={onClose} activeOpacity={0.7}>
               <Ionicons name="close" size={22} color="#475569" />
             </TouchableOpacity>
+          </View>
+
+          {/* Tab Navigation Header */}
+          <View style={styles.tabBarRow}>
+            {selectedWord && (
+              <TouchableOpacity
+                style={[styles.tabChip, mode === 'explain' && styles.tabChipActive]}
+                onPress={() => onSwitchMode && onSwitchMode('explain')}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="book" size={12} color={mode === 'explain' ? '#ffffff' : '#64748b'} />
+                <Text style={[styles.tabChipText, mode === 'explain' && styles.tabChipTextActive]}>
+                  {t.tabExplain}
+                </Text>
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity
+              style={[styles.tabChip, mode === 'ask' && styles.tabChipActive]}
+              onPress={() => onSwitchMode && onSwitchMode('ask')}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="mic" size={12} color={mode === 'ask' ? '#ffffff' : '#64748b'} />
+              <Text style={[styles.tabChipText, mode === 'ask' && styles.tabChipTextActive]}>
+                {t.tabAskVoice}
+              </Text>
+            </TouchableOpacity>
+            {pageText && (
+              <TouchableOpacity
+                style={[styles.tabChip, mode === 'quiz' && styles.tabChipActive]}
+                onPress={() => onSwitchMode && onSwitchMode('quiz')}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="help-circle" size={12} color={mode === 'quiz' ? '#ffffff' : '#64748b'} />
+                <Text style={[styles.tabChipText, mode === 'quiz' && styles.tabChipTextActive]}>
+                  {t.tabQuiz}
+                </Text>
+              </TouchableOpacity>
+            )}
+            {sessionResult && (
+              <TouchableOpacity
+                style={[styles.tabChip, mode === 'celebrate' && styles.tabChipActive]}
+                onPress={() => onSwitchMode && onSwitchMode('celebrate')}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="trophy" size={12} color={mode === 'celebrate' ? '#ffffff' : '#64748b'} />
+                <Text style={[styles.tabChipText, mode === 'celebrate' && styles.tabChipTextActive]}>
+                  {t.tabFeedback}
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           <ScrollView style={styles.sheetBody} contentContainerStyle={styles.sheetContent}>
@@ -527,6 +676,192 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
                     )}
                   </View>
                 )}
+              </View>
+            )}
+
+            {/* 4. VOICE ASK WITH SPARKY (Meta Muse Voice Transcribe + Muse Spark) */}
+            {mode === 'ask' && (
+              <View style={styles.voiceAskSection}>
+                <View style={[styles.voiceHeroCard, { backgroundColor: theme.surfaceSecondary, borderColor: theme.border }]}>
+                  <View style={styles.voiceHeroHeader}>
+                    <Ionicons name="mic-circle" size={36} color="#6366f1" />
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.voiceHeroTitle, { color: theme.text }]}>
+                        {t.askVoiceTitle}
+                      </Text>
+                      <Text style={[styles.voiceHeroSubtitle, { color: theme.textMuted }]}>
+                        {t.askVoiceSubtitle}
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* Big Microphone Recording Action */}
+                  <View style={styles.voiceMicContainer}>
+                    <TouchableOpacity
+                      style={[
+                        styles.voiceMicButtonTouch,
+                        isRecordingQuestion && styles.voiceMicButtonPulsing,
+                      ]}
+                      onPress={isRecordingQuestion ? stopVoiceQuestionRecording : startVoiceQuestionRecording}
+                      activeOpacity={0.8}
+                      disabled={isTranscribingQuestion || isAnsweringQuestion}
+                    >
+                      <LinearGradient
+                        colors={
+                          isRecordingQuestion
+                            ? ['#ef4444', '#dc2626']
+                            : ['#6366f1', '#4f46e5']
+                        }
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={styles.voiceMicGradient}
+                      >
+                        <Ionicons
+                          name={isRecordingQuestion ? 'stop' : 'mic'}
+                          size={36}
+                          color="#ffffff"
+                        />
+                      </LinearGradient>
+                    </TouchableOpacity>
+
+                    <Text style={[styles.voiceMicInstruction, { color: theme.text }]}>
+                      {isRecordingQuestion
+                        ? t.askVoicePromptListening
+                        : isTranscribingQuestion
+                        ? t.askVoiceTranscribing
+                        : isAnsweringQuestion
+                        ? t.askVoiceThinking
+                        : t.askVoicePromptIdle}
+                    </Text>
+
+                    {isRecordingQuestion && (
+                      <TouchableOpacity
+                        style={styles.voiceDoneButton}
+                        onPress={stopVoiceQuestionRecording}
+                        activeOpacity={0.8}
+                      >
+                        <Text style={styles.voiceDoneButtonText}>{t.askVoiceStopBtn}</Text>
+                      </TouchableOpacity>
+                    )}
+
+                    {(isTranscribingQuestion || isAnsweringQuestion) && (
+                      <View style={styles.voiceLoadingRow}>
+                        <ActivityIndicator size="small" color="#6366f1" />
+                        <Text style={[styles.voiceLoadingText, { color: theme.textMuted }]}>
+                          {isTranscribingQuestion
+                            ? t.askVoiceTranscribing
+                            : t.askVoiceThinking}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+
+                  {/* Dialogue Bubbles */}
+                  {userQuestionTranscript ? (
+                    <View style={styles.dialogueContainer}>
+                      {/* Child question bubble */}
+                      <View style={styles.childQuestionBubble}>
+                        <View style={styles.bubbleTagRow}>
+                          <Ionicons name="mic" size={13} color="#6366f1" />
+                          <Text style={styles.bubbleAuthorTag}>{t.askVoiceYouAsked}</Text>
+                        </View>
+                        <Text style={styles.childQuestionText}>"{userQuestionTranscript}"</Text>
+                      </View>
+
+                      {/* Sparky response bubble */}
+                      {sparkyAnswerText ? (
+                        <View
+                          style={[
+                            styles.sparkyAnswerBubble,
+                            { backgroundColor: themeMode === 'dark' ? '#1e1b4b' : '#f5f3ff' },
+                          ]}
+                        >
+                          <View style={styles.bubbleTagRow}>
+                            <SparkyMascot size="small" mood="encouraging" />
+                            <Text style={styles.sparkyAuthorTag}>{t.askVoiceSparkyAnswered}</Text>
+                          </View>
+                          <Text style={[styles.sparkyAnswerText, { color: theme.text }]}>
+                            {sparkyAnswerText}
+                          </Text>
+
+                          <View style={styles.bubbleActionsRow}>
+                            <TouchableOpacity
+                              style={styles.bubbleListenBtn}
+                              onPress={() => speakText(sparkyAnswerText, language, 0.88)}
+                              activeOpacity={0.7}
+                            >
+                              <Ionicons name="volume-high" size={15} color="#6366f1" />
+                              <Text style={styles.bubbleListenText}>{t.pronounceAudio}</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                              style={styles.bubbleAskAnotherBtn}
+                              onPress={() => {
+                                setUserQuestionTranscript('');
+                                setSparkyAnswerText('');
+                                startVoiceQuestionRecording();
+                              }}
+                              activeOpacity={0.7}
+                            >
+                              <Ionicons name="refresh" size={15} color="#475569" />
+                              <Text style={styles.bubbleAskAnotherText}>{t.askVoiceAskAnother}</Text>
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+                      ) : null}
+                    </View>
+                  ) : null}
+
+                  {/* Quick example chips */}
+                  {!isRecordingQuestion && !userQuestionTranscript && (
+                    <View style={styles.presetQuestionsSection}>
+                      <Text style={[styles.presetQuestionsTitle, { color: theme.textMuted }]}>
+                        {language === 'es'
+                          ? '💡 O toca una pregunta de ejemplo:'
+                          : '💡 Or tap an example question:'}
+                      </Text>
+                      <View style={styles.presetChipsWrap}>
+                        {(language === 'es'
+                          ? [
+                              '¿De qué trata este cuento?',
+                              '¿Por qué es importante leer con atención?',
+                              '¿Qué personaje te gusta más?',
+                            ]
+                          : [
+                              'What is this story about?',
+                              'Why is reading aloud helpful?',
+                              'Who is the main character?',
+                            ]
+                        ).map((preset, pIdx) => (
+                          <TouchableOpacity
+                            key={pIdx}
+                            style={[
+                              styles.presetChip,
+                              { backgroundColor: theme.surface, borderColor: theme.border },
+                            ]}
+                            onPress={async () => {
+                              setUserQuestionTranscript(preset);
+                              setIsAnsweringQuestion(true);
+                              playChime('tap');
+                              const answer = await answerChildVoiceQuestionWithSparky(
+                                preset,
+                                pageText || sentenceContext || selectedWord || '',
+                                language
+                              );
+                              setSparkyAnswerText(answer);
+                              setIsAnsweringQuestion(false);
+                              playChime('sparkle');
+                              speakText(answer, language, 0.88);
+                            }}
+                            activeOpacity={0.7}
+                          >
+                            <Text style={[styles.presetChipText, { color: theme.text }]}>💬 {preset}</Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    </View>
+                  )}
+                </View>
               </View>
             )}
           </ScrollView>
@@ -1093,5 +1428,219 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     textTransform: 'capitalize',
     letterSpacing: 0.3,
+  },
+  // Voice Ask Styles
+  tabBarRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
+  },
+  tabChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 20,
+    backgroundColor: '#f1f5f9',
+  },
+  tabChipActive: {
+    backgroundColor: '#6366f1',
+  },
+  tabChipText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#64748b',
+  },
+  tabChipTextActive: {
+    color: '#ffffff',
+  },
+  voiceAskSection: {
+    paddingVertical: 10,
+  },
+  voiceHeroCard: {
+    borderRadius: 20,
+    borderWidth: 1,
+    padding: 18,
+  },
+  voiceHeroHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 16,
+  },
+  voiceHeroTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  voiceHeroSubtitle: {
+    fontSize: 11,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  voiceMicContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+  },
+  voiceMicButtonTouch: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    shadowColor: '#6366f1',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 8,
+    marginBottom: 12,
+  },
+  voiceMicButtonPulsing: {
+    shadowColor: '#ef4444',
+    transform: [{ scale: 1.08 }],
+  },
+  voiceMicGradient: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  voiceMicInstruction: {
+    fontSize: 14,
+    fontWeight: '700',
+    textAlign: 'center',
+    maxWidth: 280,
+    lineHeight: 20,
+  },
+  voiceDoneButton: {
+    marginTop: 12,
+    backgroundColor: '#ef4444',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 16,
+  },
+  voiceDoneButtonText: {
+    color: '#ffffff',
+    fontWeight: '800',
+    fontSize: 13,
+  },
+  voiceLoadingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 10,
+  },
+  voiceLoadingText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  dialogueContainer: {
+    marginTop: 16,
+    gap: 12,
+  },
+  childQuestionBubble: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  bubbleTagRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 6,
+  },
+  bubbleAuthorTag: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#6366f1',
+    textTransform: 'uppercase',
+  },
+  childQuestionText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#1e293b',
+    fontStyle: 'italic',
+  },
+  sparkyAnswerBubble: {
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#c7d2fe',
+  },
+  sparkyAuthorTag: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#4f46e5',
+    textTransform: 'uppercase',
+  },
+  sparkyAnswerText: {
+    fontSize: 15,
+    fontWeight: '600',
+    lineHeight: 22,
+    marginBottom: 12,
+  },
+  bubbleActionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  bubbleListenBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: '#e0e7ff',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  bubbleListenText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#4338ca',
+  },
+  bubbleAskAnotherBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: '#f1f5f9',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  bubbleAskAnotherText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#475569',
+  },
+  presetQuestionsSection: {
+    marginTop: 16,
+    paddingTop: 14,
+    borderTopWidth: 1,
+    borderTopColor: '#f1f5f9',
+  },
+  presetQuestionsTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
+  presetChipsWrap: {
+    flexDirection: 'column',
+    gap: 8,
+  },
+  presetChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  presetChipText: {
+    fontSize: 13,
+    fontWeight: '600',
   },
 });

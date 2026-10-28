@@ -35,6 +35,8 @@ export class SpeechRecognitionController {
   public onError?: (error: string) => void;
   public onEnd?: () => void;
 
+  public isCloudFallback: boolean = false;
+
   constructor(language: SupportedLanguage = 'en') {
     this.language = language;
     this.initRecognition();
@@ -54,7 +56,8 @@ export class SpeechRecognitionController {
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
     if (!SpeechRecognitionClass) {
-      console.warn('SpeechRecognition API not available in this environment');
+      console.warn('SpeechRecognition API not available in this environment. Using Meta Muse Voice Transcribe fallback.');
+      this.isCloudFallback = true;
       return;
     }
 
@@ -169,6 +172,28 @@ export class SpeechRecognitionController {
         // ignore
       }
     }
+
+    // If device SpeechRecognition API is absent, transcribe recorded audio via Meta Muse Voice
+    if (this.isCloudFallback && this.audioChunks.length > 0) {
+      const blob = this.getAudioBlob();
+      if (blob) {
+        transcribeAudioWithMuseVoice(blob, this.language)
+          .then((transcript) => {
+            if (transcript && this.onWordSpoken) {
+              this.onWordSpoken(transcript, true);
+            }
+          })
+          .catch((err) => {
+            console.warn('Muse Voice Transcribe fallback error:', err);
+          });
+      }
+    }
+  }
+
+  public async transcribeCurrentAudio(): Promise<string> {
+    const blob = this.getAudioBlob();
+    if (!blob) return '';
+    return await transcribeAudioWithMuseVoice(blob, this.language);
   }
 
   public getAudioBlob(): Blob | null {

@@ -29,7 +29,7 @@ function MainApp() {
   const [privacyModalVisible, setPrivacyModalVisible] = useState<boolean>(false);
   const [readingSettingsVisible, setReadingSettingsVisible] = useState<boolean>(false);
   const [tutorDrawerVisible, setTutorDrawerVisible] = useState<boolean>(false);
-  const [tutorMode, setTutorMode] = useState<'explain' | 'celebrate' | 'quiz'>('explain');
+  const [tutorMode, setTutorMode] = useState<'explain' | 'celebrate' | 'quiz' | 'ask'>('explain');
   const [selectedWordForTutor, setSelectedWordForTutor] = useState<string>('');
   const [contextSentenceForTutor, setContextSentenceForTutor] = useState<string>('');
   const [currentSessionResult, setCurrentSessionResult] = useState<ReadingSessionResult | null>(null);
@@ -85,6 +85,11 @@ function MainApp() {
     setTutorDrawerVisible(true);
   };
 
+  const handleOpenVoiceAsk = () => {
+    setTutorMode('ask');
+    setTutorDrawerVisible(true);
+  };
+
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.surface }]}>
       <StatusBar style={themeMode === 'dark' ? 'light' : 'dark'} />
@@ -130,6 +135,7 @@ function MainApp() {
               onOpenScan={() => setCameraModalVisible(true)}
               onStarsEarned={(newTotal) => setStarsCount(newTotal)}
               onOpenSettings={() => setReadingSettingsVisible(true)}
+              onOpenVoiceAsk={handleOpenVoiceAsk}
             />
           </View>
         )}
@@ -164,6 +170,7 @@ function MainApp() {
           pageText={currentPage.text}
           language={language}
           onClose={() => setTutorDrawerVisible(false)}
+          onSwitchMode={(newMode) => setTutorMode(newMode)}
           onViewReport={() => {
             setTutorDrawerVisible(false);
             setActiveTab('report');

@@ -32,6 +32,7 @@ interface ReadingViewProps {
   onOpenScan: () => void;
   onStarsEarned?: (newTotal: number) => void;
   onOpenSettings?: () => void;
+  onOpenVoiceAsk?: () => void;
 }
 
 export const ReadingView: React.FC<ReadingViewProps> = ({
@@ -42,6 +43,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
   onOpenScan,
   onStarsEarned,
   onOpenSettings,
+  onOpenVoiceAsk,
 }) => {
   const t = getTranslation(language);
   const { width } = useWindowDimensions();
@@ -803,6 +805,37 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
             </Text>
           </LinearGradient>
         </TouchableOpacity>
+
+        {/* Ask Sparky Voice Q&A Button (Meta Muse Voice Transcribe) */}
+        {onOpenVoiceAsk && (
+          <TouchableOpacity
+            style={styles.dockButtonTouch}
+            onPress={onOpenVoiceAsk}
+            activeOpacity={0.75}
+          >
+            <LinearGradient
+              colors={themeMode === 'dark' ? ['#312e81', '#1e1b4b'] : ['#e0e7ff', '#ede9fe']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={[
+                styles.dockSimButton,
+                { borderColor: '#818cf8' },
+                isCompact && styles.dockSimButtonCompact,
+              ]}
+            >
+              <Ionicons name="sparkles" size={15} color="#6366f1" />
+              <Text
+                style={[
+                  styles.dockSimText,
+                  { color: '#4f46e5' },
+                  isCompact && styles.dockSimTextCompact,
+                ]}
+              >
+                {t.askVoiceBtnLabel}
+              </Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
