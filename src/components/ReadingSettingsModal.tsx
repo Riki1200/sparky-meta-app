@@ -46,42 +46,35 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
 
   const supportedLang = (language as SupportedLanguage) || 'en';
   const t = getTranslation(supportedLang);
-  const isEs = supportedLang === 'es';
 
   const fonts: { id: ChildFontFamily; name: string; tag: string; description: string; sample: string }[] = [
     {
       id: 'lexend',
       name: 'Lexend',
-      tag: isEs ? '⭐ Recomendada para Fluidez' : '⭐ Fluency Recommended',
-      description: isEs
-        ? 'Diseñada por expertos para reducir la aglomeración de letras y acelerar la lectura.'
-        : 'Scientifically designed to reduce visual crowding and increase reading speed.',
-      sample: isEs ? 'El oso come miel dulce' : 'The quick brown fox jumps',
+      tag: t.fontRecommendedTag,
+      description: t.fontRecommendedDesc,
+      sample: 'Lexend ABC 123',
     },
     {
       id: 'comic',
       name: 'Comic & Nunito',
-      tag: isEs ? '🎈 Amigable e Infantil' : '🎈 Friendly & Rounded',
-      description: isEs
-        ? 'Letras redondeadas y cálidas similares a los libros infantiles y cartillas escolares.'
-        : 'Warm, rounded letterforms similar to classic early children storybooks.',
-      sample: isEs ? 'La cometa vuela alto' : 'Stars shine brightly tonight',
+      tag: t.fontFriendlyTag,
+      description: t.fontFriendlyDesc,
+      sample: 'Comic Nunito ABC 123',
     },
     {
       id: 'dyslexic',
-      name: isEs ? 'Apoyo para Dislexia' : 'Dyslexia Support',
-      tag: isEs ? '👓 Alto Contraste y Espaciado' : '👓 High Spacing & Contrast',
-      description: isEs
-        ? 'Mayor peso en la base de las letras para evitar que el niño confunda b/d o p/q.'
-        : 'Weighted character stems and wide spacing to prevent letter confusion.',
-      sample: isEs ? 'Los barcos navegan rápido' : 'Bold boats sail safely home',
+      name: t.fontDyslexiaTitle,
+      tag: t.fontDyslexiaTag,
+      description: t.fontDyslexiaDesc,
+      sample: 'Dyslexic b d p q ABC',
     },
     {
       id: 'system',
-      name: isEs ? 'Estándar del Sistema' : 'System Default',
-      tag: isEs ? '📱 Neutra' : '📱 Neutral',
-      description: isEs ? 'Tipografía predeterminada del dispositivo.' : 'Standard device system typeface.',
-      sample: isEs ? 'Lectura clara y sencilla' : 'Clear and simple reading',
+      name: t.fontSystemTitle,
+      tag: t.fontSystemTag,
+      description: t.fontSystemDesc,
+      sample: 'System Font ABC 123',
     },
   ];
 
@@ -296,12 +289,12 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
             {/* Section 3: Text Size */}
             <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: theme.text }]}>
-                {isEs ? '🔍 Tamaño de las Letras' : '🔍 Text Size'}
+                🔍 {t.fontSizeTitle}
               </Text>
               <View style={styles.sizeRow}>
                 {(['normal', 'large', 'extra'] as ChildFontSize[]).map((sz) => {
                   const isSelected = fontSize === sz;
-                  const label = sz === 'normal' ? (isEs ? 'Normal (23px)' : 'Regular') : sz === 'large' ? (isEs ? 'Grande (28px)' : 'Large') : (isEs ? 'Gigante (34px)' : 'Extra Large');
+                  const label = sz === 'normal' ? t.sizeRegular : sz === 'large' ? t.sizeLarge : t.sizeExtraLarge;
                   return (
                     <TouchableOpacity
                       key={sz}
@@ -346,7 +339,7 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
             {/* Section 4: Visual Reading Aids */}
             <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: theme.text }]}>
-                {isEs ? '🛠️ Herramientas de Apoyo Visual' : '🛠️ Visual Reading Aids'}
+                🛠️ {t.visualAidsTitle}
               </Text>
 
               {/* Reading Ruler Toggle */}
@@ -419,7 +412,7 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
             {/* Section 5: Voice & Speech Preview (Meta Muse Encouragement) */}
             <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: theme.text }]}>
-                {isEs ? '🎙️ Voz de Sparky (Meta Muse Encouragement)' : '🎙️ Sparky Voice & Meta Muse Audio'}
+                🎙️ {t.sparkyVoicePreviewTitle}
               </Text>
               <View
                 style={[
@@ -437,12 +430,10 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
                     </View>
                     <View style={styles.voiceTitleCol}>
                       <Text style={[styles.voiceTitle, { color: theme.text }]}>
-                        {isEs ? 'Voz de Ánimo del Tutor' : 'Tutor Spoken Encouragement'}
+                        {t.sparkyVoiceTutorTitle}
                       </Text>
                       <Text style={[styles.voiceSubtitle, { color: theme.textSecondary }]}>
-                        {isEs
-                          ? 'Pedagogía de Meta Muse Spark 1.3 • Audio infantil'
-                          : 'Pedagogy by Meta Muse Spark 1.3 • Child-friendly audio'}
+                        {t.sparkyVoiceTutorSub}
                       </Text>
                     </View>
                   </View>
@@ -461,9 +452,7 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
                       color="#ffffff"
                     />
                     <Text style={styles.voicePlayBtnText}>
-                      {isPlayingVoice
-                        ? (isEs ? 'Detener' : 'Stop')
-                        : (isEs ? 'Probar Voz' : 'Test Voice')}
+                      {isPlayingVoice ? t.stopVoiceBtn : t.testVoiceBtn}
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -489,7 +478,7 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
             >
               <Ionicons name="checkmark-sharp" size={20} color="#ffffff" />
               <Text style={styles.saveBtnText}>
-                {isEs ? 'Listo, Continuar Leyendo' : 'Done, Continue Reading'}
+                {t.doneContinueReadingBtn}
               </Text>
             </TouchableOpacity>
           </View>

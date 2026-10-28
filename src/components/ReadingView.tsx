@@ -197,12 +197,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
     setIsSparkyReading(false);
     if (!sparkyCancelRef.current) {
       playChime('complete');
-      speakText(
-        language === 'es'
-          ? '¡Excelente! Ahora te toca a ti leerlo en voz alta.'
-          : 'Great job listening! Now it is your turn to read aloud.',
-        language
-      );
+      speakText(t.yourTurnToRead, language);
     }
   };
 
@@ -507,7 +502,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
             <View style={styles.sceneExpandBadge}>
               <Ionicons name="expand" size={13} color="#ffffff" />
               <Text style={styles.sceneExpandText}>
-                {language === 'es' ? 'Ver en Grande' : 'Tap to Enlarge'}
+                {t.tapToEnlarge}
               </Text>
             </View>
 
@@ -649,23 +644,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
               <View style={styles.legendItem}>
                 <View style={[styles.legendDot, { backgroundColor: theme.primary }]} />
                 <Text style={[styles.legendLabel, { color: theme.primary }]}>
-                  {language === 'es'
-                    ? 'Silabeo Activo'
-                    : language === 'fr'
-                    ? 'Syllabes Actives'
-                    : language === 'pt'
-                    ? 'Sílabas Ativas'
-                    : language === 'de'
-                    ? 'Silben Aktiv'
-                    : language === 'it'
-                    ? 'Sillabe Attive'
-                    : language === 'nl'
-                    ? 'Lettergrepen Actief'
-                    : language === 'pl'
-                    ? 'Sylaby Aktywne'
-                    : language === 'tr'
-                    ? 'Heceler Aktif'
-                    : 'Syllables Active'}
+                  {t.syllablesActive}
                 </Text>
               </View>
             )}
@@ -677,23 +656,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
           <View style={[styles.liveTranscriptBox, { backgroundColor: theme.primaryLight, borderColor: theme.borderActive }]}>
             <Ionicons name="mic-circle" size={16} color={theme.primary} />
             <Text style={[styles.liveTranscriptLabel, { color: theme.primary }]}>
-              {language === 'es'
-                ? 'Escuché:'
-                : language === 'fr'
-                ? 'Entendu :'
-                : language === 'pt'
-                ? 'Ouvi:'
-                : language === 'de'
-                ? 'Gehört:'
-                : language === 'it'
-                ? 'Ascoltato:'
-                : language === 'nl'
-                ? 'Gehoord:'
-                : language === 'pl'
-                ? 'Usłyszano:'
-                : language === 'tr'
-                ? 'Duyuldu:'
-                : 'Heard:'}
+              {t.sparkyHeard}
             </Text>
             <Text style={[styles.liveTranscriptPhrase, { color: theme.text }]} numberOfLines={1}>
               "{recentSpokenText}"
@@ -758,11 +721,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
                 isCompact && styles.dockSparkyListenTextCompact,
               ]}
             >
-              {isSparkyReading
-                ? (language === 'es' ? 'Pausa' : 'Pause')
-                : (isCompact
-                  ? (language === 'es' ? 'Oír' : 'Hear')
-                  : (language === 'es' ? 'Sparky Lee' : (language === 'fr' ? 'Sparky Lit' : (language === 'pt' ? 'Sparky Lê' : (language === 'de' ? 'Sparky Liest' : (language === 'it' ? 'Sparky Legge' : (language === 'nl' ? 'Sparky Leest' : (language === 'pl' ? 'Sparky Czyta' : (language === 'tr' ? 'Sparky Okur' : 'Sparky Reads')))))))))}
+              {isSparkyReading ? t.pauseBtn : t.sparkyReadsBtn}
             </Text>
           </LinearGradient>
         </TouchableOpacity>
@@ -829,7 +788,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
                 isCompact && styles.dockSimTextCompact,
               ]}
             >
-              {isSimulating ? (language === 'es' ? 'Pausa' : 'Pause') : t.simulateDemoBtn}
+              {isSimulating ? t.pauseBtn : t.simulateDemoBtn}
             </Text>
           </LinearGradient>
         </TouchableOpacity>

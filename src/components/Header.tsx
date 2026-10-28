@@ -204,7 +204,7 @@ export const Header: React.FC<HeaderProps> = ({
             style={[styles.shieldButton, { backgroundColor: theme.badges.kpiAccuracyBg, borderColor: theme.border }]}
             onPress={onOpenPrivacy}
             activeOpacity={0.7}
-            accessibilityLabel="Child Privacy Shield"
+            accessibilityLabel={t.privacyBadge}
           >
             <Ionicons name="shield-checkmark" size={16} color={theme.badges.kpiAccuracyText} />
           </TouchableOpacity>
@@ -298,7 +298,7 @@ export const Header: React.FC<HeaderProps> = ({
               <View style={styles.modalHeaderLeft}>
                 <Ionicons name="globe-outline" size={18} color={theme.text} />
                 <Text style={[styles.modalTitle, { color: theme.text }]}>
-                  {language === "es" ? "Seleccionar Idioma" : "Select Language"}
+                  {t.selectLanguageTitle}
                 </Text>
               </View>
               <TouchableOpacity

@@ -274,11 +274,7 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
           speakText(answer, language, 0.88);
         } else {
           setUserQuestionTranscript('...');
-          setSparkyAnswerText(
-            language === 'es'
-              ? '¡No pude escucharte bien! Intenta de nuevo hablando cerca del micrófono.'
-              : 'I could not hear clearly! Try speaking closer to the microphone.'
-          );
+          setSparkyAnswerText(t.couldNotHearVoice);
         }
       } catch (err) {
         console.warn('Voice Q&A workflow error:', err);
@@ -386,7 +382,7 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
                 {/* Word Banner with 3D Listen Button */}
                 <View style={styles.wordHeaderCard}>
                   <View>
-                    <Text style={styles.targetWordLabel}>Word Practice</Text>
+                    <Text style={styles.targetWordLabel}>{t.wordPracticeLabel}</Text>
                     <Text style={styles.targetWordDisplay}>{selectedWord}</Text>
                   </View>
                   <TouchableOpacity
@@ -433,23 +429,7 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
                   <View style={styles.loadingBox}>
                     <ActivityIndicator size="large" color="#6366f1" />
                     <Text style={styles.loadingText}>
-                      {language === 'es'
-                        ? 'Sparky está preparando la mejor explicación para ti...'
-                        : language === 'fr'
-                        ? 'Sparky prépare la meilleure explication pour toi...'
-                        : language === 'pt'
-                        ? 'Sparky está preparando a melhor explicação...'
-                        : language === 'de'
-                        ? 'Sparky bereitet die beste Erklärung für dich vor...'
-                        : language === 'it'
-                        ? 'Sparky sta preparando la migliore spiegazione...'
-                        : language === 'nl'
-                        ? 'Sparky bereidt de beste uitleg voor...'
-                        : language === 'pl'
-                        ? 'Sparky przygotowuje najlepsze wyjaśnienie...'
-                        : language === 'tr'
-                        ? 'Sparky senin için en iyi açıklamayı hazırlıyor...'
-                        : 'Sparky is thinking of the best kid-friendly explanation...'}
+                      {t.preparingExplanation}
                     </Text>
                   </View>
                 ) : explanation ? (
@@ -524,7 +504,7 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
                     {t.celebrationSubtitle} ({sessionResult.totalWords} {t.wordsRead.toLowerCase()})
                   </Text>
                   <View style={styles.starsRewardPill}>
-                    <Text style={styles.starsRewardText}>+10 Stars Added! ⭐</Text>
+                    <Text style={styles.starsRewardText}>{t.starsAddedBadge}</Text>
                   </View>
                 </View>
 
@@ -572,9 +552,7 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
                           color="#ffffff"
                         />
                         <Text style={styles.replayAudioText}>
-                          {isPlayingAudio
-                            ? (language === 'es' ? 'Detener' : 'Stop')
-                            : (language === 'es' ? 'Escuchar a Sparky' : t.listenToSparky)}
+                          {isPlayingAudio ? t.stopVoiceBtn : t.listenToSparky}
                         </Text>
                       </TouchableOpacity>
                       <TouchableOpacity
@@ -592,9 +570,7 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
                     <View style={styles.spokenLoadingRow}>
                       <ActivityIndicator size="small" color="#6366f1" />
                       <Text style={styles.spokenLoadingText}>
-                        {language === 'es'
-                          ? 'Meta Muse Spark creando palabras de ánimo...'
-                          : 'Generating encouraging cheer with Meta Muse...'}
+                        {t.generatingCheer}
                       </Text>
                     </View>
                   ) : (
@@ -644,13 +620,7 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
                   <View style={styles.loadingBox}>
                     <ActivityIndicator size="large" color="#6366f1" />
                     <Text style={styles.loadingText}>
-                      {language === 'es'
-                        ? 'Sparky está creando preguntas entretenidas...'
-                        : language === 'fr'
-                        ? 'Sparky crée les questions du quiz...'
-                        : language === 'pt'
-                        ? 'Sparky está criando as perguntas...'
-                        : 'Sparky is crafting fun questions with Meta Muse Spark...'}
+                      {t.craftingQuiz}
                     </Text>
                   </View>
                 ) : (
@@ -869,23 +839,10 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
                   {!isRecordingQuestion && !userQuestionTranscript && (
                     <View style={styles.presetQuestionsSection}>
                       <Text style={[styles.presetQuestionsTitle, { color: theme.textMuted }]}>
-                        {language === 'es'
-                          ? '💡 O toca una pregunta de ejemplo:'
-                          : '💡 Or tap an example question:'}
+                        {t.exampleQuestionsTitle}
                       </Text>
                       <View style={styles.presetChipsWrap}>
-                        {(language === 'es'
-                          ? [
-                              '¿De qué trata este cuento?',
-                              '¿Por qué es importante leer con atención?',
-                              '¿Qué personaje te gusta más?',
-                            ]
-                          : [
-                              'What is this story about?',
-                              'Why is reading aloud helpful?',
-                              'Who is the main character?',
-                            ]
-                        ).map((preset, pIdx) => (
+                        {[t.exampleQ1, t.exampleQ2, t.exampleQ3].map((preset, pIdx) => (
                           <TouchableOpacity
                             key={pIdx}
                             style={[

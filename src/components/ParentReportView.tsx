@@ -45,9 +45,9 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
   });
   const [copiedAlert, setCopiedAlert] = useState(false);
   const studentsList = [
-    { name: 'Leo', emoji: '👦', grade: language === 'es' ? '1er Grado' : '1st Grade' },
-    { name: 'Sofía', emoji: '👧', grade: language === 'es' ? '2do Grado' : '2nd Grade' },
-    { name: 'Mateo', emoji: '🧒', grade: language === 'es' ? '3er Grado' : '3rd Grade' },
+    { name: 'Leo', emoji: '👦', grade: t.grade1 },
+    { name: 'Sofía', emoji: '👧', grade: t.grade2 },
+    { name: 'Mateo', emoji: '🧒', grade: t.grade3 },
   ];
   const [selectedStudent, setSelectedStudent] = useState(studentsList[0]);
   const [printModalVisible, setPrintModalVisible] = useState(false);
@@ -252,7 +252,7 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
     pageTitle: demoTitles[language]?.title || demoTitles.en.title,
     bookSource: demoTitles[language]?.source || demoTitles.en.source,
     language,
-    date: language === 'es' ? 'Hoy, 2:30 PM' : 'Today, 2:30 PM',
+    date: t.todayLabel,
     durationSeconds: 32,
     totalWords: 36,
     correctWords: 32,
@@ -261,7 +261,7 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
     skippedWords: 0,
     accuracyPercent: 92,
     wordsPerMinute: 68,
-    gradeLevel: language === 'en' ? 'Grade 1-2 (Early Reader)' : '1er - 2do Grado',
+    gradeLevel: t.grade12Label,
     errors: demoTitles[language]?.errors || demoTitles.en.errors,
   };
 
@@ -321,25 +321,25 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
   const getWpmEvaluation = (wpm: number) => {
     if (wpm >= 70) {
       return {
-        level: language === 'es' ? 'Fluidez Óptima' : 'Optimal Fluency',
+        level: t.fluencyOptimal,
         color: '#16a34a',
         bg: '#ecfdf5',
-        note: language === 'es' ? 'Por encima de la meta de su grado' : 'Above target grade level',
+        note: t.fluencyOptimalDesc,
       };
     }
     if (wpm >= 45) {
       return {
-        level: language === 'es' ? 'Fluidez en Desarrollo' : 'Developing Fluency',
+        level: t.fluencyDeveloping,
         color: '#d97706',
         bg: '#fffbeb',
-        note: language === 'es' ? 'Cerca de la meta de fluidez lectora' : 'Approaching grade target',
+        note: t.fluencyDevelopingDesc,
       };
     }
     return {
-      level: language === 'es' ? 'Requiere Apoyo y Paciencia' : 'Needs Support & Practice',
+      level: t.fluencySupport,
       color: '#ea580c',
       bg: '#fff7ed',
-      note: language === 'es' ? 'Práctica recomendada de 10 min/día' : 'Recommended 10 min daily practice',
+      note: t.fluencySupportDesc,
     };
   };
 
@@ -379,7 +379,7 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
             <Text style={styles.headerEmoji}>📊</Text>
             <View>
               <Text style={[styles.headerTitle, { color: theme.text }]}>
-                {language === 'es' ? 'Reporte para Padres y Maestros' : t.reportTitle}
+                {t.reportTitle}
               </Text>
               <Text style={[styles.headerSubtitle, { color: theme.textSecondary }]}>
                 {activeSession ? `${activeSession.pageTitle} • ${activeSession.gradeLevel}` : t.reportSubtitle}
@@ -414,8 +414,8 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
             />
             <Text style={styles.shareButtonText}>
               {copiedAlert
-                ? (language === 'es' ? '¡Copiado!' : 'Copied!')
-                : (language === 'es' ? 'Compartir por WhatsApp' : 'Share Report')}
+                ? t.copiedToast
+                : t.shareReportAction}
             </Text>
           </LinearGradient>
         </TouchableOpacity>
@@ -428,12 +428,10 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
             <Text style={styles.studentSharedEmoji}>📱</Text>
             <View>
               <Text style={[styles.studentSharedTitle, { color: theme.text }]}>
-                {language === 'es' ? 'Dispositivo Compartido (1 Teléfono en Casa)' : 'Family Shared Device Mode'}
+                {t.sharedDeviceModeTitle}
               </Text>
               <Text style={[styles.studentSharedSub, { color: theme.textSecondary }]}>
-                {language === 'es'
-                  ? 'El niño no necesita teléfono propio. Varios hermanos leen por turnos en el mismo teléfono.'
-                  : 'Children do not need personal phones. Siblings take 10-min reading turns on one device.'}
+                {t.sharedDeviceModeSub}
               </Text>
             </View>
           </View>
@@ -448,7 +446,7 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
           >
             <Ionicons name="print-outline" size={14} color={theme.primary} />
             <Text style={[styles.printOfflineText, { color: theme.primary }]}>
-              {language === 'es' ? 'Ficha en Papel' : 'Printable'}
+              {t.printableWorksheetBtn}
             </Text>
           </TouchableOpacity>
         </View>
@@ -538,7 +536,7 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
           <Text style={[styles.kpiLabel, { color: theme.textSecondary }]}>{t.summaryAccuracy}</Text>
           <View style={[styles.kpiBadgePill, { backgroundColor: theme.badges.kpiAccuracyBg }]}>
             <Text style={[styles.kpiBadgeText, { color: theme.badges.kpiAccuracyText }]}>
-              {language === 'es' ? 'Precisión' : 'Accuracy'}
+              {t.accuracyLabel}
             </Text>
           </View>
         </View>
@@ -557,7 +555,7 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
           <Text style={[styles.kpiLabel, { color: theme.textSecondary }]}>{t.daysStreak}</Text>
           <View style={[styles.kpiBadgePill, { backgroundColor: theme.badges.kpiStreakBg }]}>
             <Text style={[styles.kpiBadgeText, { color: theme.badges.kpiStreakText }]}>
-              {language === 'es' ? 'Días 🔥' : 'Days 🔥'}
+              {t.daysUnit}
             </Text>
           </View>
         </View>
@@ -576,7 +574,7 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
           <Text style={[styles.kpiLabel, { color: theme.textSecondary }]}>{t.summaryWordsRead}</Text>
           <View style={[styles.kpiBadgePill, { backgroundColor: theme.badges.kpiWordsBg }]}>
             <Text style={[styles.kpiBadgeText, { color: theme.badges.kpiWordsText }]}>
-              {language === 'es' ? 'Palabras' : 'Words'}
+              {t.wordsUnit}
             </Text>
           </View>
         </View>
@@ -585,10 +583,10 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
       {/* Session Breakdown Bar */}
       <View style={styles.sectionCard}>
         <Text style={styles.sectionTitle}>
-          {language === 'es' ? 'Desglose de la Sesión' : 'Session Breakdown'}
+          {t.sessionBreakdownTitle}
         </Text>
         <Text style={styles.sectionSubtitle}>
-          {activeSession.totalWords} {language === 'es' ? 'palabras totales leídas en' : 'words read in'} {activeSession.durationSeconds}s
+          {activeSession.totalWords} {t.sessionBreakdownDesc} {activeSession.durationSeconds}s
         </Text>
 
         <View style={styles.breakdownRow}>
@@ -670,9 +668,7 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
                 color="#ffffff"
               />
               <Text style={styles.replayAudioText}>
-                {isPlayingAudio
-                  ? (language === 'es' ? 'Detener Voz' : 'Stop')
-                  : (language === 'es' ? 'Escuchar a Sparky' : t.listenToSparky)}
+                {isPlayingAudio ? t.stopVoiceBtn : t.listenToSparky}
               </Text>
             </TouchableOpacity>
 
@@ -702,9 +698,7 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
                 { color: themeMode === 'dark' ? '#a5b4fc' : '#6366f1' },
               ]}
             >
-              {language === 'es'
-                ? 'Meta Muse Spark creando palabras de ánimo...'
-                : 'Sparky is generating encouraging words...'}
+              {t.generatingCheer}
             </Text>
           </View>
         ) : (
@@ -725,14 +719,12 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
           <View>
             <Text style={styles.sectionTitle}>{t.practiceWordsTitle}</Text>
             <Text style={styles.sectionSubtitle}>
-              {language === 'es'
-                ? 'Palabras sugeridas por la IA para practicar en voz alta hoy'
-                : t.practiceWordsSubtitle}
+              {t.practiceWordsSubtitle}
             </Text>
           </View>
           <View style={styles.deckBadge}>
             <Text style={styles.deckBadgeText}>
-              {activeSession.errors.length} {language === 'es' ? 'palabras' : 'words'}
+              {activeSession.errors.length} {t.wordsUnit}
             </Text>
           </View>
         </View>
@@ -741,12 +733,10 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
           <View style={styles.emptyDeckBox}>
             <Text style={styles.emptyDeckEmoji}>🌟</Text>
             <Text style={styles.emptyDeckTitle}>
-              {language === 'es' ? '¡Lectura Impecable!' : 'Flawless Reading!'}
+              {t.flawlessReadingTitle}
             </Text>
             <Text style={styles.emptyDeckSubtitle}>
-              {language === 'es'
-                ? 'No se detectaron vacilaciones ni errores de pronunciación en esta página.'
-                : 'No errors were detected on this page.'}
+              {t.flawlessReadingSubtitle}
             </Text>
           </View>
         ) : (
@@ -770,9 +760,7 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
                             isHesitation ? styles.hesitationTagText : styles.mispronouncedTagText,
                           ]}
                         >
-                          {isHesitation
-                            ? (language === 'es' ? `Pausa (${err.hesitationSeconds || 1.9}s)` : `Hesitation (${err.hesitationSeconds || 1.9}s)`)
-                            : (language === 'es' ? 'Pronunciación' : 'Practice Needed')}
+                          {isHesitation ? `${t.hesitationBadge} (${err.hesitationSeconds || 1.9}s)` : t.pronunciationBadge}
                         </Text>
                       </View>
                     </View>
@@ -793,7 +781,7 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
                     >
                       <Ionicons name="volume-high" size={15} color="#ea580c" />
                       <Text style={styles.listenErrorBtnText}>
-                        {language === 'es' ? 'Escuchar' : 'Listen'}
+                        {t.listenWordBtn}
                       </Text>
                     </TouchableOpacity>
 
@@ -804,7 +792,7 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
                     >
                       <Ionicons name="sparkles" size={14} color="#2563eb" />
                       <Text style={styles.explainErrorBtnText}>
-                        {language === 'es' ? 'Explicar' : 'Explain'}
+                        {t.explainWordBtn}
                       </Text>
                     </TouchableOpacity>
                   </View>
@@ -821,15 +809,13 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
           <Text style={styles.pedagogicalMascot}>💡</Text>
           <View style={{ flex: 1 }}>
             <Text style={styles.pedagogicalTitle}>
-              {language === 'es' ? 'Consejo Pedagógico para Padres' : 'Parent Pedagogical Tip'}
+              {t.parentPedagogicalTipTitle}
             </Text>
             <Text style={styles.pedagogicalSub}>Meta Muse Spark 1.3</Text>
           </View>
         </View>
         <Text style={styles.pedagogicalText}>
-          {language === 'es'
-            ? 'Practica la lectura repetida de la misma página 2 veces seguidas. La primera vez sirve para decodificar las palabras nuevas; la segunda vez permite al niño concentrarse en la entonación y comprender el sentido de la historia con alegría.'
-            : 'Practice repeated reading of the same page twice. The first pass allows decoding unfamiliar vocabulary; the second pass allows the child to focus on expression, phrasing, and full comprehension.'}
+          {t.parentTipDeveloping}
         </Text>
       </View>
 
@@ -841,7 +827,7 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
       >
         <Ionicons name="arrow-back" size={16} color="#0f172a" />
         <Text style={styles.backButtonText}>
-          {language === 'es' ? 'Volver a la Sala de Lectura' : t.backToReadingBtn}
+          {t.backToReadingBtn}
         </Text>
       </TouchableOpacity>
 
@@ -852,10 +838,10 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
             <View style={styles.printModalHeader}>
               <View style={styles.printHeaderLeft}>
                 <Text style={styles.printHeaderTitle}>
-                  {language === 'es' ? '📄 Ficha de Práctica Offline' : '📄 Printable Activity Sheet'}
+                  📄 {t.printModalTitle}
                 </Text>
                 <Text style={styles.printHeaderSub}>
-                  {language === 'es' ? 'Para practicar en papel y cuaderno sin pantalla' : 'For screen-free physical book practice'}
+                  {t.printModalDesc}
                 </Text>
               </View>
               <TouchableOpacity style={styles.printCloseCircle} onPress={() => setPrintModalVisible(false)}>
@@ -868,7 +854,7 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
                 <View style={styles.sheetPaperTop}>
                   <Text style={styles.sheetSchoolName}>SPARKY READING INITIATIVE • UNESCO ERCE</Text>
                   <Text style={styles.sheetDateRow}>
-                    {language === 'es' ? `Estudiante: ${selectedStudent.name} (${selectedStudent.grade})` : `Student: ${selectedStudent.name} (${selectedStudent.grade})`}
+                    `${selectedStudent.name} (${selectedStudent.grade})`
                     {'   •   '}
                     {activeSession ? activeSession.date : new Date().toLocaleDateString()}
                   </Text>
@@ -878,7 +864,7 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
                 {/* Exercise 1: Syllable breakdown */}
                 <View style={styles.sheetSection}>
                   <Text style={styles.sheetSectionTitle}>
-                    {language === 'es' ? '1. Divide en sílabas y lee en voz alta:' : '1. Syllable division & read aloud:'}
+                    {t.printExercise1}
                   </Text>
                   {activeSession?.errors && activeSession.errors.length > 0 ? (
                     activeSession.errors.map((err, eIdx) => (
@@ -887,18 +873,18 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
                         <Text style={styles.sheetSyllableDots}>
                           [ {err.syllables ? err.syllables.join(' - ') : err.word} ]
                         </Text>
-                        <Text style={styles.sheetCheckBox}>☐ Leído con éxito</Text>
+                        <Text style={styles.sheetCheckBox}>☐ {t.readSuccessfullyCheckBox}</Text>
                       </View>
                     ))
                   ) : (
-                    <Text style={styles.sheetWordRow}>• hummingbird [ hum - ming - bird ]  ☐ Leído con éxito</Text>
+                    <Text style={styles.sheetWordRow}>• hummingbird [ hum - ming - bird ]  ☐ {t.readSuccessfullyCheckBox}</Text>
                   )}
                 </View>
 
                 {/* Exercise 2: Sentence Comprehension */}
                 <View style={styles.sheetSection}>
                   <Text style={styles.sheetSectionTitle}>
-                    {language === 'es' ? '2. Escribe una oración con tu palabra favorita:' : '2. Write a sentence with your favorite word:'}
+                    {t.printExercise2}
                   </Text>
                   <View style={styles.sheetLinedPaper}>
                     <View style={styles.sheetLine} />
@@ -912,13 +898,13 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
                   <View style={styles.sheetSignCol}>
                     <View style={styles.sheetSignLine} />
                     <Text style={styles.sheetSignText}>
-                      {language === 'es' ? 'Firma del Padre / Tutor' : 'Parent / Tutor Signature'}
+                      {t.printParentSignature}
                     </Text>
                   </View>
                   <View style={styles.sheetSignCol}>
                     <View style={styles.sheetSignLine} />
                     <Text style={styles.sheetSignText}>
-                      {language === 'es' ? 'Firma del Maestro' : 'Teacher Signature'}
+                      {t.printTeacherSignature}
                     </Text>
                   </View>
                 </View>
@@ -939,7 +925,7 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
               >
                 <Ionicons name="print" size={18} color="#ffffff" />
                 <Text style={styles.printActionBtnText}>
-                  {language === 'es' ? 'Imprimir Ficha' : 'Print to Paper (PDF)'}
+                  {t.printActionBtn}
                 </Text>
               </TouchableOpacity>
             </View>

@@ -20,6 +20,7 @@ import {
   setOnboardingCompleted,
   UserProfile,
 } from "../services/storageService";
+import { getTranslation } from "../i18n/translations";
 
 interface OnboardingWizardModalProps {
   visible: boolean;
@@ -548,7 +549,7 @@ export const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({
   const handleComplete = async () => {
     playChime("complete");
     await saveUserProfile({
-      name: readerName.trim() || (language === 'es' ? "Pequeño Lector" : "Young Reader"),
+      name: readerName.trim() || getTranslation(language).defaultReaderName,
       avatar: selectedAvatar,
       level: readingLevel,
       dailyGoalMinutes,

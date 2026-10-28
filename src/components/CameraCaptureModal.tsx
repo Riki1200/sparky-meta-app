@@ -349,7 +349,7 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
                       fontWeight: 600,
                     }}
                   >
-                    📖 {language === 'es' ? 'Encuadra el párrafo a leer aquí' : language === 'fr' ? 'Cadrez le paragraphe ici' : language === 'pt' ? 'Enquadre o parágrafo aqui' : language === 'de' ? 'Buchabsatz hier ausrichten' : language === 'it' ? 'Inquadra il paragrafo qui' : language === 'nl' ? 'Lijn de alinea hier uit' : language === 'pl' ? 'Wykadruj akapit tutaj' : language === 'tr' ? 'Paragrafı buraya hizalayın' : 'Align book paragraph here'}
+                    📖 {t.cameraAlignHint}
                   </span>
                 </div>
               </div>
@@ -382,7 +382,7 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
           {/* Quick Demo Book Samples */}
           <View style={styles.sampleSection}>
             <Text style={styles.sampleSectionTitle}>
-              {language === 'es' ? 'O prueba con una página física de ejemplo:' : language === 'fr' ? 'Ou testez avec une page exemple :' : language === 'pt' ? 'Ou teste com uma página de exemplo:' : 'Or test with a sample physical page:'}
+              {t.cameraSampleSectionTitle}
             </Text>
             <View style={styles.sampleCardsRow}>
               {SAMPLE_BOOK_PHOTOS.map((sample, idx) => (
@@ -401,7 +401,7 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
                     </Text>
                     <View style={styles.sampleBadge}>
                       <Text style={styles.sampleBadgeText}>
-                        {language === 'es' ? 'Probar 1-Clic' : language === 'fr' ? 'Test 1-Clic' : language === 'pt' ? 'Testar 1-Clique' : '1-Click Test'}
+                        {t.cameraSample1Click}
                       </Text>
                     </View>
                   </View>
@@ -417,19 +417,13 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
             <View style={styles.processingCard}>
               <ActivityIndicator size="large" color="#ea580c" />
               <Text style={styles.processingTitle}>
-                {language === 'es' ? 'Sparky está leyendo tu libro...' : language === 'fr' ? 'Sparky lit votre livre...' : language === 'pt' ? 'Sparky está lendo seu livro...' : 'Sparky is reading your book...'}
+                {t.cameraProcessingTitle}
               </Text>
               <Text style={styles.processingSubtitle}>{progressStatus}</Text>
               <View style={styles.processingTip}>
                 <Ionicons name="sparkles" size={16} color="#f59e0b" />
                 <Text style={styles.processingTipText}>
-                  {language === 'es'
-                    ? 'Meta Muse Spark adaptará las preguntas a este texto'
-                    : language === 'fr'
-                    ? 'Meta Muse Spark adaptera les questions à ce texte'
-                    : language === 'pt'
-                    ? 'Meta Muse Spark adaptará as perguntas a este texto'
-                    : 'Meta Muse Spark will adapt comprehension questions to this text'}
+                  {t.cameraProcessingTip}
                 </Text>
               </View>
             </View>

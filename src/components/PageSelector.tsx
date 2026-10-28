@@ -61,7 +61,7 @@ export const PageSelector: React.FC<PageSelectorProps> = ({
 
           <View style={[styles.toggleBadge, { backgroundColor: theme.surface, borderColor: theme.border }, isExpanded && { backgroundColor: theme.primary, borderColor: theme.primary }]}>
             <Text style={[styles.toggleBadgeText, { color: theme.text }, isExpanded && { color: "#ffffff" }]}>
-              {isExpanded ? (language === "es" ? "Cerrar" : "Close") : (language === "es" ? "Cambiar" : "Change")}
+              {isExpanded ? t.closeBtnShort : t.changeBookBtn}
             </Text>
             <Ionicons
               name={isExpanded ? "chevron-up" : "chevron-down"}
@@ -161,7 +161,7 @@ export const PageSelector: React.FC<PageSelectorProps> = ({
                     <View style={[styles.activePillIndicator, { backgroundColor: theme.primary }]}>
                       <Ionicons name="checkmark-sharp" size={10} color="#ffffff" />
                       <Text style={styles.activePillText}>
-                        {language === "es" ? "LEYENDO" : "CURRENT"}
+                        {t.currentReadingBadge}
                       </Text>
                     </View>
                   )}

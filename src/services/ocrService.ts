@@ -1,6 +1,7 @@
 import { createWorker } from 'tesseract.js';
 import { BookPage, OCRResult, SupportedLanguage } from '../types';
 import { createWordTokensFromText } from '../data/sampleBooks';
+import { getTranslation } from '../i18n/translations';
 
 let workerPromise: Promise<any> | null = null;
 
@@ -129,7 +130,7 @@ export async function recognizePageText(
     if (onProgress) onProgress(1.0, 'Page text captured successfully!');
 
     return {
-      text: cleanedText || (language === 'en' ? 'Could not detect text. Please try with better lighting.' : 'Texto detectado en la página del libro.'),
+      text: cleanedText || getTranslation(language).couldNotDetectText,
       confidence: ret.data.confidence || 80,
       words,
     };
@@ -202,6 +203,6 @@ export function createBookPageFromCapture(
     imageUrl,
     words,
     difficulty: wordsCount < 30 ? 'Beginner' : wordsCount < 60 ? 'Intermediate' : 'Advanced',
-    gradeLevel: language === 'en' ? 'School Reader' : 'Nivel Escolar',
+    gradeLevel: getTranslation(language).schoolReaderLabel,
   };
 }
