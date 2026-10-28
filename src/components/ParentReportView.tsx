@@ -14,6 +14,7 @@ import { ReadingSessionResult, ReadingErrorDetail, SupportedLanguage } from '../
 import { getReadingHistory, getReadingStats } from '../services/storageService';
 import { speakWordPhonetically, playChime } from '../services/ttsService';
 import { getTranslation } from '../i18n/translations';
+import { useTheme } from '../context/ThemeContext';
 
 interface ParentReportViewProps {
   currentSession?: ReadingSessionResult | null;
@@ -29,6 +30,7 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
   onOpenWordExplainer,
 }) => {
   const t = getTranslation(language);
+  const { theme, themeMode } = useTheme();
   const [history, setHistory] = useState<ReadingSessionResult[]>([]);
   const [stats, setStats] = useState<any>({
     totalMinutes: 0,
@@ -312,20 +314,20 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
 
   return (
     <ScrollView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: theme.bg }]}
       contentContainerStyle={styles.contentContainer}
       showsVerticalScrollIndicator={false}
     >
       {/* Modern Dashboard Header */}
-      <View style={styles.headerCard}>
+      <View style={[styles.headerCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
         <View style={styles.headerLeft}>
           <View style={styles.headerTitleRow}>
             <Text style={styles.headerEmoji}>📊</Text>
             <View>
-              <Text style={styles.headerTitle}>
+              <Text style={[styles.headerTitle, { color: theme.text }]}>
                 {language === 'es' ? 'Reporte para Padres y Maestros' : t.reportTitle}
               </Text>
-              <Text style={styles.headerSubtitle}>
+              <Text style={[styles.headerSubtitle, { color: theme.textSecondary }]}>
                 {activeSession ? `${activeSession.pageTitle} • ${activeSession.gradeLevel}` : t.reportSubtitle}
               </Text>
             </View>
@@ -348,6 +350,75 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
               : (language === 'es' ? 'Compartir por WhatsApp' : 'Share Report')}
           </Text>
         </TouchableOpacity>
+      </View>
+
+      {/* 1 Phone in the Family: Student Profile Switcher & Shared Device Banner */}
+      <View style={[styles.studentSharedCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+        <View style={styles.studentSharedHeader}>
+          <View style={styles.studentSharedLeft}>
+            <Text style={styles.studentSharedEmoji}>📱</Text>
+            <View>
+              <Text style={[styles.studentSharedTitle, { color: theme.text }]}>
+                {language === 'es' ? 'Dispositivo Compartido (1 Teléfono en Casa)' : 'Family Shared Device Mode'}
+              </Text>
+              <Text style={[styles.studentSharedSub, { color: theme.textSecondary }]}>
+                {language === 'es'
+                  ? 'El niño no necesita teléfono propio. Varios hermanos leen por turnos en el mismo teléfono.'
+                  : 'Children do not need personal phones. Siblings take 10-min reading turns on one device.'}
+              </Text>
+            </View>
+          </View>
+
+          <TouchableOpacity
+            style={[styles.printOfflinePill, { backgroundColor: theme.primaryLight, borderColor: theme.borderActive }]}
+            onPress={() => {
+              playChime('tap');
+              setPrintModalVisible(true);
+            }}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="print-outline" size={14} color={theme.primary} />
+            <Text style={[styles.printOfflineText, { color: theme.primary }]}>
+              {language === 'es' ? 'Ficha en Papel' : 'Printable'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.studentsRow}>
+          {studentsList.map((st) => {
+            const isSelected = selectedStudent.name === st.name;
+            return (
+              <TouchableOpacity
+                key={st.name}
+                style={[
+                  styles.studentPill,
+                  {
+                    backgroundColor: isSelected ? theme.primaryLight : theme.surfaceSecondary,
+                    borderColor: isSelected ? theme.primary : theme.border,
+                  },
+                ]}
+                onPress={() => {
+                  playChime('tap');
+                  setSelectedStudent(st);
+                }}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.studentEmoji}>{st.emoji}</Text>
+                <View>
+                  <Text style={[styles.studentName, { color: isSelected ? theme.primary : theme.text }]}>
+                    {st.name}
+                  </Text>
+                  <Text style={[styles.studentGrade, { color: theme.textSecondary }]}>
+                    {st.grade}
+                  </Text>
+                </View>
+                {isSelected && (
+                  <Ionicons name="checkmark-circle" size={15} color={theme.primary} />
+                )}
+              </TouchableOpacity>
+            );
+          })}
+        </View>
       </View>
 
       {/* UNESCO Literacy Benchmark Banner */}
@@ -741,6 +812,75 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontWeight: '800',
     fontSize: 12,
+  },
+  studentSharedCard: {
+    borderRadius: 18,
+    padding: 16,
+    borderWidth: 1,
+    gap: 12,
+  },
+  studentSharedHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  studentSharedLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flex: 1,
+    minWidth: 200,
+  },
+  studentSharedEmoji: {
+    fontSize: 22,
+  },
+  studentSharedTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  studentSharedSub: {
+    fontSize: 11,
+    marginTop: 2,
+    lineHeight: 15,
+  },
+  printOfflinePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  printOfflineText: {
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  studentsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    flexWrap: 'wrap',
+  },
+  studentPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 14,
+    borderWidth: 1.5,
+  },
+  studentEmoji: {
+    fontSize: 18,
+  },
+  studentName: {
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  studentGrade: {
+    fontSize: 10,
   },
   benchmarkBanner: {
     flexDirection: 'row',

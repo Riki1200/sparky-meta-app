@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Platform,
+  useWindowDimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { BookPage, WordToken, ReadingSessionResult, ReadingErrorDetail, SupportedLanguage } from '../types';
@@ -13,11 +14,12 @@ import {
   SpeechRecognitionController,
   matchSpokenWordToTokens,
 } from '../services/speechService';
-import { speakText, playChime } from '../services/ttsService';
+import { speakText, stopSpeaking, playChime } from '../services/ttsService';
 import { saveReadingSession, addStars } from '../services/storageService';
 import { getTranslation } from '../i18n/translations';
 import { SparkyMascot } from './SparkyMascot';
 import { CelebrationConfetti } from './CelebrationConfetti';
+import { useTheme } from '../context/ThemeContext';
 
 interface ReadingViewProps {
   page: BookPage;
@@ -26,6 +28,7 @@ interface ReadingViewProps {
   onPageCompleted: (result: ReadingSessionResult) => void;
   onOpenScan: () => void;
   onStarsEarned?: (newTotal: number) => void;
+  onOpenSettings?: () => void;
 }
 
 export const ReadingView: React.FC<ReadingViewProps> = ({
@@ -35,12 +38,25 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
   onPageCompleted,
   onOpenScan,
   onStarsEarned,
+  onOpenSettings,
 }) => {
   const t = getTranslation(language);
+  const { width } = useWindowDimensions();
+  const isCompact = width < 540;
+
+  const {
+    theme,
+    themeMode,
+    activeFontFamilyCss,
+    fontScale,
+    readingRuler,
+    syllableMode,
+  } = useTheme();
 
   const [tokens, setTokens] = useState<WordToken[]>([]);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [isListening, setIsListening] = useState<boolean>(false);
+  const [isSparkyReading, setIsSparkyReading] = useState<boolean>(false);
   const [startTime, setStartTime] = useState<number | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState<number>(0);
   const [wpm, setWpm] = useState<number>(0);
@@ -53,6 +69,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
   const lastWordTimestampRef = useRef<number>(Date.now());
   const timerIntervalRef = useRef<any>(null);
   const simulationTimerRef = useRef<any>(null);
+  const sparkyCancelRef = useRef<boolean>(false);
 
   useEffect(() => {
     resetPageReading();
@@ -76,6 +93,8 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
       if (speechControllerRef.current) {
         speechControllerRef.current.stopListening();
       }
+      stopSpeaking();
+      sparkyCancelRef.current = true;
       if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
       if (simulationTimerRef.current) clearTimeout(simulationTimerRef.current);
     };
@@ -83,6 +102,9 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
 
   const resetPageReading = () => {
     if (simulationTimerRef.current) clearTimeout(simulationTimerRef.current);
+    sparkyCancelRef.current = true;
+    stopSpeaking();
+    setIsSparkyReading(false);
     setIsSimulating(false);
     setIsListening(false);
     setShowConfetti(false);
@@ -104,6 +126,12 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
   };
 
   const startReadingSession = () => {
+    if (isSparkyReading) {
+      sparkyCancelRef.current = true;
+      stopSpeaking();
+      setIsSparkyReading(false);
+    }
+
     if (!startTime) {
       setStartTime(Date.now());
       timerIntervalRef.current = setInterval(() => {
@@ -120,98 +148,128 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
   const stopReadingSession = () => {
     setIsListening(false);
     speechControllerRef.current?.stopListening();
-  };
-
-  const handleSpeechInput = (spokenPhrase: string) => {
-    if (currentIndex >= tokens.length) return;
-
-    const now = Date.now();
-    const timeDelta = now - lastWordTimestampRef.current;
-
-    const result = matchSpokenWordToTokens(
-      spokenPhrase,
-      tokens,
-      currentIndex,
-      language,
-      timeDelta
-    );
-
-    if (result.nextIndex !== currentIndex) {
-      lastWordTimestampRef.current = now;
-      setCurrentIndex(result.nextIndex);
-      setTokens(result.updatedTokens);
-
-      if (result.error) {
-        setErrorsList((prev) => [...prev, result.error!]);
-      }
-
-      if (result.nextIndex >= tokens.length) {
-        finishReadingSession(result.updatedTokens, [
-          ...errorsList,
-          ...(result.error ? [result.error] : []),
-        ]);
-      }
-    }
-  };
-
-  useEffect(() => {
-    if (elapsedSeconds > 2 && currentIndex > 0) {
-      const calculatedWpm = Math.round((currentIndex / elapsedSeconds) * 60);
-      setWpm(calculatedWpm);
-    }
-  }, [elapsedSeconds, currentIndex]);
-
-  const finishReadingSession = async (
-    finalTokens: WordToken[],
-    finalErrors: ReadingErrorDetail[]
-  ) => {
-    stopReadingSession();
     if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
-    playChime('complete');
-    setShowConfetti(true);
+  };
 
+  const handleSparkyReadAloud = async () => {
+    if (isSparkyReading) {
+      sparkyCancelRef.current = true;
+      stopSpeaking();
+      setIsSparkyReading(false);
+      return;
+    }
+
+    // Stop child mic or simulation if active
+    if (isListening) stopReadingSession();
+    if (isSimulating) {
+      clearTimeout(simulationTimerRef.current);
+      setIsSimulating(false);
+    }
+
+    setIsSparkyReading(true);
+    sparkyCancelRef.current = false;
+    playChime('sparkle');
+
+    for (let i = 0; i < tokens.length; i++) {
+      if (sparkyCancelRef.current) break;
+      setCurrentIndex(i);
+      setTokens((prev) =>
+        prev.map((t, idx) => ({
+          ...t,
+          status: idx === i ? 'current' : idx < i ? 'correct' : 'pending',
+        }))
+      );
+
+      await new Promise<void>((resolve) => {
+        speakText(tokens[i].word, language, 0.85, () => resolve());
+      });
+      await new Promise((r) => setTimeout(r, 110));
+    }
+
+    setIsSparkyReading(false);
+    if (!sparkyCancelRef.current) {
+      playChime('complete');
+      speakText(
+        language === 'es'
+          ? '¡Excelente! Ahora te toca a ti leerlo en voz alta.'
+          : 'Great job listening! Now it is your turn to read aloud.',
+        language
+      );
+    }
+  };
+
+  const handleSpeechInput = (spokenText: string) => {
+    if (tokens.length === 0 || currentIndex >= tokens.length) return;
+
+    const hesitationMs = Date.now() - lastWordTimestampRef.current;
+    const match = matchSpokenWordToTokens(spokenText, tokens, currentIndex, language, hesitationMs);
+    if (!match || match.nextIndex === currentIndex) return;
+
+    lastWordTimestampRef.current = Date.now();
+    const updated = match.updatedTokens;
+    const newErrors = match.error ? [...errorsList, match.error] : errorsList;
+
+    setTokens(updated);
+    setCurrentIndex(match.nextIndex);
+    setErrorsList(newErrors);
+
+    if (startTime) {
+      const seconds = (Date.now() - startTime) / 1000;
+      if (seconds > 0) {
+        const wordsRead = match.nextIndex;
+        const currentWpm = Math.round((wordsRead / seconds) * 60);
+        setWpm(currentWpm);
+      }
+    }
+
+    if (match.nextIndex >= updated.length) {
+      finishReadingSession(updated, newErrors);
+    }
+  };
+
+  const finishReadingSession = async (finalTokens: WordToken[], finalErrors: ReadingErrorDetail[]) => {
+    stopReadingSession();
+    setIsSimulating(false);
+    setShowConfetti(true);
+    playChime('complete');
+
+    const durationSec = elapsedSeconds || Math.max(1, Math.round(((Date.now() - (startTime || Date.now())) / 1000)));
     const totalWords = finalTokens.length;
     const correctCount = finalTokens.filter((t) => t.status === 'correct').length;
     const hesitationCount = finalTokens.filter((t) => t.status === 'hesitation').length;
     const mispronouncedCount = finalTokens.filter((t) => t.status === 'mispronounced').length;
     const skippedCount = finalTokens.filter((t) => t.status === 'skipped').length;
+    const accuracy = totalWords > 0 ? Math.round((correctCount / totalWords) * 100) : 100;
+    const calcWpm = durationSec > 0 ? Math.round((totalWords / durationSec) * 60) : wpm;
 
-    const finalAccuracy =
-      totalWords > 0 ? Math.round((correctCount / totalWords) * 100) : 100;
-    const finalWpm =
-      elapsedSeconds > 2 ? Math.round((totalWords / elapsedSeconds) * 60) : 68;
-
-    const sessionResult: ReadingSessionResult = {
-      id: `session_${Date.now()}`,
+    const result: ReadingSessionResult = {
+      id: 'session-' + Date.now(),
       pageId: page.id,
       pageTitle: page.title,
       bookSource: page.source,
       language,
-      date: new Date().toLocaleDateString(language === 'es' ? 'es-DO' : 'en-US', {
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      }),
-      durationSeconds: Math.max(1, elapsedSeconds),
+      date: new Date().toISOString(),
+      durationSeconds: durationSec,
       totalWords,
       correctWords: correctCount,
       hesitationWords: hesitationCount,
       mispronouncedWords: mispronouncedCount,
       skippedWords: skippedCount,
-      accuracyPercent: Math.min(100, Math.max(0, finalAccuracy)),
-      wordsPerMinute: finalWpm,
+      accuracyPercent: accuracy,
+      wordsPerMinute: calcWpm,
       errors: finalErrors,
       gradeLevel: page.gradeLevel,
     };
 
-    await saveReadingSession(sessionResult);
+    await saveReadingSession(result);
     const newStars = await addStars(10);
-    if (onStarsEarned) onStarsEarned(newStars);
+    if (onStarsEarned) {
+      onStarsEarned(newStars);
+    }
 
     setTimeout(() => {
-      onPageCompleted(sessionResult);
-    }, 1400);
+      onPageCompleted(result);
+    }, 1800);
   };
 
   const handleSimulateChildReading = () => {
@@ -229,21 +287,22 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
     }, 1000);
 
     let simIndex = 0;
-    const allTokens = [...page.words];
+    const allTokens = [...page.words.map((w, idx) => ({ ...w, status: (idx === 0 ? 'current' : 'pending') as any }))];
     const simulatedErrors: ReadingErrorDetail[] = [];
 
     const stepSimulation = () => {
       if (simIndex >= allTokens.length) {
-        setIsSimulating(false);
         finishReadingSession(allTokens, simulatedErrors);
         return;
       }
 
       const currentWord = allTokens[simIndex].word;
-      let delay = 650;
+      setRecentSpokenText(currentWord);
 
-      if (simIndex === 2 && allTokens.length > 4) {
-        delay = 2100;
+      const isTricky = simIndex === 2 || (simIndex === 5 && allTokens.length > 6);
+      const delay = isTricky ? 1400 : 700;
+
+      if (simIndex === 2) {
         allTokens[simIndex] = {
           ...allTokens[simIndex],
           status: 'hesitation',
@@ -300,6 +359,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
 
   const getMascotMood = () => {
     if (showConfetti) return 'celebrating';
+    if (isSparkyReading) return 'thinking';
     if (isListening || isSimulating) return 'listening';
     return 'idle';
   };
@@ -310,42 +370,62 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
         ? '¡Excelente lectura! ¡Ganaste 10 estrellas! ⭐🎉'
         : 'Incredible reading! You earned 10 stars! ⭐🎉';
     }
+    if (isSparkyReading) {
+      return language === 'es'
+        ? 'Escucha con atención cómo suena cada palabra... 🎧📖'
+        : 'Listen carefully to how each word is pronounced... 🎧📖';
+    }
     if (isListening || isSimulating) {
       return language === 'es'
         ? '¡Te escucho! Lee con voz clara y tranquila... 🎧'
         : 'I am listening! Read aloud with confidence... 🎧';
     }
     return language === 'es'
-      ? "Toca cualquier palabra para escucharla o pulsa 'Leer en Voz Alta' 📖"
-      : "Tap any word to hear it or tap 'Read Aloud' 📖";
+      ? "Toca cualquier palabra para escucharla o pulsa 'Sparky Lee' / 'Leer en Voz Alta' 📖"
+      : "Tap any word to hear it or tap 'Sparky Reads' / 'Read Aloud' 📖";
   };
 
   const progressPercent = tokens.length > 0 ? (currentIndex / tokens.length) * 100 : 0;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.bg }]}>
       <CelebrationConfetti active={showConfetti} />
 
-      {/* Modern Compact Live HUD Bar (Only 38px, zero vertical waste) */}
-      <View style={styles.miniHudBar}>
+      {/* Modern Compact Live HUD Bar with Direct Aa Quick Button */}
+      <View style={[styles.miniHudBar, { backgroundColor: theme.hudBg, borderBottomColor: theme.hudBorder }]}>
         <View style={styles.hudLeft}>
-          <Text style={styles.hudCountText}>
+          <Text style={[styles.hudCountText, { color: theme.textSecondary }]}>
             {currentIndex}/{tokens.length} {language === 'es' ? 'palabras' : 'words'}
           </Text>
-          <View style={styles.hudProgressTrack}>
-            <View style={[styles.hudProgressFill, { width: `${progressPercent}%` }]} />
+          <View style={[styles.hudProgressTrack, { backgroundColor: theme.borderLight }]}>
+            <View style={[styles.hudProgressFill, { width: `${progressPercent}%`, backgroundColor: theme.primary }]} />
           </View>
         </View>
 
         <View style={styles.hudRight}>
-          <View style={styles.hudStatPillBlue}>
+          <View style={[styles.hudStatPillBlue, { backgroundColor: themeMode === 'dark' ? '#082f49' : '#f0f9ff', borderColor: '#38bdf8' }]}>
             <Ionicons name="speedometer-outline" size={12} color="#0284c7" />
             <Text style={styles.hudStatTextBlue}>{wpm || '--'} WPM</Text>
           </View>
-          <View style={styles.hudStatPillGreen}>
+          <View style={[styles.hudStatPillGreen, { backgroundColor: themeMode === 'dark' ? '#064e3b' : '#ecfdf5', borderColor: '#34d399' }]}>
             <Ionicons name="checkmark-circle-outline" size={12} color="#059669" />
             <Text style={styles.hudStatTextGreen}>{currentAccuracy}%</Text>
           </View>
+
+          {/* Direct Quick Aa Typography Button in HUD */}
+          {onOpenSettings && (
+            <TouchableOpacity
+              style={[styles.hudAaBtn, { backgroundColor: theme.surfaceSecondary, borderColor: theme.border }]}
+              onPress={() => {
+                playChime('tap');
+                onOpenSettings();
+              }}
+              activeOpacity={0.7}
+              accessibilityLabel="Ajustes de Fuente y Tamaño"
+            >
+              <Text style={[styles.hudAaText, { color: theme.text }]}>Aa</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
 
@@ -366,17 +446,38 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
         </View>
 
         {/* Elevated Tactile Reading Paper Board */}
-        <View style={styles.paperCard}>
+        <View
+          style={[
+            styles.paperCard,
+            {
+              backgroundColor: theme.paperCardBg,
+              borderColor: theme.paperCardBorder,
+              shadowColor: themeMode === 'dark' ? '#000000' : '#0f172a',
+            },
+          ]}
+        >
           <View style={styles.tokensContainer}>
             {tokens.map((token, idx) => {
-              const isCurrent = idx === currentIndex && (isListening || isSimulating);
+              const isCurrent = idx === currentIndex && (isListening || isSimulating || isSparkyReading);
               const isCorrect = token.status === 'correct';
               const isHesitation = token.status === 'hesitation';
               const isMispronounced = token.status === 'mispronounced';
               const isSkipped = token.status === 'skipped';
 
+              // Format word for syllable mode
+              const displayWord =
+                syllableMode && token.syllables && token.syllables.length > 1
+                  ? token.syllables.join(' • ')
+                  : token.display;
+
               return (
-                <View key={token.id || idx} style={styles.tokenWrapper}>
+                <View
+                  key={token.id || idx}
+                  style={[
+                    styles.tokenWrapper,
+                    readingRuler && isCurrent && styles.tokenWrapperRuler,
+                  ]}
+                >
                   {isCurrent && (
                     <View style={styles.currentSparkIndicator}>
                       <Text style={styles.sparkEmoji}>✨</Text>
@@ -386,11 +487,13 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
                   <TouchableOpacity
                     style={[
                       styles.wordButton,
-                      isCurrent && styles.wordCurrent,
+                      { backgroundColor: theme.wordBgPending },
+                      isCurrent && [styles.wordCurrent, { borderColor: theme.borderActive, backgroundColor: themeMode === 'dark' ? '#3b220c' : '#fef3c7' }],
                       isCorrect && styles.wordCorrect,
                       isHesitation && styles.wordHesitation,
                       isMispronounced && styles.wordMispronounced,
                       isSkipped && styles.wordSkipped,
+                      readingRuler && isCurrent && styles.wordButtonRulerActive,
                     ]}
                     onPress={() => handleWordTap(token)}
                     activeOpacity={0.7}
@@ -398,14 +501,20 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
                     <Text
                       style={[
                         styles.wordText,
+                        {
+                          color: theme.wordTextPending,
+                          fontSize: fontScale.size,
+                          letterSpacing: fontScale.letterSpacing,
+                          ...(Platform.OS === 'web' ? { fontFamily: activeFontFamilyCss } : {}),
+                        },
                         isCorrect && styles.wordTextCorrect,
                         isHesitation && styles.wordTextHesitation,
                         isMispronounced && styles.wordTextMispronounced,
                         isSkipped && styles.wordTextSkipped,
-                        isCurrent && styles.wordTextCurrent,
+                        isCurrent && [styles.wordTextCurrent, { color: themeMode === 'dark' ? '#fed7aa' : '#78350f' }],
                       ]}
                     >
-                      {token.display}
+                      {displayWord}
                     </Text>
 
                     {isHesitation && (
@@ -424,50 +533,72 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
                       </View>
                     )}
                   </TouchableOpacity>
+
+                  {/* Reading Focus Ruler Line */}
+                  {readingRuler && isCurrent && (
+                    <View style={[styles.rulerBar, { backgroundColor: theme.primary }]} />
+                  )}
                 </View>
               );
             })}
           </View>
 
           {/* Discreet Color Legend */}
-          <View style={styles.legendRow}>
+          <View style={[styles.legendRow, { borderTopColor: theme.borderLight }]}>
             <View style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: '#10b981' }]} />
-              <Text style={styles.legendLabel}>{t.legendCorrect}</Text>
+              <Text style={[styles.legendLabel, { color: theme.textSecondary }]}>{t.legendCorrect}</Text>
             </View>
             <View style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: '#f59e0b' }]} />
-              <Text style={styles.legendLabel}>{t.legendHesitation}</Text>
+              <Text style={[styles.legendLabel, { color: theme.textSecondary }]}>{t.legendHesitation}</Text>
             </View>
             <View style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: '#f43f5e' }]} />
-              <Text style={styles.legendLabel}>{t.legendMispronounced}</Text>
+              <Text style={[styles.legendLabel, { color: theme.textSecondary }]}>{t.legendMispronounced}</Text>
             </View>
+            {syllableMode && (
+              <View style={styles.legendItem}>
+                <View style={[styles.legendDot, { backgroundColor: theme.primary }]} />
+                <Text style={[styles.legendLabel, { color: theme.primary }]}>
+                  {language === 'es' ? 'Silabeo Activo' : 'Syllables Active'}
+                </Text>
+              </View>
+            )}
           </View>
         </View>
 
         {/* Live speech heard transcript pill */}
         {recentSpokenText ? (
-          <View style={styles.liveTranscriptBox}>
-            <Ionicons name="mic" size={14} color="#ea580c" />
-            <Text style={styles.liveTranscriptLabel}>
-              {language === 'es' ? 'Escuchado: ' : 'Heard: '}
+          <View style={[styles.liveTranscriptBox, { backgroundColor: theme.primaryLight, borderColor: theme.borderActive }]}>
+            <Ionicons name="mic-circle" size={16} color={theme.primary} />
+            <Text style={[styles.liveTranscriptLabel, { color: theme.primary }]}>
+              {language === 'es' ? 'Escuché:' : 'Heard:'}
             </Text>
-            <Text style={styles.liveTranscriptPhrase} numberOfLines={1}>
+            <Text style={[styles.liveTranscriptPhrase, { color: theme.text }]} numberOfLines={1}>
               "{recentSpokenText}"
             </Text>
           </View>
         ) : null}
 
         {/* Spacing for floating dock */}
-        <View style={{ height: 90 }} />
+        <View style={{ height: 95 }} />
       </ScrollView>
 
       {/* Modern Floating Action Dock */}
-      <View style={styles.floatingDock}>
+      <View
+        style={[
+          styles.floatingDock,
+          {
+            backgroundColor: theme.dockBg,
+            borderColor: theme.dockBorder,
+            shadowColor: themeMode === 'dark' ? '#000000' : '#0f172a',
+          },
+        ]}
+      >
         {/* Reset / Restart */}
         <TouchableOpacity
-          style={styles.dockIconCircle}
+          style={[styles.dockIconCircle, { backgroundColor: theme.surfaceSecondary }]}
           onPress={() => {
             playChime('tap');
             resetPageReading();
@@ -475,14 +606,43 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
           activeOpacity={0.7}
           accessibilityLabel="Reset reading page"
         >
-          <Ionicons name="refresh" size={20} color="#64748b" />
+          <Ionicons name="refresh" size={18} color={theme.textSecondary} />
+        </TouchableOpacity>
+
+        {/* Sparky Lee para Mí (Echo Reading / Phonics Modeling) */}
+        <TouchableOpacity
+          style={[
+            styles.dockSparkyListenBtn,
+            { backgroundColor: isSparkyReading ? theme.accent : theme.surfaceSecondary, borderColor: theme.border },
+            isCompact && styles.dockSparkyListenBtnCompact,
+          ]}
+          onPress={handleSparkyReadAloud}
+          activeOpacity={0.8}
+          accessibilityLabel="Escuchar a Sparky leer la página"
+        >
+          <Ionicons
+            name={isSparkyReading ? 'stop-circle' : 'volume-high'}
+            size={18}
+            color={isSparkyReading ? '#ffffff' : theme.accent}
+          />
+          <Text
+            style={[
+              styles.dockSparkyListenText,
+              { color: isSparkyReading ? '#ffffff' : theme.text },
+              isCompact && styles.dockSparkyListenTextCompact,
+            ]}
+          >
+            {isSparkyReading ? (language === 'es' ? 'Pausa' : 'Pause') : (isCompact ? (language === 'es' ? 'Oír' : 'Hear') : (language === 'es' ? 'Sparky Lee' : 'Sparky Reads'))}
+          </Text>
         </TouchableOpacity>
 
         {/* Hero Mic Read-Aloud Button */}
         <TouchableOpacity
           style={[
             styles.heroMicButton,
+            { backgroundColor: theme.primary },
             (isListening || isSimulating) && styles.heroMicButtonActive,
+            isCompact && styles.heroMicButtonCompact,
           ]}
           onPress={() => {
             if (isListening || isSimulating) {
@@ -496,13 +656,15 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
         >
           <Ionicons
             name={isListening || isSimulating ? 'stop-circle' : 'mic'}
-            size={22}
+            size={20}
             color="#ffffff"
           />
-          <Text style={styles.heroMicText}>
+          <Text style={[styles.heroMicText, isCompact && styles.heroMicTextCompact]}>
             {isListening || isSimulating
               ? (language === 'es' ? 'Pausar' : 'Stop')
-              : (language === 'es' ? 'Leer en Voz Alta' : 'Read Aloud')}
+              : (isCompact
+                ? (language === 'es' ? 'Leer' : 'Read')
+                : (language === 'es' ? 'Leer en Voz Alta' : 'Read Aloud'))}
           </Text>
         </TouchableOpacity>
 
@@ -510,23 +672,26 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
         <TouchableOpacity
           style={[
             styles.dockSimButton,
-            isSimulating && styles.dockSimButtonActive,
+            { backgroundColor: theme.primaryLight, borderColor: theme.borderActive },
+            isSimulating && { backgroundColor: theme.primary },
+            isCompact && styles.dockSimButtonCompact,
           ]}
           onPress={handleSimulateChildReading}
           activeOpacity={0.75}
         >
           <Ionicons
             name={isSimulating ? 'pause' : 'play-forward'}
-            size={16}
-            color={isSimulating ? '#ffffff' : '#ea580c'}
+            size={15}
+            color={isSimulating ? '#ffffff' : theme.primary}
           />
           <Text
             style={[
               styles.dockSimText,
-              isSimulating && styles.dockSimTextActive,
+              { color: isSimulating ? '#ffffff' : theme.primary },
+              isCompact && styles.dockSimTextCompact,
             ]}
           >
-            {isSimulating ? 'Pausa' : 'Simular'}
+            {isSimulating ? (language === 'es' ? 'Pausa' : 'Pause') : (language === 'es' ? 'Simular' : 'Sim')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -537,18 +702,15 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
     position: 'relative',
   },
   miniHudBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#ffffff',
     paddingHorizontal: 16,
     paddingVertical: 7,
     borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
   },
   hudLeft: {
     flexDirection: 'row',
@@ -560,18 +722,15 @@ const styles = StyleSheet.create({
   hudCountText: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#475569',
   },
   hudProgressTrack: {
     flex: 1,
     height: 5,
-    backgroundColor: '#e2e8f0',
     borderRadius: 3,
     overflow: 'hidden',
   },
   hudProgressFill: {
     height: '100%',
-    backgroundColor: '#ea580c',
     borderRadius: 3,
   },
   hudRight: {
@@ -583,33 +742,41 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#f0f9ff',
     paddingHorizontal: 7,
     paddingVertical: 3,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#bae6fd',
   },
   hudStatTextBlue: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#0369a1',
+    color: '#0284c7',
   },
   hudStatPillGreen: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#ecfdf5',
     paddingHorizontal: 7,
     paddingVertical: 3,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#a7f3d0',
   },
   hudStatTextGreen: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#047857',
+    color: '#059669',
+  },
+  hudAaBtn: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  hudAaText: {
+    fontSize: 11,
+    fontWeight: '900',
   },
   scrollArea: {
     flex: 1,
@@ -625,14 +792,11 @@ const styles = StyleSheet.create({
     marginVertical: 2,
   },
   paperCard: {
-    backgroundColor: '#ffffff',
     borderRadius: 22,
     padding: 20,
     borderWidth: 1.5,
-    borderColor: '#e2e8f0',
-    shadowColor: '#0f172a',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.08,
     shadowRadius: 10,
     elevation: 3,
   },
@@ -640,12 +804,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-    lineHeight: 46,
     paddingVertical: 6,
   },
   tokenWrapper: {
     position: 'relative',
     alignItems: 'center',
+  },
+  tokenWrapperRuler: {
+    zIndex: 5,
   },
   currentSparkIndicator: {
     position: 'absolute',
@@ -660,22 +826,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 12,
-    backgroundColor: '#f8fafc',
     borderWidth: 1.5,
     borderColor: 'transparent',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
   },
+  wordButtonRulerActive: {
+    borderBottomWidth: 3,
+  },
+  rulerBar: {
+    position: 'absolute',
+    bottom: -4,
+    left: 4,
+    right: 4,
+    height: 3,
+    borderRadius: 2,
+  },
   wordText: {
-    fontSize: 23,
     fontWeight: '600',
-    color: '#1e293b',
-    letterSpacing: -0.3,
   },
   wordCurrent: {
-    borderColor: '#f59e0b',
-    backgroundColor: '#fef3c7',
     shadowColor: '#f59e0b',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
@@ -683,7 +854,6 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   wordTextCurrent: {
-    color: '#78350f',
     fontWeight: '800',
   },
   wordCorrect: {
@@ -747,7 +917,6 @@ const styles = StyleSheet.create({
     marginTop: 18,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#f1f5f9',
     flexWrap: 'wrap',
   },
   legendItem: {
@@ -762,29 +931,24 @@ const styles = StyleSheet.create({
   },
   legendLabel: {
     fontSize: 11,
-    color: '#64748b',
     fontWeight: '600',
   },
   liveTranscriptBox: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#fff7ed',
     paddingHorizontal: 12,
     paddingVertical: 7,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#fed7aa',
     alignSelf: 'center',
   },
   liveTranscriptLabel: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#ea580c',
   },
   liveTranscriptPhrase: {
     fontSize: 11,
-    color: '#9a3412',
     fontStyle: 'italic',
     maxWidth: 240,
   },
@@ -794,18 +958,16 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    gap: 8,
+    paddingVertical: 7,
+    paddingHorizontal: 10,
     borderRadius: 30,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    shadowColor: '#0f172a',
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.12,
+    shadowOpacity: 0.16,
     shadowRadius: 16,
     elevation: 8,
+    maxWidth: '96%',
     ...(Platform.OS === 'web'
       ? {
           backdropFilter: 'blur(16px)',
@@ -813,20 +975,38 @@ const styles = StyleSheet.create({
       : {}),
   },
   dockIconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#f1f5f9',
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  dockSparkyListenBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingVertical: 9,
+    paddingHorizontal: 11,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  dockSparkyListenBtnCompact: {
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+  },
+  dockSparkyListenText: {
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  dockSparkyListenTextCompact: {
+    fontSize: 11,
   },
   heroMicButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    backgroundColor: '#ea580c',
-    paddingVertical: 12,
-    paddingHorizontal: 22,
+    gap: 6,
+    paddingVertical: 11,
+    paddingHorizontal: 16,
     borderRadius: 25,
     shadowColor: '#ea580c',
     shadowOffset: { width: 0, height: 3 },
@@ -834,37 +1014,41 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 4,
   },
+  heroMicButtonCompact: {
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+  },
   heroMicButtonActive: {
     backgroundColor: '#dc2626',
     shadowColor: '#dc2626',
   },
   heroMicText: {
     color: '#ffffff',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '900',
     letterSpacing: -0.2,
+  },
+  heroMicTextCompact: {
+    fontSize: 12,
   },
   dockSimButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    backgroundColor: '#fff7ed',
-    paddingVertical: 10,
-    paddingHorizontal: 14,
+    gap: 4,
+    paddingVertical: 9,
+    paddingHorizontal: 11,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#fed7aa',
   },
-  dockSimButtonActive: {
-    backgroundColor: '#ea580c',
-    borderColor: '#ea580c',
+  dockSimButtonCompact: {
+    paddingHorizontal: 8,
+    paddingVertical: 8,
   },
   dockSimText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '800',
-    color: '#ea580c',
   },
-  dockSimTextActive: {
-    color: '#ffffff',
+  dockSimTextCompact: {
+    fontSize: 10,
   },
 });

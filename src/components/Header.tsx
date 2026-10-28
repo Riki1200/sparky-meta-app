@@ -11,6 +11,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { SupportedLanguage } from "../types";
 import { getTranslation } from "../i18n/translations";
 import { playChime } from "../services/ttsService";
+import { useTheme } from "../context/ThemeContext";
 
 interface HeaderProps {
   language: SupportedLanguage;
@@ -21,6 +22,7 @@ interface HeaderProps {
   starsCount?: number;
   onOpenPrivacy: () => void;
   onOpenScan?: () => void;
+  onOpenSettings?: () => void;
 }
 
 const AVAILABLE_LANGUAGES: { code: SupportedLanguage; label: string; flag: string; short: string; country: string }[] = [
@@ -44,8 +46,10 @@ export const Header: React.FC<HeaderProps> = ({
   starsCount = 45,
   onOpenPrivacy,
   onOpenScan,
+  onOpenSettings,
 }) => {
   const t = getTranslation(language);
+  const { themeMode, theme, toggleTheme } = useTheme();
   const [langModalVisible, setLangModalVisible] = useState(false);
 
   const currentLangObj =
@@ -61,7 +65,7 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
       {/* Top Main Bar: Brand + Quick Badges */}
       <View style={styles.topBar}>
         {/* Brand Identity */}
@@ -70,17 +74,17 @@ export const Header: React.FC<HeaderProps> = ({
           onPress={() => playChime("sparkle")}
           activeOpacity={0.8}
         >
-          <View style={styles.mascotCircle}>
+          <View style={[styles.mascotCircle, { backgroundColor: theme.primaryLight, borderColor: theme.borderActive }]}>
             <Text style={styles.mascotEmoji}>✨</Text>
           </View>
           <View>
             <View style={styles.titleWrap}>
-              <Text style={styles.brandTitle}>
+              <Text style={[styles.brandTitle, { color: theme.text }]}>
                 Sparky<Text style={styles.brandAccent}>.</Text>
               </Text>
-              <View style={styles.aiBadge}>
-                <Ionicons name="sparkles" size={10} color="#6366f1" />
-                <Text style={styles.aiBadgeText}>Meta AI</Text>
+              <View style={[styles.aiBadge, { backgroundColor: theme.accentLight }]}>
+                <Ionicons name="sparkles" size={10} color={theme.accent} />
+                <Text style={[styles.aiBadgeText, { color: theme.accent }]}>Meta AI</Text>
               </View>
             </View>
           </View>
@@ -89,43 +93,80 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Right Status Actions */}
         <View style={styles.rightCluster}>
           {/* Stars Pill */}
-          <View style={styles.miniPillGold}>
+          <View style={[styles.miniPillGold, { backgroundColor: themeMode === 'dark' ? '#261b07' : '#fffbeb', borderColor: '#fef08a' }]}>
             <Text style={styles.pillIconSmall}>⭐</Text>
             <Text style={styles.goldNumber}>{starsCount}</Text>
           </View>
 
           {/* Streak Pill */}
-          <View style={styles.miniPillFlame}>
+          <View style={[styles.miniPillFlame, { backgroundColor: themeMode === 'dark' ? '#2c1e14' : '#fff7ed', borderColor: '#fed7aa' }]}>
             <Text style={styles.pillIconSmall}>🔥</Text>
             <Text style={styles.flameNumber}>{streakDays}</Text>
           </View>
 
+          {/* ☀️ / 🌙 Theme Toggle Button */}
+          <TouchableOpacity
+            style={[
+              styles.iconCircleBtn,
+              { backgroundColor: theme.surfaceSecondary, borderColor: theme.border },
+            ]}
+            onPress={() => {
+              playChime("tap");
+              toggleTheme();
+            }}
+            activeOpacity={0.75}
+            accessibilityLabel="Alternar Modo Claro / Oscuro"
+          >
+            <Text style={styles.themeEmojiText}>
+              {themeMode === "light" ? "☀️" : "🌙"}
+            </Text>
+          </TouchableOpacity>
+
+          {/* 🔤 Child Font & Reading Settings Button */}
+          <TouchableOpacity
+            style={[
+              styles.iconCircleBtn,
+              { backgroundColor: theme.surfaceSecondary, borderColor: theme.border },
+            ]}
+            onPress={() => {
+              playChime("tap");
+              if (onOpenSettings) onOpenSettings();
+            }}
+            activeOpacity={0.75}
+            accessibilityLabel="Ajustes de Fuente Infantil y Accesibilidad"
+          >
+            <Text style={[styles.fontBtnText, { color: theme.text }]}>Aa</Text>
+          </TouchableOpacity>
+
           {/* Compact Language Picker Button */}
           <TouchableOpacity
-            style={styles.langPickerButton}
+            style={[
+              styles.langPickerButton,
+              { backgroundColor: theme.surfaceSecondary, borderColor: theme.border },
+            ]}
             onPress={() => setLangModalVisible(true)}
             activeOpacity={0.75}
           >
             <Text style={styles.langPickerFlag}>{currentLangObj.flag}</Text>
-            <Text style={styles.langPickerCode}>{currentLangObj.short}</Text>
-            <Ionicons name="chevron-down" size={12} color="#64748b" />
+            <Text style={[styles.langPickerCode, { color: theme.text }]}>{currentLangObj.short}</Text>
+            <Ionicons name="chevron-down" size={12} color={theme.textMuted} />
           </TouchableOpacity>
 
           {/* Privacy Shield Button */}
           <TouchableOpacity
-            style={styles.shieldButton}
+            style={[styles.shieldButton, { backgroundColor: themeMode === 'dark' ? '#064e3b' : '#ecfdf5', borderColor: '#a7f3d0' }]}
             onPress={onOpenPrivacy}
             activeOpacity={0.7}
             accessibilityLabel="Child Privacy Shield"
           >
-            <Ionicons name="shield-checkmark" size={16} color="#059669" />
+            <Ionicons name="shield-checkmark" size={16} color="#10b981" />
           </TouchableOpacity>
         </View>
       </View>
 
       {/* Bottom Segmented Controller: Kid Reading vs Parent/Teacher Report */}
       <View style={styles.segmentedRow}>
-        <View style={styles.segmentedContainer}>
+        <View style={[styles.segmentedContainer, { backgroundColor: theme.surfaceSecondary }]}>
           <TouchableOpacity
             style={[
               styles.segmentItem,
@@ -137,11 +178,12 @@ export const Header: React.FC<HeaderProps> = ({
             <Ionicons
               name={activeTab === "reading" ? "book" : "book-outline"}
               size={15}
-              color={activeTab === "reading" ? "#ffffff" : "#64748b"}
+              color={activeTab === "reading" ? "#ffffff" : theme.textSecondary}
             />
             <Text
               style={[
                 styles.segmentText,
+                { color: activeTab === "reading" ? "#ffffff" : theme.textSecondary },
                 activeTab === "reading" && styles.segmentTextActive,
               ]}
             >
@@ -152,7 +194,7 @@ export const Header: React.FC<HeaderProps> = ({
           <TouchableOpacity
             style={[
               styles.segmentItem,
-              activeTab === "report" && styles.segmentItemActiveTutor,
+              activeTab === "report" && (themeMode === 'dark' ? styles.segmentItemActiveTutorDark : styles.segmentItemActiveTutor),
             ]}
             onPress={() => onSelectTab("report")}
             activeOpacity={0.8}
@@ -160,11 +202,12 @@ export const Header: React.FC<HeaderProps> = ({
             <Ionicons
               name={activeTab === "report" ? "stats-chart" : "stats-chart-outline"}
               size={15}
-              color={activeTab === "report" ? "#ffffff" : "#64748b"}
+              color={activeTab === "report" ? "#ffffff" : theme.textSecondary}
             />
             <Text
               style={[
                 styles.segmentText,
+                { color: activeTab === "report" ? "#ffffff" : theme.textSecondary },
                 activeTab === "report" && styles.segmentTextActive,
               ]}
             >
@@ -175,12 +218,12 @@ export const Header: React.FC<HeaderProps> = ({
 
         {/* Quick OCR Scan Button */}
         <TouchableOpacity
-          style={styles.quickScanButton}
+          style={[styles.quickScanButton, { backgroundColor: theme.primaryLight, borderColor: theme.borderActive }]}
           onPress={handleScanClick}
           activeOpacity={0.85}
         >
-          <Ionicons name="camera-outline" size={15} color="#ea580c" />
-          <Text style={styles.quickScanText}>{t.navScan}</Text>
+          <Ionicons name="camera-outline" size={15} color={theme.primary} />
+          <Text style={[styles.quickScanText, { color: theme.primary }]}>{t.navScan}</Text>
         </TouchableOpacity>
       </View>
 
@@ -192,23 +235,23 @@ export const Header: React.FC<HeaderProps> = ({
         onRequestClose={() => setLangModalVisible(false)}
       >
         <TouchableOpacity
-          style={styles.modalBackdrop}
+          style={[styles.modalBackdrop, { backgroundColor: theme.modalBackdrop }]}
           activeOpacity={1}
           onPress={() => setLangModalVisible(false)}
         >
-          <View style={styles.modalCard}>
-            <View style={styles.modalHeader}>
+          <View style={[styles.modalCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: theme.borderLight }]}>
               <View style={styles.modalHeaderLeft}>
-                <Ionicons name="globe-outline" size={18} color="#0f172a" />
-                <Text style={styles.modalTitle}>
+                <Ionicons name="globe-outline" size={18} color={theme.text} />
+                <Text style={[styles.modalTitle, { color: theme.text }]}>
                   {language === "es" ? "Seleccionar Idioma" : "Select Language"}
                 </Text>
               </View>
               <TouchableOpacity
                 onPress={() => setLangModalVisible(false)}
-                style={styles.modalCloseCircle}
+                style={[styles.modalCloseCircle, { backgroundColor: theme.surfaceSecondary }]}
               >
-                <Ionicons name="close" size={16} color="#64748b" />
+                <Ionicons name="close" size={16} color={theme.textSecondary} />
               </TouchableOpacity>
             </View>
 
@@ -220,7 +263,10 @@ export const Header: React.FC<HeaderProps> = ({
                     key={item.code}
                     style={[
                       styles.langGridCard,
-                      isSelected && styles.langGridCardSelected,
+                      {
+                        backgroundColor: isSelected ? theme.primaryLight : theme.surfaceSecondary,
+                        borderColor: isSelected ? theme.borderActive : theme.border,
+                      },
                     ]}
                     onPress={() => {
                       playChime("tap");
@@ -234,18 +280,18 @@ export const Header: React.FC<HeaderProps> = ({
                       <Text
                         style={[
                           styles.langGridLabel,
-                          isSelected && styles.langGridLabelSelected,
+                          { color: isSelected ? theme.primary : theme.text },
                         ]}
                       >
                         {item.label}
                       </Text>
-                      <Text style={styles.langGridCountry}>{item.country}</Text>
+                      <Text style={[styles.langGridCountry, { color: theme.textSecondary }]}>{item.country}</Text>
                     </View>
                     {isSelected && (
                       <Ionicons
                         name="checkmark-circle"
                         size={18}
-                        color="#ea580c"
+                        color={theme.primary}
                       />
                     )}
                   </TouchableOpacity>
@@ -261,9 +307,7 @@ export const Header: React.FC<HeaderProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "#ffffff",
     borderBottomWidth: 1,
-    borderBottomColor: "#f1f5f9",
     paddingHorizontal: 16,
     paddingTop: 10,
     paddingBottom: 10,
@@ -291,9 +335,7 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: "#fff7ed",
     borderWidth: 1.5,
-    borderColor: "#fed7aa",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -308,7 +350,6 @@ const styles = StyleSheet.create({
   brandTitle: {
     fontSize: 19,
     fontWeight: "900",
-    color: "#0f172a",
     letterSpacing: -0.5,
   },
   brandAccent: {
@@ -318,7 +359,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 3,
-    backgroundColor: "#e0e7ff",
     paddingHorizontal: 7,
     paddingVertical: 2,
     borderRadius: 12,
@@ -326,7 +366,6 @@ const styles = StyleSheet.create({
   aiBadgeText: {
     fontSize: 10,
     fontWeight: "800",
-    color: "#4338ca",
   },
   rightCluster: {
     flexDirection: "row",
@@ -337,12 +376,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 3,
-    backgroundColor: "#fffbeb",
     paddingHorizontal: 8,
     paddingVertical: 5,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#fef08a",
   },
   pillIconSmall: {
     fontSize: 11,
@@ -356,28 +393,39 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 3,
-    backgroundColor: "#fff7ed",
     paddingHorizontal: 8,
     paddingVertical: 5,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#fed7aa",
   },
   flameNumber: {
     fontSize: 12,
     fontWeight: "900",
     color: "#ea580c",
   },
+  iconCircleBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  themeEmojiText: {
+    fontSize: 15,
+  },
+  fontBtnText: {
+    fontSize: 13,
+    fontWeight: "900",
+  },
   langPickerButton: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    backgroundColor: "#f8fafc",
     paddingHorizontal: 8,
     paddingVertical: 5,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
   },
   langPickerFlag: {
     fontSize: 13,
@@ -385,15 +433,12 @@ const styles = StyleSheet.create({
   langPickerCode: {
     fontSize: 11,
     fontWeight: "800",
-    color: "#334155",
   },
   shieldButton: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: "#ecfdf5",
     borderWidth: 1,
-    borderColor: "#a7f3d0",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -406,7 +451,6 @@ const styles = StyleSheet.create({
   segmentedContainer: {
     flex: 1,
     flexDirection: "row",
-    backgroundColor: "#f1f5f9",
     borderRadius: 16,
     padding: 3,
     gap: 3,
@@ -436,10 +480,17 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
+  segmentItemActiveTutorDark: {
+    backgroundColor: "#334155",
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 2,
+  },
   segmentText: {
     fontSize: 12,
     fontWeight: "700",
-    color: "#64748b",
   },
   segmentTextActive: {
     color: "#ffffff",
@@ -449,21 +500,17 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
-    backgroundColor: "#fff7ed",
     paddingHorizontal: 12,
     paddingVertical: 7,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#fed7aa",
   },
   quickScanText: {
     fontSize: 12,
     fontWeight: "800",
-    color: "#ea580c",
   },
   modalBackdrop: {
     flex: 1,
-    backgroundColor: "rgba(15, 23, 42, 0.45)",
     justifyContent: "center",
     alignItems: "center",
     padding: 16,
@@ -471,12 +518,12 @@ const styles = StyleSheet.create({
   modalCard: {
     width: "100%",
     maxWidth: 440,
-    backgroundColor: "#ffffff",
     borderRadius: 22,
     padding: 18,
-    shadowColor: "#0f172a",
+    borderWidth: 1,
+    shadowColor: "#000000",
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.2,
     shadowRadius: 20,
     elevation: 10,
   },
@@ -487,7 +534,6 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     paddingBottom: 10,
     borderBottomWidth: 1,
-    borderBottomColor: "#f1f5f9",
   },
   modalHeaderLeft: {
     flexDirection: "row",
@@ -497,13 +543,11 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 15,
     fontWeight: "800",
-    color: "#0f172a",
   },
   modalCloseCircle: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: "#f1f5f9",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -516,14 +560,8 @@ const styles = StyleSheet.create({
     paddingVertical: 9,
     paddingHorizontal: 12,
     borderRadius: 14,
-    backgroundColor: "#f8fafc",
     borderWidth: 1.5,
-    borderColor: "#e2e8f0",
     gap: 12,
-  },
-  langGridCardSelected: {
-    backgroundColor: "#fff7ed",
-    borderColor: "#ea580c",
   },
   langGridFlag: {
     fontSize: 22,
@@ -534,13 +572,8 @@ const styles = StyleSheet.create({
   langGridLabel: {
     fontSize: 13,
     fontWeight: "800",
-    color: "#0f172a",
-  },
-  langGridLabelSelected: {
-    color: "#ea580c",
   },
   langGridCountry: {
     fontSize: 11,
-    color: "#64748b",
   },
 });

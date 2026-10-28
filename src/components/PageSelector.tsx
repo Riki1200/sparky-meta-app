@@ -12,6 +12,7 @@ import { BookPage, SupportedLanguage } from "../types";
 import { SAMPLE_BOOK_PAGES } from "../data/sampleBooks";
 import { getTranslation } from "../i18n/translations";
 import { playChime } from "../services/ttsService";
+import { useTheme } from "../context/ThemeContext";
 
 interface PageSelectorProps {
   currentPageId: string;
@@ -27,6 +28,7 @@ export const PageSelector: React.FC<PageSelectorProps> = ({
   language,
 }) => {
   const t = getTranslation(language);
+  const { theme, themeMode } = useTheme();
   const [isExpanded, setIsExpanded] = useState(false);
 
   const filteredPages = SAMPLE_BOOK_PAGES.filter((p) => p.language === language);
@@ -36,35 +38,35 @@ export const PageSelector: React.FC<PageSelectorProps> = ({
   return (
     <View style={styles.container}>
       {/* Sleek Mini Bar: Shows current book + "Change Book" toggle button */}
-      <View style={styles.compactBar}>
+      <View style={[styles.compactBar, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
         <TouchableOpacity
-          style={styles.bookPill}
+          style={[styles.bookPill, { backgroundColor: theme.surfaceSecondary, borderColor: theme.border }]}
           onPress={() => {
             playChime("tap");
             setIsExpanded(!isExpanded);
           }}
           activeOpacity={0.8}
         >
-          <View style={styles.bookIconBadge}>
-            <Ionicons name="book" size={14} color="#ea580c" />
+          <View style={[styles.bookIconBadge, { backgroundColor: theme.primaryLight, borderColor: theme.borderActive }]}>
+            <Ionicons name="book" size={14} color={theme.primary} />
           </View>
           <View style={styles.bookTitlesCol}>
-            <Text style={styles.currentBookTitle} numberOfLines={1}>
+            <Text style={[styles.currentBookTitle, { color: theme.text }]} numberOfLines={1}>
               {currentPage.title}
             </Text>
-            <Text style={styles.currentBookGrade}>
+            <Text style={[styles.currentBookGrade, { color: theme.textSecondary }]}>
               {currentPage.gradeLevel} • {currentPage.source}
             </Text>
           </View>
 
-          <View style={[styles.toggleBadge, isExpanded && styles.toggleBadgeActive]}>
-            <Text style={[styles.toggleBadgeText, isExpanded && styles.toggleBadgeTextActive]}>
+          <View style={[styles.toggleBadge, { backgroundColor: theme.surface, borderColor: theme.border }, isExpanded && { backgroundColor: theme.primary, borderColor: theme.primary }]}>
+            <Text style={[styles.toggleBadgeText, { color: theme.text }, isExpanded && { color: "#ffffff" }]}>
               {isExpanded ? (language === "es" ? "Cerrar" : "Close") : (language === "es" ? "Cambiar" : "Change")}
             </Text>
             <Ionicons
               name={isExpanded ? "chevron-up" : "chevron-down"}
               size={13}
-              color={isExpanded ? "#ffffff" : "#64748b"}
+              color={isExpanded ? "#ffffff" : theme.textSecondary}
             />
           </View>
         </TouchableOpacity>
@@ -72,12 +74,12 @@ export const PageSelector: React.FC<PageSelectorProps> = ({
 
       {/* Expandable Visual Carousel Shelf */}
       {isExpanded && (
-        <View style={styles.expandedDrawer}>
+        <View style={[styles.expandedDrawer, { backgroundColor: theme.bg, borderTopColor: theme.border }]}>
           <View style={styles.drawerHeader}>
-            <Text style={styles.drawerTitle}>
+            <Text style={[styles.drawerTitle, { color: theme.text }]}>
               {language === "es" ? "Biblioteca de Cuentos" : "Story Library"}
             </Text>
-            <Text style={styles.drawerSubtitle}>
+            <Text style={[styles.drawerSubtitle, { color: theme.textSecondary }]}>
               {language === "es"
                 ? "Elige una lectura o escanea una página de tu libro de texto escolar"
                 : "Choose a story or scan a page from your school book"}
@@ -91,7 +93,7 @@ export const PageSelector: React.FC<PageSelectorProps> = ({
           >
             {/* 1. OCR Camera Scanner Card */}
             <TouchableOpacity
-              style={styles.newScanCard}
+              style={[styles.newScanCard, { backgroundColor: theme.primaryLight, borderColor: theme.borderActive }]}
               onPress={() => {
                 playChime("sparkle");
                 setIsExpanded(false);
@@ -99,65 +101,71 @@ export const PageSelector: React.FC<PageSelectorProps> = ({
               }}
               activeOpacity={0.8}
             >
-              <View style={styles.newScanIconCircle}>
-                <Ionicons name="camera-outline" size={24} color="#ea580c" />
-              </View>
-              <View style={styles.scanBadge}>
+              <View style={[styles.scanBadge, { backgroundColor: theme.primary }]}>
                 <Text style={styles.scanBadgeText}>OCR</Text>
               </View>
-              <Text style={styles.newScanTitle}>{t.navScan}</Text>
-              <Text style={styles.newScanDesc} numberOfLines={2}>
-                {language === "es" ? "Usa tu libro escolar real" : "Scan physical book"}
+              <View style={[styles.newScanIconCircle, { backgroundColor: theme.surface }]}>
+                <Ionicons name="camera" size={18} color={theme.primary} />
+              </View>
+              <Text style={[styles.newScanTitle, { color: theme.primary }]}>
+                {language === "es" ? "Escanear Libro" : "Scan Book"}
+              </Text>
+              <Text style={[styles.newScanDesc, { color: theme.textSecondary }]}>
+                {language === "es"
+                  ? "Toma foto a tu página real"
+                  : "Point camera at a physical book"}
               </Text>
             </TouchableOpacity>
 
-            {/* 2. Available Book Cards */}
-            {displayPages.map((page) => {
-              const isSelected = page.id === currentPageId;
-              const wordCount = page.words?.length || page.text.split(/\s+/).length;
-
+            {/* 2. Sample Stories in the active language */}
+            {displayPages.map((pageItem) => {
+              const isSelected = pageItem.id === currentPage.id;
               return (
                 <TouchableOpacity
-                  key={page.id}
-                  style={[styles.bookCard, isSelected && styles.bookCardSelected]}
+                  key={pageItem.id}
+                  style={[
+                    styles.bookCard,
+                    { backgroundColor: theme.surface, borderColor: theme.border },
+                    isSelected && [styles.bookCardSelected, { borderColor: theme.primary }],
+                  ]}
                   onPress={() => {
                     playChime("tap");
-                    onSelectPage(page);
+                    onSelectPage(pageItem);
                     setIsExpanded(false);
                   }}
                   activeOpacity={0.85}
                 >
-                  {page.imageUrl && (
-                    <View style={styles.coverWrapper}>
-                      <Image source={{ uri: page.imageUrl }} style={styles.bookCover} />
-                      <View style={styles.coverOverlay} />
-                      <View style={styles.wordsCountPill}>
-                        <Text style={styles.wordsCountText}>
-                          {wordCount} {t.wordsRead.toLowerCase()}
-                        </Text>
-                      </View>
+                  <View style={styles.coverWrapper}>
+                    <Image
+                      source={{ uri: pageItem.imageUrl }}
+                      style={styles.bookCover}
+                      resizeMode="cover"
+                    />
+                    <View style={styles.coverOverlay} />
+                    <View style={styles.wordsCountPill}>
+                      <Text style={styles.wordsCountText}>
+                        {pageItem.words.length} {language === "es" ? "palabras" : "words"}
+                      </Text>
                     </View>
-                  )}
+                  </View>
 
                   <View style={styles.bookInfo}>
-                    <View style={styles.difficultyBadge}>
-                      <Text style={styles.difficultyText}>{page.gradeLevel}</Text>
+                    <View style={[styles.difficultyBadge, { backgroundColor: theme.surfaceSecondary, borderColor: theme.border }]}>
+                      <Text style={[styles.difficultyText, { color: theme.textSecondary }]}>{pageItem.difficulty}</Text>
                     </View>
-
-                    <Text style={styles.bookCardTitle} numberOfLines={2}>
-                      {page.title}
+                    <Text style={[styles.bookCardTitle, { color: theme.text }]} numberOfLines={2}>
+                      {pageItem.title}
                     </Text>
-
-                    <Text style={styles.bookCardSource} numberOfLines={1}>
-                      {page.source}
+                    <Text style={[styles.bookCardSource, { color: theme.textSecondary }]} numberOfLines={1}>
+                      {pageItem.gradeLevel}
                     </Text>
                   </View>
 
                   {isSelected && (
-                    <View style={styles.activePillIndicator}>
-                      <Ionicons name="checkmark-circle" size={11} color="#ffffff" />
+                    <View style={[styles.activePillIndicator, { backgroundColor: theme.primary }]}>
+                      <Ionicons name="checkmark-sharp" size={10} color="#ffffff" />
                       <Text style={styles.activePillText}>
-                        {language === "es" ? "ACTIVO" : "ACTIVE"}
+                        {language === "es" ? "LEYENDO" : "CURRENT"}
                       </Text>
                     </View>
                   )}
@@ -173,32 +181,27 @@ export const PageSelector: React.FC<PageSelectorProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "#ffffff",
-    borderBottomWidth: 1,
-    borderBottomColor: "#f1f5f9",
+    zIndex: 10,
   },
   compactBar: {
     paddingHorizontal: 16,
     paddingVertical: 7,
+    borderBottomWidth: 1,
   },
   bookPill: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#f8fafc",
     borderRadius: 14,
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
     gap: 10,
   },
   bookIconBadge: {
     width: 28,
     height: 28,
     borderRadius: 8,
-    backgroundColor: "#fff7ed",
     borderWidth: 1,
-    borderColor: "#fed7aa",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -208,42 +211,28 @@ const styles = StyleSheet.create({
   currentBookTitle: {
     fontSize: 13,
     fontWeight: "800",
-    color: "#0f172a",
   },
   currentBookGrade: {
     fontSize: 10,
-    color: "#64748b",
     fontWeight: "500",
   },
   toggleBadge: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    backgroundColor: "#ffffff",
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#cbd5e1",
-  },
-  toggleBadgeActive: {
-    backgroundColor: "#0f172a",
-    borderColor: "#0f172a",
   },
   toggleBadgeText: {
     fontSize: 11,
     fontWeight: "700",
-    color: "#334155",
-  },
-  toggleBadgeTextActive: {
-    color: "#ffffff",
   },
   expandedDrawer: {
     paddingTop: 8,
     paddingBottom: 14,
-    backgroundColor: "#f8fafc",
     borderTopWidth: 1,
-    borderTopColor: "#e2e8f0",
   },
   drawerHeader: {
     paddingHorizontal: 16,
@@ -252,11 +241,9 @@ const styles = StyleSheet.create({
   drawerTitle: {
     fontSize: 13,
     fontWeight: "800",
-    color: "#0f172a",
   },
   drawerSubtitle: {
     fontSize: 11,
-    color: "#64748b",
   },
   scrollList: {
     paddingHorizontal: 16,
@@ -268,9 +255,7 @@ const styles = StyleSheet.create({
     width: 125,
     height: 155,
     borderRadius: 14,
-    backgroundColor: "#fff7ed",
     borderWidth: 1.5,
-    borderColor: "#fed7aa",
     borderStyle: "dashed",
     alignItems: "center",
     justifyContent: "center",
@@ -281,7 +266,6 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 6,
     right: 6,
-    backgroundColor: "#ea580c",
     borderRadius: 5,
     paddingHorizontal: 4,
     paddingVertical: 1,
@@ -295,7 +279,6 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: "#ffedd5",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 6,
@@ -303,12 +286,10 @@ const styles = StyleSheet.create({
   newScanTitle: {
     fontSize: 11,
     fontWeight: "800",
-    color: "#9a3412",
     textAlign: "center",
   },
   newScanDesc: {
     fontSize: 9,
-    color: "#c2410c",
     textAlign: "center",
     marginTop: 2,
     lineHeight: 12,
@@ -317,9 +298,7 @@ const styles = StyleSheet.create({
     width: 135,
     height: 155,
     borderRadius: 14,
-    backgroundColor: "#ffffff",
     borderWidth: 1,
-    borderColor: "#e2e8f0",
     overflow: "hidden",
     shadowColor: "#0f172a",
     shadowOffset: { width: 0, height: 2 },
@@ -329,9 +308,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   bookCardSelected: {
-    borderColor: "#ea580c",
     borderWidth: 2,
-    backgroundColor: "#fffbf7",
   },
   coverWrapper: {
     position: "relative",
@@ -372,28 +349,23 @@ const styles = StyleSheet.create({
   },
   difficultyBadge: {
     alignSelf: "flex-start",
-    backgroundColor: "#f8fafc",
     paddingHorizontal: 5,
     paddingVertical: 1,
     borderRadius: 5,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
   },
   difficultyText: {
     fontSize: 8,
     fontWeight: "800",
-    color: "#475569",
   },
   bookCardTitle: {
     fontSize: 11,
     fontWeight: "800",
-    color: "#0f172a",
     lineHeight: 14,
     marginVertical: 2,
   },
   bookCardSource: {
     fontSize: 9,
-    color: "#64748b",
     fontWeight: "500",
   },
   activePillIndicator: {
@@ -401,7 +373,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 3,
-    backgroundColor: "#ea580c",
     paddingVertical: 2,
   },
   activePillText: {

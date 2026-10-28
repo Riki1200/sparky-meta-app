@@ -8,11 +8,14 @@ import { ParentReportView } from './src/components/ParentReportView';
 import { CameraCaptureModal } from './src/components/CameraCaptureModal';
 import { TutorDrawer } from './src/components/TutorDrawer';
 import { PrivacyBadgeModal } from './src/components/PrivacyBadgeModal';
+import { ReadingSettingsModal } from './src/components/ReadingSettingsModal';
 import { BookPage, ReadingSessionResult, SupportedLanguage } from './src/types';
 import { SAMPLE_BOOK_PAGES } from './src/data/sampleBooks';
 import { getReadingStats, getStarsCount } from './src/services/storageService';
+import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 
-export default function App() {
+function MainApp() {
+  const { theme, themeMode } = useTheme();
   const [language, setLanguage] = useState<SupportedLanguage>('en');
   const [activeTab, setActiveTab] = useState<'reading' | 'report' | 'scan'>('reading');
   const [currentPage, setCurrentPage] = useState<BookPage>(SAMPLE_BOOK_PAGES[0]);
@@ -22,6 +25,7 @@ export default function App() {
   // Modals state
   const [cameraModalVisible, setCameraModalVisible] = useState<boolean>(false);
   const [privacyModalVisible, setPrivacyModalVisible] = useState<boolean>(false);
+  const [readingSettingsVisible, setReadingSettingsVisible] = useState<boolean>(false);
   const [tutorDrawerVisible, setTutorDrawerVisible] = useState<boolean>(false);
   const [tutorMode, setTutorMode] = useState<'explain' | 'celebrate' | 'quiz'>('explain');
   const [selectedWordForTutor, setSelectedWordForTutor] = useState<string>('');
@@ -72,9 +76,9 @@ export default function App() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar style="dark" />
-      <View style={styles.appContainer}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.surface }]}>
+      <StatusBar style={themeMode === 'dark' ? 'light' : 'dark'} />
+      <View style={[styles.appContainer, { backgroundColor: theme.bg }]}>
         {/* Persistent Top Navigation Bar */}
         <Header
           language={language}
@@ -90,6 +94,8 @@ export default function App() {
           streakDays={streakDays}
           starsCount={starsCount}
           onOpenPrivacy={() => setPrivacyModalVisible(true)}
+          onOpenScan={() => setCameraModalVisible(true)}
+          onOpenSettings={() => setReadingSettingsVisible(true)}
         />
 
         {/* Tab 1: Reading Room */}
@@ -112,6 +118,7 @@ export default function App() {
               onPageCompleted={handlePageCompleted}
               onOpenScan={() => setCameraModalVisible(true)}
               onStarsEarned={(newTotal) => setStarsCount(newTotal)}
+              onOpenSettings={() => setReadingSettingsVisible(true)}
             />
           </View>
         )}
@@ -158,19 +165,32 @@ export default function App() {
           onClose={() => setPrivacyModalVisible(false)}
           language={language}
         />
+
+        {/* Child Reading Typography & Accessibility Settings Modal */}
+        <ReadingSettingsModal
+          visible={readingSettingsVisible}
+          onClose={() => setReadingSettingsVisible(false)}
+          language={language}
+        />
       </View>
     </SafeAreaView>
+  );
+}
+
+export default function App() {
+  return (
+    <ThemeProvider>
+      <MainApp />
+    </ThemeProvider>
   );
 }
 
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#ffffff',
   },
   appContainer: {
     flex: 1,
-    backgroundColor: '#f8fafc',
     ...(Platform.OS === 'web'
       ? {
           height: '100vh' as any,
