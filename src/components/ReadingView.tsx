@@ -9,6 +9,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { BookPage, WordToken, ReadingSessionResult, ReadingErrorDetail, SupportedLanguage } from '../types';
 import {
   SpeechRecognitionController,
@@ -456,6 +457,14 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
             },
           ]}
         >
+          {/* Magic Book Top Accent Ribbon */}
+          <LinearGradient
+            colors={['#FF6B35', '#F59E0B', '#8B5CF6', '#3B82F6', '#10B981']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.magicBookRibbon}
+          />
+
           <View style={styles.tokensContainer}>
             {tokens.map((token, idx) => {
               const isCurrent = idx === currentIndex && (isListening || isSimulating || isSparkyReading);
@@ -611,39 +620,41 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
 
         {/* Sparky Lee para Mí (Echo Reading / Phonics Modeling) */}
         <TouchableOpacity
-          style={[
-            styles.dockSparkyListenBtn,
-            { backgroundColor: isSparkyReading ? theme.accent : theme.surfaceSecondary, borderColor: theme.border },
-            isCompact && styles.dockSparkyListenBtnCompact,
-          ]}
+          style={styles.dockButtonTouch}
           onPress={handleSparkyReadAloud}
           activeOpacity={0.8}
           accessibilityLabel="Escuchar a Sparky leer la página"
         >
-          <Ionicons
-            name={isSparkyReading ? 'stop-circle' : 'volume-high'}
-            size={18}
-            color={isSparkyReading ? '#ffffff' : theme.accent}
-          />
-          <Text
+          <LinearGradient
+            colors={isSparkyReading ? ['#6366F1', '#4F46E5'] : (themeMode === 'dark' ? ['#1E1B4B', '#312E81'] : ['#EEF2FF', '#E0E7FF'])}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
             style={[
-              styles.dockSparkyListenText,
-              { color: isSparkyReading ? '#ffffff' : theme.text },
-              isCompact && styles.dockSparkyListenTextCompact,
+              styles.dockSparkyListenBtn,
+              isCompact && styles.dockSparkyListenBtnCompact,
+              { borderColor: isSparkyReading ? '#818CF8' : theme.border },
             ]}
           >
-            {isSparkyReading ? (language === 'es' ? 'Pausa' : 'Pause') : (isCompact ? (language === 'es' ? 'Oír' : 'Hear') : (language === 'es' ? 'Sparky Lee' : 'Sparky Reads'))}
-          </Text>
+            <Ionicons
+              name={isSparkyReading ? 'stop-circle' : 'volume-high'}
+              size={18}
+              color={isSparkyReading ? '#ffffff' : '#6366f1'}
+            />
+            <Text
+              style={[
+                styles.dockSparkyListenText,
+                { color: isSparkyReading ? '#ffffff' : (themeMode === 'dark' ? '#C7D2FE' : '#4338CA') },
+                isCompact && styles.dockSparkyListenTextCompact,
+              ]}
+            >
+              {isSparkyReading ? (language === 'es' ? 'Pausa' : 'Pause') : (isCompact ? (language === 'es' ? 'Oír' : 'Hear') : (language === 'es' ? 'Sparky Lee' : 'Sparky Reads'))}
+            </Text>
+          </LinearGradient>
         </TouchableOpacity>
 
-        {/* Hero Mic Read-Aloud Button */}
+        {/* Hero Mic Read-Aloud Button with Radiant Sunset Gradient */}
         <TouchableOpacity
-          style={[
-            styles.heroMicButton,
-            { backgroundColor: theme.primary },
-            (isListening || isSimulating) && styles.heroMicButtonActive,
-            isCompact && styles.heroMicButtonCompact,
-          ]}
+          style={styles.heroMicTouch}
           onPress={() => {
             if (isListening || isSimulating) {
               stopReadingSession();
@@ -654,45 +665,62 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
           }}
           activeOpacity={0.85}
         >
-          <Ionicons
-            name={isListening || isSimulating ? 'stop-circle' : 'mic'}
-            size={20}
-            color="#ffffff"
-          />
-          <Text style={[styles.heroMicText, isCompact && styles.heroMicTextCompact]}>
-            {isListening || isSimulating
-              ? (language === 'es' ? 'Pausar' : 'Stop')
-              : (isCompact
-                ? (language === 'es' ? 'Leer' : 'Read')
-                : (language === 'es' ? 'Leer en Voz Alta' : 'Read Aloud'))}
-          </Text>
+          <LinearGradient
+            colors={isListening || isSimulating ? ['#EF4444', '#DC2626', '#991B1B'] : ['#FF6B35', '#F97316', '#EA580C']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={[
+              styles.heroMicButton,
+              (isListening || isSimulating) && styles.heroMicButtonActive,
+              isCompact && styles.heroMicButtonCompact,
+            ]}
+          >
+            <Ionicons
+              name={isListening || isSimulating ? 'stop-circle' : 'mic'}
+              size={20}
+              color="#ffffff"
+            />
+            <Text style={[styles.heroMicText, isCompact && styles.heroMicTextCompact]}>
+              {isListening || isSimulating
+                ? (language === 'es' ? 'Pausar' : 'Stop')
+                : (isCompact
+                  ? (language === 'es' ? 'Leer' : 'Read')
+                  : (language === 'es' ? 'Leer en Voz Alta' : 'Read Aloud'))}
+            </Text>
+          </LinearGradient>
         </TouchableOpacity>
 
-        {/* 1-Click Simulation Demo */}
+        {/* 1-Click Simulation Demo with Amber Sunset Gradient */}
         <TouchableOpacity
-          style={[
-            styles.dockSimButton,
-            { backgroundColor: theme.primaryLight, borderColor: theme.borderActive },
-            isSimulating && { backgroundColor: theme.primary },
-            isCompact && styles.dockSimButtonCompact,
-          ]}
+          style={styles.dockButtonTouch}
           onPress={handleSimulateChildReading}
           activeOpacity={0.75}
         >
-          <Ionicons
-            name={isSimulating ? 'pause' : 'play-forward'}
-            size={15}
-            color={isSimulating ? '#ffffff' : theme.primary}
-          />
-          <Text
+          <LinearGradient
+            colors={isSimulating ? ['#EA580C', '#C2410C'] : (themeMode === 'dark' ? ['#431407', '#2A0C03'] : ['#FFF7ED', '#FFEDD5'])}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
             style={[
-              styles.dockSimText,
-              { color: isSimulating ? '#ffffff' : theme.primary },
-              isCompact && styles.dockSimTextCompact,
+              styles.dockSimButton,
+              { borderColor: theme.borderActive },
+              isCompact && styles.dockSimButtonCompact,
             ]}
           >
-            {isSimulating ? (language === 'es' ? 'Pausa' : 'Pause') : (language === 'es' ? 'Simular' : 'Sim')}
-          </Text>
+            <Ionicons
+              name={isSimulating ? 'pause' : 'play-forward'}
+              size={15}
+              color={isSimulating ? '#ffffff' : '#ea580c'}
+            />
+            <Text
+              style={[
+                styles.dockSimText,
+                { color: isSimulating ? '#ffffff' : '#ea580c' },
+                isCompact && styles.dockSimTextCompact,
+              ]}
+            >
+              {isSimulating ? (language === 'es' ? 'Pausa' : 'Pause') : (language === 'es' ? 'Simular' : 'Sim')}
+            </Text>
+          </LinearGradient>
         </TouchableOpacity>
       </View>
     </View>
@@ -980,6 +1008,20 @@ const styles = StyleSheet.create({
     borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  magicBookRibbon: {
+    height: 4,
+    width: '100%',
+    borderRadius: 2,
+    marginBottom: 12,
+  },
+  dockButtonTouch: {
+    borderRadius: 20,
+    overflow: 'hidden',
+  },
+  heroMicTouch: {
+    borderRadius: 25,
+    overflow: 'hidden',
   },
   dockSparkyListenBtn: {
     flexDirection: 'row',

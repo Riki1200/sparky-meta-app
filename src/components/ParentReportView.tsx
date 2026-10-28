@@ -10,6 +10,7 @@ import {
   Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { ReadingSessionResult, ReadingErrorDetail, SupportedLanguage } from '../types';
 import { getReadingHistory, getReadingStats } from '../services/storageService';
 import { speakWordPhonetically, playChime } from '../services/ttsService';
@@ -335,20 +336,27 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
         </View>
 
         <TouchableOpacity
-          style={styles.shareButton}
+          style={styles.shareTouch}
           onPress={handleShareReport}
           activeOpacity={0.85}
         >
-          <Ionicons
-            name={copiedAlert ? 'checkmark-circle' : 'share-social-outline'}
-            size={16}
-            color="#ffffff"
-          />
-          <Text style={styles.shareButtonText}>
-            {copiedAlert
-              ? (language === 'es' ? '¡Copiado!' : 'Copied!')
-              : (language === 'es' ? 'Compartir por WhatsApp' : 'Share Report')}
-          </Text>
+          <LinearGradient
+            colors={['#22C55E', '#16A34A', '#15803D']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.shareButtonGradient}
+          >
+            <Ionicons
+              name={copiedAlert ? 'checkmark-circle' : 'share-social-outline'}
+              size={16}
+              color="#ffffff"
+            />
+            <Text style={styles.shareButtonText}>
+              {copiedAlert
+                ? (language === 'es' ? '¡Copiado!' : 'Copied!')
+                : (language === 'es' ? 'Compartir por WhatsApp' : 'Share Report')}
+            </Text>
+          </LinearGradient>
         </TouchableOpacity>
       </View>
 
@@ -436,42 +444,80 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
         </View>
       </View>
 
-      {/* 4 Bento-Grid KPI Cards */}
+      {/* 4 Bento-Grid KPI Cards with Dynamic Gradients */}
       <View style={styles.kpiGrid}>
         {/* KPI 1: Speed */}
-        <View style={styles.kpiCard}>
-          <View style={[styles.kpiIconCircle, { backgroundColor: '#eff6ff' }]}>
-            <Ionicons name="speedometer-outline" size={18} color="#2563eb" />
+        <View style={[styles.kpiCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+          <LinearGradient
+            colors={['#0EA5E9', '#2563EB']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.kpiGradientCircle}
+          >
+            <Ionicons name="speedometer-outline" size={17} color="#ffffff" />
+          </LinearGradient>
+          <Text style={[styles.kpiValue, { color: theme.text }]}>{activeSession.wordsPerMinute}</Text>
+          <Text style={[styles.kpiLabel, { color: theme.textSecondary }]}>{t.speedometerLabel}</Text>
+          <View style={[styles.kpiBadgePill, { backgroundColor: themeMode === 'dark' ? '#082F49' : '#E0F2FE' }]}>
+            <Text style={[styles.kpiBadgeText, { color: '#0284C7' }]}>WPM</Text>
           </View>
-          <Text style={styles.kpiValue}>{activeSession.wordsPerMinute}</Text>
-          <Text style={styles.kpiLabel}>{t.speedometerLabel}</Text>
         </View>
 
         {/* KPI 2: Accuracy */}
-        <View style={styles.kpiCard}>
-          <View style={[styles.kpiIconCircle, { backgroundColor: '#ecfdf5' }]}>
-            <Ionicons name="checkmark-done-circle-outline" size={18} color="#059669" />
+        <View style={[styles.kpiCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+          <LinearGradient
+            colors={['#10B981', '#059669']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.kpiGradientCircle}
+          >
+            <Ionicons name="checkmark-done-circle-outline" size={17} color="#ffffff" />
+          </LinearGradient>
+          <Text style={[styles.kpiValue, { color: theme.text }]}>{activeSession.accuracyPercent}%</Text>
+          <Text style={[styles.kpiLabel, { color: theme.textSecondary }]}>{t.summaryAccuracy}</Text>
+          <View style={[styles.kpiBadgePill, { backgroundColor: themeMode === 'dark' ? '#064E3B' : '#ECFDF5' }]}>
+            <Text style={[styles.kpiBadgeText, { color: '#059669' }]}>
+              {language === 'es' ? 'Precisión' : 'Accuracy'}
+            </Text>
           </View>
-          <Text style={styles.kpiValue}>{activeSession.accuracyPercent}%</Text>
-          <Text style={styles.kpiLabel}>{t.summaryAccuracy}</Text>
         </View>
 
         {/* KPI 3: Streak */}
-        <View style={styles.kpiCard}>
-          <View style={[styles.kpiIconCircle, { backgroundColor: '#fff7ed' }]}>
-            <Ionicons name="flame-outline" size={18} color="#ea580c" />
+        <View style={[styles.kpiCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+          <LinearGradient
+            colors={['#F97316', '#EF4444']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.kpiGradientCircle}
+          >
+            <Ionicons name="flame-outline" size={17} color="#ffffff" />
+          </LinearGradient>
+          <Text style={[styles.kpiValue, { color: theme.text }]}>{stats.streakDays}</Text>
+          <Text style={[styles.kpiLabel, { color: theme.textSecondary }]}>{t.daysStreak}</Text>
+          <View style={[styles.kpiBadgePill, { backgroundColor: themeMode === 'dark' ? '#431407' : '#FFF7ED' }]}>
+            <Text style={[styles.kpiBadgeText, { color: '#EA580C' }]}>
+              {language === 'es' ? 'Días 🔥' : 'Days 🔥'}
+            </Text>
           </View>
-          <Text style={styles.kpiValue}>{stats.streakDays}</Text>
-          <Text style={styles.kpiLabel}>{t.daysStreak}</Text>
         </View>
 
         {/* KPI 4: Total Words */}
-        <View style={styles.kpiCard}>
-          <View style={[styles.kpiIconCircle, { backgroundColor: '#faf5ff' }]}>
-            <Ionicons name="book-outline" size={18} color="#7c3aed" />
+        <View style={[styles.kpiCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+          <LinearGradient
+            colors={['#8B5CF6', '#6366F1']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.kpiGradientCircle}
+          >
+            <Ionicons name="book-outline" size={17} color="#ffffff" />
+          </LinearGradient>
+          <Text style={[styles.kpiValue, { color: theme.text }]}>{stats.totalWords || activeSession.totalWords}</Text>
+          <Text style={[styles.kpiLabel, { color: theme.textSecondary }]}>{t.summaryWordsRead}</Text>
+          <View style={[styles.kpiBadgePill, { backgroundColor: themeMode === 'dark' ? '#2E1065' : '#F5F3FF' }]}>
+            <Text style={[styles.kpiBadgeText, { color: '#7C3AED' }]}>
+              {language === 'es' ? 'Palabras' : 'Words'}
+            </Text>
           </View>
-          <Text style={styles.kpiValue}>{stats.totalWords || activeSession.totalWords}</Text>
-          <Text style={styles.kpiLabel}>{t.summaryWordsRead}</Text>
         </View>
       </View>
 
@@ -794,19 +840,21 @@ const styles = StyleSheet.create({
     color: '#64748b',
     marginTop: 2,
   },
-  shareButton: {
+  shareTouch: {
+    borderRadius: 20,
+    overflow: 'hidden',
+    shadowColor: '#16a34a',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  shareButtonGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#059669',
     paddingHorizontal: 14,
     paddingVertical: 9,
-    borderRadius: 20,
-    shadowColor: '#059669',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2,
   },
   shareButtonText: {
     color: '#ffffff',
@@ -928,10 +976,28 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 130,
     backgroundColor: '#ffffff',
-    borderRadius: 16,
+    borderRadius: 18,
     padding: 14,
     borderWidth: 1,
     borderColor: '#e2e8f0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  kpiGradientCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
   },
   kpiIconCircle: {
     width: 34,
@@ -951,6 +1017,18 @@ const styles = StyleSheet.create({
     color: '#64748b',
     fontWeight: '600',
     marginTop: 2,
+  },
+  kpiBadgePill: {
+    marginTop: 8,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 2.5,
+    borderRadius: 8,
+  },
+  kpiBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.3,
   },
   sectionCard: {
     backgroundColor: '#ffffff',

@@ -9,6 +9,7 @@
     "expo": "~58.0.20",
     "expo-haptics": "~58.0.7",
     "expo-image-picker": "~58.0.10",
+    "expo-linear-gradient": "~58.0.3",
     "expo-speech": "~58.0.3",
     "expo-status-bar": "~58.0.4",
     "react": "19.3.0",
