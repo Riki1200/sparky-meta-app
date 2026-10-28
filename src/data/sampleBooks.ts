@@ -57,7 +57,7 @@ export const SAMPLE_BOOK_PAGES: BookPage[] = [
     difficulty: 'Beginner',
     gradeLevel: 'Grade 1-2 (Early Reader)',
     text: 'A tiny hummingbird fluttered its colorful wings near the tall green trees. The morning breeze was fresh and gentle. With joyful courage, it found the sweetest flower in the sunlit garden.',
-    imageUrl: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=800&auto=format&fit=crop&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1555169062-013468b47731?w=800&auto=format&fit=crop&q=80',
     words: [],
   },
   {

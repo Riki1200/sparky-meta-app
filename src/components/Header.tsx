@@ -69,7 +69,7 @@ export const Header: React.FC<HeaderProps> = ({
     <View style={[styles.container, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
       {/* Top Accent Gradient Shimmer Line */}
       <LinearGradient
-        colors={['#FF6B35', '#F97316', '#8B5CF6', '#3B82F6', '#10B981']}
+        colors={theme.gradients.rainbow}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
         style={styles.topAccentLine}
@@ -84,7 +84,7 @@ export const Header: React.FC<HeaderProps> = ({
           activeOpacity={0.8}
         >
           <LinearGradient
-            colors={['#FF8A00', '#FF6B35', '#EA580C']}
+            colors={theme.gradients.sparkyMascot}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.mascotCircle}
@@ -97,7 +97,7 @@ export const Header: React.FC<HeaderProps> = ({
                 Sparky<Text style={styles.brandAccent}>.</Text>
               </Text>
               <LinearGradient
-                colors={['#4F46E5', '#7C3AED', '#EC4899']}
+                colors={theme.gradients.metaAi}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.aiBadge}
@@ -113,24 +113,24 @@ export const Header: React.FC<HeaderProps> = ({
         <View style={styles.rightCluster}>
           {/* Stars Pill with Radiant Gradient */}
           <LinearGradient
-            colors={themeMode === 'dark' ? ['#451A03', '#78350F'] : ['#FEF9C3', '#FEF08A']}
+            colors={theme.gradients.starPill}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={[styles.miniPillGradient, { borderColor: '#FDE047' }]}
+            style={[styles.miniPillGradient, { borderColor: theme.border }]}
           >
             <Text style={styles.pillIconSmall}>⭐</Text>
-            <Text style={[styles.goldNumber, { color: themeMode === 'dark' ? '#FDE047' : '#92400E' }]}>{starsCount}</Text>
+            <Text style={[styles.goldNumber, { color: theme.badges.starBadgeText }]}>{starsCount}</Text>
           </LinearGradient>
 
           {/* Streak Pill with Fire Gradient */}
           <LinearGradient
-            colors={themeMode === 'dark' ? ['#431407', '#7C2D12'] : ['#FFEDD5', '#FED7AA']}
+            colors={theme.gradients.streakPill}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={[styles.miniPillGradient, { borderColor: '#F97316' }]}
+            style={[styles.miniPillGradient, { borderColor: theme.borderActive }]}
           >
             <Text style={styles.pillIconSmall}>🔥</Text>
-            <Text style={[styles.flameNumber, { color: themeMode === 'dark' ? '#FED7AA' : '#C2410C' }]}>{streakDays}</Text>
+            <Text style={[styles.flameNumber, { color: theme.badges.streakBadgeText }]}>{streakDays}</Text>
           </LinearGradient>
 
           {/* ☀️ / 🌙 Theme Toggle Button */}
@@ -183,12 +183,12 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Privacy Shield Button */}
           <TouchableOpacity
-            style={[styles.shieldButton, { backgroundColor: themeMode === 'dark' ? '#064e3b' : '#ecfdf5', borderColor: '#a7f3d0' }]}
+            style={[styles.shieldButton, { backgroundColor: theme.badges.kpiAccuracyBg, borderColor: theme.border }]}
             onPress={onOpenPrivacy}
             activeOpacity={0.7}
             accessibilityLabel="Child Privacy Shield"
           >
-            <Ionicons name="shield-checkmark" size={16} color="#10b981" />
+            <Ionicons name="shield-checkmark" size={16} color={theme.badges.kpiAccuracyText} />
           </TouchableOpacity>
         </View>
       </View>
@@ -204,7 +204,7 @@ export const Header: React.FC<HeaderProps> = ({
           >
             {activeTab === "reading" ? (
               <LinearGradient
-                colors={['#FF6B35', '#F97316', '#EA580C']}
+                colors={theme.gradients.tabActiveReading}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.segmentItemActiveGradient}
@@ -228,7 +228,7 @@ export const Header: React.FC<HeaderProps> = ({
           >
             {activeTab === "report" ? (
               <LinearGradient
-                colors={themeMode === 'dark' ? ['#4338CA', '#3730A3', '#312E81'] : ['#1E293B', '#0F172A']}
+                colors={theme.gradients.tabActiveReport}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.segmentItemActiveGradient}
@@ -252,12 +252,12 @@ export const Header: React.FC<HeaderProps> = ({
           activeOpacity={0.85}
         >
           <LinearGradient
-            colors={themeMode === 'dark' ? ['#431407', '#2A0C03'] : ['#FFF7ED', '#FFEDD5']}
+            colors={theme.gradients.scanBtn}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={[styles.quickScanGradient, { borderColor: theme.borderActive }]}
           >
-            <Ionicons name="camera-outline" size={15} color="#ea580c" />
+            <Ionicons name="camera-outline" size={15} color={theme.primary} />
             <Text style={styles.quickScanText}>{t.navScan}</Text>
           </LinearGradient>
         </TouchableOpacity>

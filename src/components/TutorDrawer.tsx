@@ -8,8 +8,10 @@ import {
   ActivityIndicator,
   ScrollView,
   Platform,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { ComprehensionQuestion, ReadingSessionResult, WordExplanation, SupportedLanguage } from '../types';
 import {
   explainWordWithMuseSpark,
@@ -19,6 +21,8 @@ import {
 import { speakText, speakWordPhonetically, playChime } from '../services/ttsService';
 import { addStars } from '../services/storageService';
 import { getTranslation } from '../i18n/translations';
+import { getWordIllustrationUrl } from '../services/imageService';
+import { useTheme } from '../context/ThemeContext';
 import { SparkyMascot } from './SparkyMascot';
 
 interface TutorDrawerProps {
@@ -45,11 +49,13 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
   onViewReport,
 }) => {
   const t = getTranslation(language);
+  const { theme, themeMode } = useTheme();
 
   // Word Explainer state
   const [explanation, setExplanation] = useState<WordExplanation | null>(null);
   const [loadingWord, setLoadingWord] = useState(false);
   const [activeSyllable, setActiveSyllable] = useState<string | null>(null);
+  const [imageError, setImageError] = useState(false);
 
   // Spoken feedback state
   const [spokenFeedback, setSpokenFeedback] = useState<string>('');
@@ -79,6 +85,7 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
     setLoadingWord(true);
     setExplanation(null);
     setActiveSyllable(null);
+    setImageError(false);
     try {
       const res = await explainWordWithMuseSpark(selectedWord, sentenceContext || selectedWord, language);
       setExplanation(res);
@@ -219,6 +226,36 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
                     <Text style={styles.listenWordText}>{t.pronounceAudio}</Text>
                   </TouchableOpacity>
                 </View>
+
+                {/* 🎨 Visual Picture Dictionary / AI Storybook Illustration Card */}
+                {selectedWord && !imageError && (
+                  <View style={[styles.illustrationCard, { backgroundColor: theme.surfaceSecondary, borderColor: theme.border }]}>
+                    <Image
+                      source={{ uri: getWordIllustrationUrl(selectedWord, language, sentenceContext).url }}
+                      style={styles.illustrationImage}
+                      resizeMode="cover"
+                      onError={() => setImageError(true)}
+                    />
+                    <LinearGradient
+                      colors={['transparent', 'rgba(15, 23, 42, 0.82)']}
+                      start={{ x: 0, y: 0.35 }}
+                      end={{ x: 0, y: 1 }}
+                      style={styles.illustrationGradientOverlay}
+                    >
+                      <View style={styles.illustrationTagRow}>
+                        <View style={styles.illustrationAiChip}>
+                          <Ionicons name="color-palette" size={11} color="#ffffff" />
+                          <Text style={styles.illustrationAiChipText}>
+                            {language === 'es' ? 'Diccionario Visual con IA' : 'AI Picture Dictionary'}
+                          </Text>
+                        </View>
+                        <Text style={styles.illustrationWordCaption} numberOfLines={1}>
+                          ✨ {selectedWord}
+                        </Text>
+                      </View>
+                    </LinearGradient>
+                  </View>
+                )}
 
                 {loadingWord ? (
                   <View style={styles.loadingBox}>
@@ -997,5 +1034,54 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 4,
     fontWeight: '600',
+  },
+  illustrationCard: {
+    borderRadius: 20,
+    overflow: 'hidden',
+    height: 160,
+    borderWidth: 1.5,
+    position: 'relative',
+    backgroundColor: '#f1f5f9',
+  },
+  illustrationImage: {
+    width: '100%',
+    height: '100%',
+  },
+  illustrationGradientOverlay: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 70,
+    justifyContent: 'flex-end',
+    paddingHorizontal: 14,
+    paddingBottom: 10,
+  },
+  illustrationTagRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  illustrationAiChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+  },
+  illustrationAiChipText: {
+    color: '#ffffff',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.2,
+  },
+  illustrationWordCaption: {
+    color: '#ffffff',
+    fontSize: 13,
+    fontWeight: '900',
+    textTransform: 'capitalize',
+    letterSpacing: 0.3,
   },
 });

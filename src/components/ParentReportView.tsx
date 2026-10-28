@@ -341,7 +341,7 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
           activeOpacity={0.85}
         >
           <LinearGradient
-            colors={['#22C55E', '#16A34A', '#15803D']}
+            colors={theme.gradients.shareWhatsApp}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.shareButtonGradient}
@@ -449,7 +449,7 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
         {/* KPI 1: Speed */}
         <View style={[styles.kpiCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
           <LinearGradient
-            colors={['#0EA5E9', '#2563EB']}
+            colors={theme.gradients.kpiSpeed}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.kpiGradientCircle}
@@ -458,15 +458,15 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
           </LinearGradient>
           <Text style={[styles.kpiValue, { color: theme.text }]}>{activeSession.wordsPerMinute}</Text>
           <Text style={[styles.kpiLabel, { color: theme.textSecondary }]}>{t.speedometerLabel}</Text>
-          <View style={[styles.kpiBadgePill, { backgroundColor: themeMode === 'dark' ? '#082F49' : '#E0F2FE' }]}>
-            <Text style={[styles.kpiBadgeText, { color: '#0284C7' }]}>WPM</Text>
+          <View style={[styles.kpiBadgePill, { backgroundColor: theme.badges.kpiSpeedBg }]}>
+            <Text style={[styles.kpiBadgeText, { color: theme.badges.kpiSpeedText }]}>WPM</Text>
           </View>
         </View>
 
         {/* KPI 2: Accuracy */}
         <View style={[styles.kpiCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
           <LinearGradient
-            colors={['#10B981', '#059669']}
+            colors={theme.gradients.kpiAccuracy}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.kpiGradientCircle}
@@ -475,8 +475,8 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
           </LinearGradient>
           <Text style={[styles.kpiValue, { color: theme.text }]}>{activeSession.accuracyPercent}%</Text>
           <Text style={[styles.kpiLabel, { color: theme.textSecondary }]}>{t.summaryAccuracy}</Text>
-          <View style={[styles.kpiBadgePill, { backgroundColor: themeMode === 'dark' ? '#064E3B' : '#ECFDF5' }]}>
-            <Text style={[styles.kpiBadgeText, { color: '#059669' }]}>
+          <View style={[styles.kpiBadgePill, { backgroundColor: theme.badges.kpiAccuracyBg }]}>
+            <Text style={[styles.kpiBadgeText, { color: theme.badges.kpiAccuracyText }]}>
               {language === 'es' ? 'Precisión' : 'Accuracy'}
             </Text>
           </View>
@@ -485,7 +485,7 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
         {/* KPI 3: Streak */}
         <View style={[styles.kpiCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
           <LinearGradient
-            colors={['#F97316', '#EF4444']}
+            colors={theme.gradients.kpiStreak}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.kpiGradientCircle}
@@ -494,8 +494,8 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
           </LinearGradient>
           <Text style={[styles.kpiValue, { color: theme.text }]}>{stats.streakDays}</Text>
           <Text style={[styles.kpiLabel, { color: theme.textSecondary }]}>{t.daysStreak}</Text>
-          <View style={[styles.kpiBadgePill, { backgroundColor: themeMode === 'dark' ? '#431407' : '#FFF7ED' }]}>
-            <Text style={[styles.kpiBadgeText, { color: '#EA580C' }]}>
+          <View style={[styles.kpiBadgePill, { backgroundColor: theme.badges.kpiStreakBg }]}>
+            <Text style={[styles.kpiBadgeText, { color: theme.badges.kpiStreakText }]}>
               {language === 'es' ? 'Días 🔥' : 'Days 🔥'}
             </Text>
           </View>
@@ -504,7 +504,7 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
         {/* KPI 4: Total Words */}
         <View style={[styles.kpiCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
           <LinearGradient
-            colors={['#8B5CF6', '#6366F1']}
+            colors={theme.gradients.kpiWords}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.kpiGradientCircle}
@@ -513,8 +513,8 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
           </LinearGradient>
           <Text style={[styles.kpiValue, { color: theme.text }]}>{stats.totalWords || activeSession.totalWords}</Text>
           <Text style={[styles.kpiLabel, { color: theme.textSecondary }]}>{t.summaryWordsRead}</Text>
-          <View style={[styles.kpiBadgePill, { backgroundColor: themeMode === 'dark' ? '#2E1065' : '#F5F3FF' }]}>
-            <Text style={[styles.kpiBadgeText, { color: '#7C3AED' }]}>
+          <View style={[styles.kpiBadgePill, { backgroundColor: theme.badges.kpiWordsBg }]}>
+            <Text style={[styles.kpiBadgeText, { color: theme.badges.kpiWordsText }]}>
               {language === 'es' ? 'Palabras' : 'Words'}
             </Text>
           </View>

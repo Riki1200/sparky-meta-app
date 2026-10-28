@@ -7,6 +7,7 @@ import {
   ScrollView,
   Platform,
   useWindowDimensions,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -18,6 +19,7 @@ import {
 import { speakText, stopSpeaking, playChime } from '../services/ttsService';
 import { saveReadingSession, addStars } from '../services/storageService';
 import { getTranslation } from '../i18n/translations';
+import { getStorySceneIllustrationUrl } from '../services/imageService';
 import { SparkyMascot } from './SparkyMascot';
 import { CelebrationConfetti } from './CelebrationConfetti';
 import { useTheme } from '../context/ThemeContext';
@@ -65,6 +67,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
   const [isSimulating, setIsSimulating] = useState<boolean>(false);
   const [recentSpokenText, setRecentSpokenText] = useState<string>('');
   const [showConfetti, setShowConfetti] = useState<boolean>(false);
+  const [showSceneIllustration, setShowSceneIllustration] = useState<boolean>(false);
 
   const speechControllerRef = useRef<SpeechRecognitionController | null>(null);
   const lastWordTimestampRef = useRef<number>(Date.now());
@@ -446,6 +449,62 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
           />
         </View>
 
+        {/* Toggleable Story Scene Illustration Bar */}
+        <View style={styles.sceneToggleRow}>
+          <TouchableOpacity
+            style={[
+              styles.sceneToggleBtn,
+              {
+                backgroundColor: showSceneIllustration ? theme.primaryLight : theme.surfaceSecondary,
+                borderColor: showSceneIllustration ? theme.primary : theme.border,
+              },
+            ]}
+            onPress={() => {
+              playChime('tap');
+              setShowSceneIllustration((prev) => !prev);
+            }}
+            activeOpacity={0.8}
+          >
+            <Ionicons
+              name={showSceneIllustration ? 'image' : 'image-outline'}
+              size={15}
+              color={showSceneIllustration ? theme.primary : theme.textSecondary}
+            />
+            <Text
+              style={[
+                styles.sceneToggleBtnText,
+                { color: showSceneIllustration ? theme.primary : theme.textSecondary },
+              ]}
+            >
+              {showSceneIllustration
+                ? (language === 'es' ? 'Ocultar Ilustración' : 'Hide Scene Art')
+                : (language === 'es' ? '🎨 Ver Ilustración del Cuento' : '🎨 View Story Scene Art')}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Story Scene Illustration Hero Banner */}
+        {showSceneIllustration && (
+          <View style={[styles.storySceneCard, { borderColor: theme.border }]}>
+            <Image
+              source={{ uri: getStorySceneIllustrationUrl(page.title, page.text, page.imageUrl) }}
+              style={styles.storySceneImage}
+              resizeMode="cover"
+            />
+            <LinearGradient
+              colors={['transparent', 'rgba(15, 23, 42, 0.82)']}
+              style={styles.storySceneGradient}
+            >
+              <Text style={styles.storySceneCaption} numberOfLines={1}>
+                📖 {page.title}
+              </Text>
+              <Text style={styles.storySceneSub}>
+                {language === 'es' ? 'Ilustración artística generada para apoyar la comprensión visual' : 'Visual story scaffolding for dual-coding comprehension'}
+              </Text>
+            </LinearGradient>
+          </View>
+        )}
+
         {/* Elevated Tactile Reading Paper Board */}
         <View
           style={[
@@ -459,7 +518,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
         >
           {/* Magic Book Top Accent Ribbon */}
           <LinearGradient
-            colors={['#FF6B35', '#F59E0B', '#8B5CF6', '#3B82F6', '#10B981']}
+            colors={theme.gradients.bookRibbon}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={styles.magicBookRibbon}
@@ -626,7 +685,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
           accessibilityLabel="Escuchar a Sparky leer la página"
         >
           <LinearGradient
-            colors={isSparkyReading ? ['#6366F1', '#4F46E5'] : (themeMode === 'dark' ? ['#1E1B4B', '#312E81'] : ['#EEF2FF', '#E0E7FF'])}
+            colors={isSparkyReading ? theme.gradients.btnSparkyReads : (themeMode === 'dark' ? ['#1E1B4B', '#312E81'] : ['#EEF2FF', '#E0E7FF'])}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={[
@@ -666,7 +725,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
           activeOpacity={0.85}
         >
           <LinearGradient
-            colors={isListening || isSimulating ? ['#EF4444', '#DC2626', '#991B1B'] : ['#FF6B35', '#F97316', '#EA580C']}
+            colors={isListening || isSimulating ? theme.gradients.btnMicListening : theme.gradients.btnMicIdle}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={[
@@ -697,7 +756,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
           activeOpacity={0.75}
         >
           <LinearGradient
-            colors={isSimulating ? ['#EA580C', '#C2410C'] : (themeMode === 'dark' ? ['#431407', '#2A0C03'] : ['#FFF7ED', '#FFEDD5'])}
+            colors={isSimulating ? theme.gradients.btnSimulate : (themeMode === 'dark' ? ['#431407', '#2A0C03'] : ['#FFF7ED', '#FFEDD5'])}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={[
@@ -709,7 +768,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
             <Ionicons
               name={isSimulating ? 'pause' : 'play-forward'}
               size={15}
-              color={isSimulating ? '#ffffff' : '#ea580c'}
+              color={isSimulating ? '#ffffff' : theme.primary}
             />
             <Text
               style={[
@@ -1092,5 +1151,63 @@ const styles = StyleSheet.create({
   },
   dockSimTextCompact: {
     fontSize: 10,
+  },
+  sceneToggleRow: {
+    alignItems: 'center',
+    marginVertical: 4,
+  },
+  sceneToggleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  sceneToggleBtnText: {
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  storySceneCard: {
+    width: '100%',
+    height: 180,
+    borderRadius: 22,
+    overflow: 'hidden',
+    borderWidth: 1.5,
+    marginVertical: 6,
+    position: 'relative',
+    backgroundColor: '#0f172a',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  storySceneImage: {
+    width: '100%',
+    height: '100%',
+  },
+  storySceneGradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 80,
+    justifyContent: 'flex-end',
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+  },
+  storySceneCaption: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '900',
+    letterSpacing: 0.2,
+  },
+  storySceneSub: {
+    color: '#cbd5e1',
+    fontSize: 11,
+    marginTop: 2,
+    fontWeight: '600',
   },
 });
