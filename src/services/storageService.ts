@@ -135,7 +135,7 @@ export async function getUserProfile(): Promise<UserProfile> {
     // fallback
   }
   return {
-    name: 'Pequeño Lector',
+    name: 'Young Reader',
     level: 'intermediate',
     dailyGoalMinutes: 10,
     avatar: '🌟',

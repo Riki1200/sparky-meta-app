@@ -12,6 +12,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { ChildFontFamily, ChildFontSize } from '../styles/theme';
 import { playChime } from '../services/ttsService';
+import { getTranslation } from '../i18n/translations';
+import { SupportedLanguage } from '../types';
 
 interface ReadingSettingsModalProps {
   visible: boolean;
@@ -41,7 +43,9 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
     fontScale,
   } = useTheme();
 
-  const isEs = language === 'es';
+  const supportedLang = (language as SupportedLanguage) || 'en';
+  const t = getTranslation(supportedLang);
+  const isEs = supportedLang === 'es';
 
   const fonts: { id: ChildFontFamily; name: string; tag: string; description: string; sample: string }[] = [
     {
@@ -51,7 +55,7 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
       description: isEs
         ? 'Diseñada por expertos para reducir la aglomeración de letras y acelerar la lectura.'
         : 'Scientifically designed to reduce visual crowding and increase reading speed.',
-      sample: 'El oso come miel dulce',
+      sample: isEs ? 'El oso come miel dulce' : 'The quick brown fox jumps',
     },
     {
       id: 'comic',
@@ -60,23 +64,23 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
       description: isEs
         ? 'Letras redondeadas y cálidas similares a los libros infantiles y cartillas escolares.'
         : 'Warm, rounded letterforms similar to classic early children storybooks.',
-      sample: 'La cometa vuela alto',
+      sample: isEs ? 'La cometa vuela alto' : 'Stars shine brightly tonight',
     },
     {
       id: 'dyslexic',
-      name: 'Apoyo para Dislexia',
+      name: isEs ? 'Apoyo para Dislexia' : 'Dyslexia Support',
       tag: isEs ? '👓 Alto Contraste y Espaciado' : '👓 High Spacing & Contrast',
       description: isEs
         ? 'Mayor peso en la base de las letras para evitar que el niño confunda b/d o p/q.'
         : 'Weighted character stems and wide spacing to prevent letter confusion.',
-      sample: 'Los barcos navegan rápido',
+      sample: isEs ? 'Los barcos navegan rápido' : 'Bold boats sail safely home',
     },
     {
       id: 'system',
       name: isEs ? 'Estándar del Sistema' : 'System Default',
       tag: isEs ? '📱 Neutra' : '📱 Neutral',
       description: isEs ? 'Tipografía predeterminada del dispositivo.' : 'Standard device system typeface.',
-      sample: 'Lectura clara y sencilla',
+      sample: isEs ? 'Lectura clara y sencilla' : 'Clear and simple reading',
     },
   ];
 
@@ -97,10 +101,10 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
               </View>
               <View>
                 <Text style={[styles.title, { color: theme.text }]}>
-                  {isEs ? 'Ajustes de Lectura y Accesibilidad' : 'Reading & Accessibility Settings'}
+                  {t.settingsModalTitle}
                 </Text>
                 <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
-                  {isEs ? 'Personaliza la fuente, tamaño y contraste para el niño' : 'Customize typography, contrast & size for child comfort'}
+                  {t.settingsModalSubtitle}
                 </Text>
               </View>
             </View>
@@ -122,7 +126,7 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
             <View style={[styles.previewCard, { backgroundColor: theme.paperCardBg, borderColor: theme.borderActive }]}>
               <View style={styles.previewHeader}>
                 <Text style={[styles.previewTag, { color: theme.primary }]}>
-                  {isEs ? 'VISTA PREVIA EN VIVO' : 'LIVE READING PREVIEW'}
+                  {t.livePreview}
                 </Text>
                 <Text style={[styles.previewMeta, { color: theme.textMuted }]}>
                   {fontFamily.toUpperCase()} • {fontSize.toUpperCase()} • {themeMode.toUpperCase()}
@@ -140,16 +144,14 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
                   },
                 ]}
               >
-                {isEs
-                  ? '✨ Sparky acompaña al niño palabra por palabra en su libro real.'
-                  : '✨ Sparky patiently guides the child word by word in their physical book.'}
+                {t.previewSampleText}
               </Text>
             </View>
 
             {/* Section 1: Dark / Light Mode */}
             <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: theme.text }]}>
-                {isEs ? '🌓 Tema Visual (Modo Día / Noche)' : '🌓 Visual Theme (Light / Dark Mode)'}
+                {t.themeVisualTitle}
               </Text>
               <View style={styles.themeRow}>
                 <TouchableOpacity
@@ -169,10 +171,10 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
                   <Text style={styles.themeEmoji}>☀️</Text>
                   <View style={styles.themeInfo}>
                     <Text style={[styles.themeLabel, { color: themeMode === 'light' ? '#9a3412' : theme.text }]}>
-                      {isEs ? 'Modo Claro (Día)' : 'Light Mode (Day)'}
+                      {t.lightModeTitle}
                     </Text>
                     <Text style={[styles.themeSub, { color: theme.textSecondary }]}>
-                      {isEs ? 'Fondo blanco cálido tipo papel escolar' : 'Warm paper white for daylight reading'}
+                      {t.lightModeDesc}
                     </Text>
                   </View>
                   {themeMode === 'light' && (
@@ -197,10 +199,10 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
                   <Text style={styles.themeEmoji}>🌙</Text>
                   <View style={styles.themeInfo}>
                     <Text style={[styles.themeLabel, { color: themeMode === 'dark' ? '#fed7aa' : theme.text }]}>
-                      {isEs ? 'Modo Oscuro (Noche)' : 'Dark Mode (Night)'}
+                      {t.darkModeTitle}
                     </Text>
                     <Text style={[styles.themeSub, { color: theme.textSecondary }]}>
-                      {isEs ? 'Descanso visual y bajo brillo en la noche' : 'Prevents eye strain in dimmer rooms'}
+                      {t.darkModeDesc}
                     </Text>
                   </View>
                   {themeMode === 'dark' && (
@@ -213,7 +215,7 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
             {/* Section 2: Child Font Selection */}
             <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: theme.text }]}>
-                {isEs ? '🔤 Tipografía Especializada para Niños' : '🔤 Child-Optimized Typography'}
+                {t.fontFamilyTitle}
               </Text>
               <View style={styles.fontsList}>
                 {fonts.map((f) => {
@@ -340,12 +342,10 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
                   <Text style={styles.aidEmoji}>📏</Text>
                   <View style={styles.aidTexts}>
                     <Text style={[styles.aidTitle, { color: theme.text }]}>
-                      {isEs ? 'Regla Visual de Enfoque' : 'Reading Focus Ruler'}
+                      {t.focusRulerTitle}
                     </Text>
                     <Text style={[styles.aidSub, { color: theme.textSecondary }]}>
-                      {isEs
-                        ? 'Resalta la palabra activa y atenúa el resto para evitar saltarse renglones'
-                        : 'Highlights active word line to prevent skipping lines on real pages'}
+                      {t.focusRulerDesc}
                     </Text>
                   </View>
                 </View>
@@ -375,12 +375,10 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
                   <Text style={styles.aidEmoji}>🔤</Text>
                   <View style={styles.aidTexts}>
                     <Text style={[styles.aidTitle, { color: theme.text }]}>
-                      {isEs ? 'Modo Silábico (Método Fonético)' : 'Syllable Mode (Phonics)'}
+                      {t.syllablesTitle}
                     </Text>
                     <Text style={[styles.aidSub, { color: theme.textSecondary }]}>
-                      {isEs
-                        ? 'Separa palabras largas en sílabas (es•tre•lla) para facilitar el deletreo'
-                        : 'Divides long words into clickable syllables (star•light) for easy blending'}
+                      {t.syllablesDesc}
                     </Text>
                   </View>
                 </View>

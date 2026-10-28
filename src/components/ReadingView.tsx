@@ -370,23 +370,15 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
 
   const getMascotPrompt = () => {
     if (showConfetti) {
-      return language === 'es'
-        ? '¡Excelente lectura! ¡Ganaste 10 estrellas! ⭐🎉'
-        : 'Incredible reading! You earned 10 stars! ⭐🎉';
+      return t.promptCelebration;
     }
     if (isSparkyReading) {
-      return language === 'es'
-        ? 'Escucha con atención cómo suena cada palabra... 🎧📖'
-        : 'Listen carefully to how each word is pronounced... 🎧📖';
+      return t.promptSparkyReads;
     }
     if (isListening || isSimulating) {
-      return language === 'es'
-        ? '¡Te escucho! Lee con voz clara y tranquila... 🎧'
-        : 'I am listening! Read aloud with confidence... 🎧';
+      return t.promptListening;
     }
-    return language === 'es'
-      ? "Toca cualquier palabra para escucharla o pulsa 'Sparky Lee' / 'Leer en Voz Alta' 📖"
-      : "Tap any word to hear it or tap 'Sparky Reads' / 'Read Aloud' 📖";
+    return t.promptIdle;
   };
 
   const progressPercent = tokens.length > 0 ? (currentIndex / tokens.length) * 100 : 0;
@@ -399,7 +391,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
       <View style={[styles.miniHudBar, { backgroundColor: theme.hudBg, borderBottomColor: theme.hudBorder }]}>
         <View style={styles.hudLeft}>
           <Text style={[styles.hudCountText, { color: theme.textSecondary }]}>
-            {currentIndex}/{tokens.length} {language === 'es' ? 'palabras' : 'words'}
+            {currentIndex}/{tokens.length} {t.wordsLabel}
           </Text>
           <View style={[styles.hudProgressTrack, { backgroundColor: theme.borderLight }]}>
             <View style={[styles.hudProgressFill, { width: `${progressPercent}%`, backgroundColor: theme.primary }]} />
@@ -425,7 +417,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
                 onOpenSettings();
               }}
               activeOpacity={0.7}
-              accessibilityLabel="Ajustes de Fuente y Tamaño"
+              accessibilityLabel={t.settingsBtnLabel}
             >
               <Text style={[styles.hudAaText, { color: theme.text }]}>Aa</Text>
             </TouchableOpacity>
@@ -476,9 +468,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
                 { color: showSceneIllustration ? theme.primary : theme.textSecondary },
               ]}
             >
-              {showSceneIllustration
-                ? (language === 'es' ? 'Ocultar Ilustración' : 'Hide Scene Art')
-                : (language === 'es' ? '🎨 Ver Ilustración del Cuento' : '🎨 View Story Scene Art')}
+              {showSceneIllustration ? t.hideSceneArt : t.viewSceneArt}
             </Text>
           </TouchableOpacity>
         </View>
@@ -499,7 +489,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
                 📖 {page.title}
               </Text>
               <Text style={styles.storySceneSub}>
-                {language === 'es' ? 'Ilustración artística generada para apoyar la comprensión visual' : 'Visual story scaffolding for dual-coding comprehension'}
+                {t.sceneArtDesc}
               </Text>
             </LinearGradient>
           </View>
@@ -629,7 +619,23 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
               <View style={styles.legendItem}>
                 <View style={[styles.legendDot, { backgroundColor: theme.primary }]} />
                 <Text style={[styles.legendLabel, { color: theme.primary }]}>
-                  {language === 'es' ? 'Silabeo Activo' : 'Syllables Active'}
+                  {language === 'es'
+                    ? 'Silabeo Activo'
+                    : language === 'fr'
+                    ? 'Syllabes Actives'
+                    : language === 'pt'
+                    ? 'Sílabas Ativas'
+                    : language === 'de'
+                    ? 'Silben Aktiv'
+                    : language === 'it'
+                    ? 'Sillabe Attive'
+                    : language === 'nl'
+                    ? 'Lettergrepen Actief'
+                    : language === 'pl'
+                    ? 'Sylaby Aktywne'
+                    : language === 'tr'
+                    ? 'Heceler Aktif'
+                    : 'Syllables Active'}
                 </Text>
               </View>
             )}
@@ -641,7 +647,23 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
           <View style={[styles.liveTranscriptBox, { backgroundColor: theme.primaryLight, borderColor: theme.borderActive }]}>
             <Ionicons name="mic-circle" size={16} color={theme.primary} />
             <Text style={[styles.liveTranscriptLabel, { color: theme.primary }]}>
-              {language === 'es' ? 'Escuché:' : 'Heard:'}
+              {language === 'es'
+                ? 'Escuché:'
+                : language === 'fr'
+                ? 'Entendu :'
+                : language === 'pt'
+                ? 'Ouvi:'
+                : language === 'de'
+                ? 'Gehört:'
+                : language === 'it'
+                ? 'Ascoltato:'
+                : language === 'nl'
+                ? 'Gehoord:'
+                : language === 'pl'
+                ? 'Usłyszano:'
+                : language === 'tr'
+                ? 'Duyuldu:'
+                : 'Heard:'}
             </Text>
             <Text style={[styles.liveTranscriptPhrase, { color: theme.text }]} numberOfLines={1}>
               "{recentSpokenText}"
@@ -672,7 +694,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
             resetPageReading();
           }}
           activeOpacity={0.7}
-          accessibilityLabel="Reset reading page"
+          accessibilityLabel={t.resetBtn}
         >
           <Ionicons name="refresh" size={18} color={theme.textSecondary} />
         </TouchableOpacity>
@@ -682,7 +704,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
           style={styles.dockButtonTouch}
           onPress={handleSparkyReadAloud}
           activeOpacity={0.8}
-          accessibilityLabel="Escuchar a Sparky leer la página"
+          accessibilityLabel={t.readAloudPrompt}
         >
           <LinearGradient
             colors={isSparkyReading ? theme.gradients.btnSparkyReads : (themeMode === 'dark' ? ['#1E1B4B', '#312E81'] : ['#EEF2FF', '#E0E7FF'])}
@@ -706,7 +728,11 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
                 isCompact && styles.dockSparkyListenTextCompact,
               ]}
             >
-              {isSparkyReading ? (language === 'es' ? 'Pausa' : 'Pause') : (isCompact ? (language === 'es' ? 'Oír' : 'Hear') : (language === 'es' ? 'Sparky Lee' : 'Sparky Reads'))}
+              {isSparkyReading
+                ? (language === 'es' ? 'Pausa' : 'Pause')
+                : (isCompact
+                  ? (language === 'es' ? 'Oír' : 'Hear')
+                  : (language === 'es' ? 'Sparky Lee' : (language === 'fr' ? 'Sparky Lit' : (language === 'pt' ? 'Sparky Lê' : (language === 'de' ? 'Sparky Liest' : (language === 'it' ? 'Sparky Legge' : (language === 'nl' ? 'Sparky Leest' : (language === 'pl' ? 'Sparky Czyta' : (language === 'tr' ? 'Sparky Okur' : 'Sparky Reads')))))))))}
             </Text>
           </LinearGradient>
         </TouchableOpacity>
@@ -740,11 +766,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
               color="#ffffff"
             />
             <Text style={[styles.heroMicText, isCompact && styles.heroMicTextCompact]}>
-              {isListening || isSimulating
-                ? (language === 'es' ? 'Pausar' : 'Stop')
-                : (isCompact
-                  ? (language === 'es' ? 'Leer' : 'Read')
-                  : (language === 'es' ? 'Leer en Voz Alta' : 'Read Aloud'))}
+              {isListening || isSimulating ? t.stopReadingBtn : t.startReadingBtn}
             </Text>
           </LinearGradient>
         </TouchableOpacity>
@@ -777,7 +799,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
                 isCompact && styles.dockSimTextCompact,
               ]}
             >
-              {isSimulating ? (language === 'es' ? 'Pausa' : 'Pause') : (language === 'es' ? 'Simular' : 'Sim')}
+              {isSimulating ? (language === 'es' ? 'Pausa' : 'Pause') : t.simulateDemoBtn}
             </Text>
           </LinearGradient>
         </TouchableOpacity>

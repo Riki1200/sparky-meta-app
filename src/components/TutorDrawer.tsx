@@ -246,7 +246,7 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
                         <View style={styles.illustrationAiChip}>
                           <Ionicons name="color-palette" size={11} color="#ffffff" />
                           <Text style={styles.illustrationAiChipText}>
-                            {language === 'es' ? 'Diccionario Visual con IA' : 'AI Picture Dictionary'}
+                            {t.aiPictureDictionary}
                           </Text>
                         </View>
                         <Text style={styles.illustrationWordCaption} numberOfLines={1}>
@@ -267,6 +267,16 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
                         ? 'Sparky prépare la meilleure explication pour toi...'
                         : language === 'pt'
                         ? 'Sparky está preparando a melhor explicação...'
+                        : language === 'de'
+                        ? 'Sparky bereitet die beste Erklärung für dich vor...'
+                        : language === 'it'
+                        ? 'Sparky sta preparando la migliore spiegazione...'
+                        : language === 'nl'
+                        ? 'Sparky bereidt de beste uitleg voor...'
+                        : language === 'pl'
+                        ? 'Sparky przygotowuje najlepsze wyjaśnienie...'
+                        : language === 'tr'
+                        ? 'Sparky senin için en iyi açıklamayı hazırlıyor...'
                         : 'Sparky is thinking of the best kid-friendly explanation...'}
                     </Text>
                   </View>
@@ -275,7 +285,7 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
                     {/* Interactive Syllable Chips */}
                     <View style={styles.syllablesCard}>
                       <Text style={styles.cardSmallLabel}>
-                        🗣️ {t.wordSyllables.toUpperCase()} (TAP TO HEAR):
+                        🗣️ {t.wordSyllables.toUpperCase()} ({t.tapToHear}):
                       </Text>
                       <View style={styles.syllablesChipRow}>
                         {getSyllableList(explanation.syllables).map((syl, sIdx) => {

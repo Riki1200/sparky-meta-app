@@ -66,6 +66,7 @@ const I18N: Record<
     howStep3Desc: string;
     step3Title: string;
     step3Subtitle: string;
+    fontPreviewLabel: string;
     fontPreviewText: string;
     fontLexend: string;
     fontComic: string;
@@ -111,6 +112,7 @@ const I18N: Record<
     howStep3Desc: "Si te trabas, tócala. Meta AI Tutor te la explicará en sílabas y te mostrará un dibujo ilustrado.",
     step3Title: "Lectura Cómoda y Accesible",
     step3Subtitle: "Personaliza la tipografía para que leer sea fácil y sin fatiga visual.",
+    fontPreviewLabel: "Vista previa en vivo:",
     fontPreviewText: "El colibrí vuela entre las flores con alas veloces.",
     fontLexend: "Lexend Deca (Fluidez)",
     fontComic: "Comic (Infantil)",
@@ -155,6 +157,7 @@ const I18N: Record<
     howStep3Desc: "Stuck on a word? Tap it! Meta AI Tutor breaks it into syllables and shows picture cards.",
     step3Title: "Comfort & Accessibility",
     step3Subtitle: "Customize child typography for relaxed, dyslexia-friendly reading.",
+    fontPreviewLabel: "Live font preview:",
     fontPreviewText: "The hummingbird hovers over colorful garden blossoms.",
     fontLexend: "Lexend Deca (Fluency)",
     fontComic: "Comic (Playful)",
@@ -199,6 +202,7 @@ const I18N: Record<
     howStep3Desc: "Le tuteur Meta AI t'explique le mot en syllabes avec des images.",
     step3Title: "Typographie & Confort",
     step3Subtitle: "Polices adaptées aux enfants et à la dyslexie.",
+    fontPreviewLabel: "Aperçu de la police en direct :",
     fontPreviewText: "Le colibri vole joyeusement au-dessus des fleurs.",
     fontLexend: "Lexend (Fluidité)",
     fontComic: "Comic (Ludique)",
@@ -243,6 +247,7 @@ const I18N: Record<
     howStep3Desc: "O Meta AI Tutor divide em sílabas e mostra o dicionário visual.",
     step3Title: "Conforto e Acessibilidade",
     step3Subtitle: "Fontes especiais para dislexia e redução de cansaço visual.",
+    fontPreviewLabel: "Pré-visualização em tempo real:",
     fontPreviewText: "O beija-flor voa ligeiro entre as flores coloridas.",
     fontLexend: "Lexend Deca",
     fontComic: "Comic Infantil",
@@ -287,6 +292,7 @@ const I18N: Record<
     howStep3Desc: "Meta KI Tutor erklärt Silben und zeigt Bildkarten.",
     step3Title: "Schrift & Komfort",
     step3Subtitle: "Kinderfreundliche und legastheniegerechte Schriftarten.",
+    fontPreviewLabel: "Live-Schriftvorschau:",
     fontPreviewText: "Der Kolibri fliegt flink von Blüte zu Blüte.",
     fontLexend: "Lexend Deca",
     fontComic: "Comic Schrift",
@@ -331,6 +337,7 @@ const I18N: Record<
     howStep3Desc: "Meta AI Tutor spiega le sillabe e mostra illustrazioni.",
     step3Title: "Caratteri & Accessibilità",
     step3Subtitle: "Font ad alta leggibilità per dislessia e bambini.",
+    fontPreviewLabel: "Anteprima dal vivo:",
     fontPreviewText: "Il colibrì vola veloce tra i fiori profumati.",
     fontLexend: "Lexend Deca",
     fontComic: "Comic per Bambini",
@@ -375,6 +382,7 @@ const I18N: Record<
     howStep3Desc: "Meta AI Tutor legt lettergrepen en plaatjes uit.",
     step3Title: "Lettertype & Comfort",
     step3Subtitle: "Dyslexie-vriendelijk en gemakkelijk leesbaar.",
+    fontPreviewLabel: "Live lettertype voorbeeld:",
     fontPreviewText: "De kolibrie vliegt vrolijk langs de bloemen.",
     fontLexend: "Lexend Deca",
     fontComic: "Comic",
@@ -419,6 +427,7 @@ const I18N: Record<
     howStep3Desc: "Meta AI Tutor dzieli słowo na sylaby i pokazuje obrazek.",
     step3Title: "Czcionka i Wygoda",
     step3Subtitle: "Czcionki przyjazne dzieciom i osobom z dysleksją.",
+    fontPreviewLabel: "Podgląd czcionki na żywo:",
     fontPreviewText: "Koliber szybuje zwinnie pośród kwiatów.",
     fontLexend: "Lexend Deca",
     fontComic: "Comic",
@@ -463,6 +472,7 @@ const I18N: Record<
     howStep3Desc: "Meta AI Tutor hecelere böler ve resimli kart gösterir.",
     step3Title: "Konfor & Erişilebilirlik",
     step3Subtitle: "Göz yormayan ve disleksi dostu yazı tipleri.",
+    fontPreviewLabel: "Canlı yazı tipi önizlemesi:",
     fontPreviewText: "Küçük sinek kuşu renkli çiçekler arasında kanat çırpar.",
     fontLexend: "Lexend Deca",
     fontComic: "Çocukça Comic",
@@ -488,13 +498,13 @@ export const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({
   language,
 }) => {
   const { theme } = useTheme();
-  const t = I18N[language] || I18N.es;
+  const t = I18N[language] || I18N.en;
 
   const [currentStep, setCurrentStep] = useState<number>(1);
   const totalSteps = 4;
 
   // Profile setup state
-  const [readerName, setReaderName] = useState<string>("Lucas");
+  const [readerName, setReaderName] = useState<string>("");
   const [selectedAvatar, setSelectedAvatar] = useState<string>("🌟");
   const [readingLevel, setReadingLevel] = useState<"beginner" | "intermediate" | "advanced">("intermediate");
   const [selectedFont, setSelectedFont] = useState<"lexend" | "comic" | "dyslexic">("lexend");
@@ -538,7 +548,7 @@ export const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({
   const handleComplete = async () => {
     playChime("complete");
     await saveUserProfile({
-      name: readerName.trim() || "Pequeño Lector",
+      name: readerName.trim() || (language === 'es' ? "Pequeño Lector" : "Young Reader"),
       avatar: selectedAvatar,
       level: readingLevel,
       dailyGoalMinutes,
@@ -816,7 +826,7 @@ export const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({
                   ]}
                 >
                   <Text style={[styles.fontPreviewLabel, { color: theme.textMuted }]}>
-                    Vista previa en vivo:
+                    {t.fontPreviewLabel}
                   </Text>
                   <Text
                     style={[

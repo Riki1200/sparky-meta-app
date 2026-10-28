@@ -77,12 +77,10 @@ export const PageSelector: React.FC<PageSelectorProps> = ({
         <View style={[styles.expandedDrawer, { backgroundColor: theme.bg, borderTopColor: theme.border }]}>
           <View style={styles.drawerHeader}>
             <Text style={[styles.drawerTitle, { color: theme.text }]}>
-              {language === "es" ? "Biblioteca de Cuentos" : "Story Library"}
+              {t.shelfTitle}
             </Text>
             <Text style={[styles.drawerSubtitle, { color: theme.textSecondary }]}>
-              {language === "es"
-                ? "Elige una lectura o escanea una página de tu libro de texto escolar"
-                : "Choose a story or scan a page from your school book"}
+              {t.shelfSubtitle}
             </Text>
           </View>
 
@@ -108,12 +106,10 @@ export const PageSelector: React.FC<PageSelectorProps> = ({
                 <Ionicons name="camera" size={18} color={theme.primary} />
               </View>
               <Text style={[styles.newScanTitle, { color: theme.primary }]}>
-                {language === "es" ? "Escanear Libro" : "Scan Book"}
+                {t.navScan}
               </Text>
-              <Text style={[styles.newScanDesc, { color: theme.textSecondary }]}>
-                {language === "es"
-                  ? "Toma foto a tu página real"
-                  : "Point camera at a physical book"}
+              <Text style={[styles.newScanDesc, { color: theme.textSecondary }]} numberOfLines={2}>
+                {t.scanBookButton}
               </Text>
             </TouchableOpacity>
 
@@ -144,7 +140,7 @@ export const PageSelector: React.FC<PageSelectorProps> = ({
                     <View style={styles.coverOverlay} />
                     <View style={styles.wordsCountPill}>
                       <Text style={styles.wordsCountText}>
-                        {pageItem.words.length} {language === "es" ? "palabras" : "words"}
+                        {pageItem.words.length} {t.wordsLabel}
                       </Text>
                     </View>
                   </View>

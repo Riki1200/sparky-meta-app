@@ -293,13 +293,13 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
   const handleShareReport = () => {
     if (!activeSession) return;
     const summaryText =
-      `📚 Reporte de Progreso de Lectura - Sparky Lector (Meta AI)\n` +
-      `Cuento: ${activeSession.pageTitle}\n` +
-      `Fecha: ${activeSession.date}\n` +
-      `Velocidad: ${activeSession.wordsPerMinute} Palabras por minuto (WPM)\n` +
-      `Precisión: ${activeSession.accuracyPercent}%\n` +
-      `Palabras leídas: ${activeSession.totalWords}\n` +
-      `Palabras para reforzar en casa: ${activeSession.errors.map((e) => e.word).join(', ') || '¡Ninguna! Lectura perfecta'}`;
+      `📚 ${t.reportTitle} - ${t.appName} (Meta AI)\n` +
+      `${t.shareReportStory}: ${activeSession.pageTitle}\n` +
+      `${t.timeLabel}: ${activeSession.date}\n` +
+      `${t.shareReportSpeed}: ${activeSession.wordsPerMinute} WPM\n` +
+      `${t.shareReportAccuracy}: ${activeSession.accuracyPercent}%\n` +
+      `${t.shareReportWordsRead}: ${activeSession.totalWords}\n` +
+      `${t.shareReportPractice}: ${activeSession.errors.map((e) => e.word).join(', ') || t.shareReportPerfect}`;
 
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
       navigator.clipboard.writeText(summaryText);
@@ -307,7 +307,7 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
       playChime('sparkle');
       setTimeout(() => setCopiedAlert(false), 3000);
     } else {
-      Alert.alert('Reporte Listo para Compartir', summaryText);
+      Alert.alert(t.shareReportBtn, summaryText);
     }
   };
 

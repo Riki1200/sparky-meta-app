@@ -146,7 +146,7 @@ export const Header: React.FC<HeaderProps> = ({
               toggleTheme();
             }}
             activeOpacity={0.75}
-            accessibilityLabel="Alternar Modo Claro / Oscuro"
+            accessibilityLabel={t.themeToggleLabel}
           >
             <Text style={styles.themeEmojiText}>
               {themeMode === "light" ? "☀️" : "🌙"}
@@ -164,7 +164,7 @@ export const Header: React.FC<HeaderProps> = ({
               if (onOpenSettings) onOpenSettings();
             }}
             activeOpacity={0.75}
-            accessibilityLabel="Ajustes de Fuente Infantil y Accesibilidad"
+            accessibilityLabel={t.settingsBtnLabel}
           >
             <Text style={[styles.fontBtnText, { color: theme.text }]}>Aa</Text>
           </TouchableOpacity>
@@ -180,7 +180,7 @@ export const Header: React.FC<HeaderProps> = ({
               if (onOpenTutorial) onOpenTutorial();
             }}
             activeOpacity={0.75}
-            accessibilityLabel="Guía y Cómo usar Sparky"
+            accessibilityLabel={t.tutorialBtnLabel}
           >
             <Text style={styles.themeEmojiText}>❓</Text>
           </TouchableOpacity>
