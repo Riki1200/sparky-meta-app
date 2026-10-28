@@ -26,6 +26,15 @@ function getAudioContext() {
   return audioCtx;
 }
 
+let cachedVoices: SpeechSynthesisVoice[] = [];
+
+if (Platform.OS === 'web' && typeof window !== 'undefined' && 'speechSynthesis' in window) {
+  cachedVoices = window.speechSynthesis.getVoices();
+  window.speechSynthesis.onvoiceschanged = () => {
+    cachedVoices = window.speechSynthesis.getVoices();
+  };
+}
+
 /**
  * Kid-friendly Text-to-Speech (TTS) engine.
  * Speaks naturally at a comfortable, warm pace for early readers.
@@ -43,13 +52,25 @@ export async function speakText(
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = langCode;
     utterance.rate = rate; // Gentle, clear speed for kids
-    utterance.pitch = 1.1; // Slightly higher, warm and friendly
+    utterance.pitch = 1.08; // Slightly higher, warm and friendly
 
-    // Prefer a natural voice if available
-    const voices = window.speechSynthesis.getVoices();
-    const matchingVoice = voices.find(
-      (v) => v.lang.startsWith(language) && (v.name.includes('Natural') || v.name.includes('Google') || v.name.includes('Samantha') || v.name.includes('Thomas') || v.name.includes('Luciana') || v.name.includes('Mónica'))
-    ) || voices.find((v) => v.lang.startsWith(language));
+    // Prefer a warm, natural voice if available
+    const voices = cachedVoices.length > 0 ? cachedVoices : window.speechSynthesis.getVoices();
+    const matchingVoice =
+      voices.find(
+        (v) =>
+          v.lang.toLowerCase().startsWith(language.toLowerCase()) &&
+          (v.name.includes('Natural') ||
+            v.name.includes('Google') ||
+            v.name.includes('Samantha') ||
+            v.name.includes('Paulina') ||
+            v.name.includes('Luciana') ||
+            v.name.includes('Mónica') ||
+            v.name.includes('Diego') ||
+            v.name.includes('Francisca'))
+      ) ||
+      voices.find((v) => v.lang.toLowerCase().startsWith(language.toLowerCase())) ||
+      voices.find((v) => v.lang.toLowerCase().includes(langCode.toLowerCase()));
 
     if (matchingVoice) {
       utterance.voice = matchingVoice;
@@ -79,6 +100,24 @@ export async function speakText(
     console.warn('Speech synthesis error:', err);
     if (onDone) onDone();
   }
+}
+
+/**
+ * Kid-friendly voice sample preview for testing Sparky's voice.
+ */
+export function getSparkyVoiceSample(language: SupportedLanguage = 'en'): string {
+  const samples: Record<SupportedLanguage, string> = {
+    es: '¡Hola amiguito! Soy Sparky, tu tutor con Meta Muse Spark. ¡Juntos haremos que cada palabra sea una aventura mágica!',
+    en: 'Hello superstar! I am Sparky, your reading tutor powered by Meta Muse Spark. Together we make every story an adventure!',
+    fr: 'Bonjour petit champion ! Je suis Sparky, ton tuteur propulsé par Meta Muse Spark. Découvrons ensemble la magie des mots !',
+    pt: 'Olá amiguinho! Sou o Sparky, seu tutor de leitura da Meta Muse Spark. Ler com você é uma grande aventura mágica!',
+    de: 'Hallo Lesestar! Ich bin Sparky, dein Lesetutor mit Meta Muse Spark. Zusammen entdecken wir spannende Geschichten!',
+    it: 'Ciao piccolo campione! Sono Sparky, il tuo tutor di lettura con Meta Muse Spark. Leggere insieme è un’avventura fantastica!',
+    nl: 'Hallo superster! Ik ben Sparky, jouw leestutor met Meta Muse Spark. Samen maken we van elk verhaal een feestje!',
+    pl: 'Cześć przyjacielu! Jestem Sparky, Twój czytelniczy pomocnik z Meta Muse Spark. Razem odkryjemy niesamowite historie!',
+    tr: 'Merhaba minik okur! Ben Meta Muse Spark ile güçlendirilmiş eğitmenin Sparky. Birlikte okumak harika bir macera!',
+  };
+  return samples[language] || samples.en;
 }
 
 /**

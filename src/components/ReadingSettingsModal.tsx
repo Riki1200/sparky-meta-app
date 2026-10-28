@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
 import { ChildFontFamily, ChildFontSize } from '../styles/theme';
-import { playChime } from '../services/ttsService';
+import { playChime, speakText, stopSpeaking, getSparkyVoiceSample } from '../services/ttsService';
 import { getTranslation } from '../i18n/translations';
 import { SupportedLanguage } from '../types';
 
@@ -26,6 +26,7 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
   onClose,
   language,
 }) => {
+  const [isPlayingVoice, setIsPlayingVoice] = useState(false);
   const {
     themeMode,
     theme,
@@ -84,12 +85,37 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
     },
   ];
 
+  useEffect(() => {
+    return () => {
+      stopSpeaking();
+      setIsPlayingVoice(false);
+    };
+  }, []);
+
+  const handleToggleVoiceSample = () => {
+    if (isPlayingVoice) {
+      stopSpeaking();
+      setIsPlayingVoice(false);
+      return;
+    }
+    playChime('sparkle');
+    setIsPlayingVoice(true);
+    const sample = getSparkyVoiceSample(supportedLang);
+    speakText(sample, supportedLang, 0.88, () => setIsPlayingVoice(false));
+  };
+
+  const handleCloseModal = () => {
+    stopSpeaking();
+    setIsPlayingVoice(false);
+    onClose();
+  };
+
   return (
     <Modal
       visible={visible}
       transparent
       animationType="slide"
-      onRequestClose={onClose}
+      onRequestClose={handleCloseModal}
     >
       <View style={[styles.backdrop, { backgroundColor: theme.modalBackdrop }]}>
         <View style={[styles.container, { backgroundColor: theme.surface, borderColor: theme.border }]}>
@@ -113,7 +139,7 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
               style={[styles.closeBtn, { backgroundColor: theme.surfaceSecondary }]}
               onPress={() => {
                 playChime('tap');
-                onClose();
+                handleCloseModal();
               }}
               activeOpacity={0.7}
             >
@@ -389,6 +415,66 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
                 />
               </TouchableOpacity>
             </View>
+
+            {/* Section 5: Voice & Speech Preview (Meta Muse Encouragement) */}
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: theme.text }]}>
+                {isEs ? '🎙️ Voz de Sparky (Meta Muse Encouragement)' : '🎙️ Sparky Voice & Meta Muse Audio'}
+              </Text>
+              <View
+                style={[
+                  styles.voiceCard,
+                  {
+                    backgroundColor: theme.surfaceSecondary,
+                    borderColor: isPlayingVoice ? theme.primary : theme.border,
+                  },
+                ]}
+              >
+                <View style={styles.voiceTopRow}>
+                  <View style={styles.voiceInfoLeft}>
+                    <View style={[styles.voiceAvatarBox, { backgroundColor: theme.primaryLight }]}>
+                      <Ionicons name="sparkles" size={18} color={theme.primary} />
+                    </View>
+                    <View style={styles.voiceTitleCol}>
+                      <Text style={[styles.voiceTitle, { color: theme.text }]}>
+                        {isEs ? 'Voz de Ánimo del Tutor' : 'Tutor Spoken Encouragement'}
+                      </Text>
+                      <Text style={[styles.voiceSubtitle, { color: theme.textSecondary }]}>
+                        {isEs
+                          ? 'Pedagogía de Meta Muse Spark 1.3 • Audio infantil'
+                          : 'Pedagogy by Meta Muse Spark 1.3 • Child-friendly audio'}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <TouchableOpacity
+                    style={[
+                      styles.voicePlayBtn,
+                      { backgroundColor: isPlayingVoice ? '#ef4444' : theme.primary },
+                    ]}
+                    onPress={handleToggleVoiceSample}
+                    activeOpacity={0.8}
+                  >
+                    <Ionicons
+                      name={isPlayingVoice ? 'stop' : 'volume-high'}
+                      size={16}
+                      color="#ffffff"
+                    />
+                    <Text style={styles.voicePlayBtnText}>
+                      {isPlayingVoice
+                        ? (isEs ? 'Detener' : 'Stop')
+                        : (isEs ? 'Probar Voz' : 'Test Voice')}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+
+                <View style={[styles.voiceQuoteBox, { backgroundColor: theme.surface }]}>
+                  <Text style={[styles.voiceQuoteText, { color: theme.text }]}>
+                    "{getSparkyVoiceSample(supportedLang)}"
+                  </Text>
+                </View>
+              </View>
+            </View>
           </ScrollView>
 
           {/* Footer Save Button */}
@@ -397,7 +483,7 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
               style={[styles.saveBtn, { backgroundColor: theme.primary }]}
               onPress={() => {
                 playChime('sparkle');
-                onClose();
+                handleCloseModal();
               }}
               activeOpacity={0.85}
             >
@@ -616,6 +702,68 @@ const styles = StyleSheet.create({
     fontSize: 11,
     marginTop: 2,
     lineHeight: 15,
+  },
+  voiceCard: {
+    borderRadius: 20,
+    padding: 16,
+    borderWidth: 1.5,
+    gap: 12,
+  },
+  voiceTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  voiceInfoLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  voiceAvatarBox: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  voiceTitleCol: {
+    flex: 1,
+  },
+  voiceTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  voiceSubtitle: {
+    fontSize: 11,
+    marginTop: 2,
+    fontWeight: '600',
+  },
+  voicePlayBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 14,
+  },
+  voicePlayBtnText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  voiceQuoteBox: {
+    padding: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.06)',
+  },
+  voiceQuoteText: {
+    fontSize: 13,
+    fontWeight: '600',
+    fontStyle: 'italic',
+    lineHeight: 18,
   },
   footer: {
     padding: 16,

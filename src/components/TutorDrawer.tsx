@@ -20,7 +20,7 @@ import {
   transcribeAudioWithMuseVoice,
   answerChildVoiceQuestionWithSparky,
 } from '../services/metaApi';
-import { speakText, speakWordPhonetically, playChime } from '../services/ttsService';
+import { speakText, speakWordPhonetically, playChime, stopSpeaking, getSparkyVoiceSample } from '../services/ttsService';
 import { addStars } from '../services/storageService';
 import { getTranslation } from '../i18n/translations';
 import { getWordIllustrationUrl } from '../services/imageService';
@@ -168,8 +168,31 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
   };
 
   const handlePlayVoice = (text: string) => {
+    if (isPlayingAudio) {
+      stopSpeaking();
+      setIsPlayingAudio(false);
+      return;
+    }
     setIsPlayingAudio(true);
     speakText(text, language, 0.88, () => setIsPlayingAudio(false));
+  };
+
+  const handleRegenerateSpokenFeedback = async () => {
+    if (!sessionResult) return;
+    stopSpeaking();
+    setIsPlayingAudio(false);
+    setLoadingFeedback(true);
+    playChime('sparkle');
+    try {
+      const feedback = await generateTutorSpokenFeedback(sessionResult);
+      setSpokenFeedback(feedback);
+      setIsPlayingAudio(true);
+      speakText(feedback, language, 0.88, () => setIsPlayingAudio(false));
+    } catch (e) {
+      console.warn('Feedback regeneration error:', e);
+    } finally {
+      setLoadingFeedback(false);
+    }
   };
 
   const handleTapSyllable = (syl: string) => {
@@ -526,28 +549,58 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
                   <View style={styles.spokenHeaderRow}>
                     <View style={styles.spokenHeaderLeft}>
                       <Ionicons name="chatbubble-ellipses" size={20} color="#6366f1" />
-                      <Text style={styles.spokenTitle}>{t.spokenFeedbackTitle}</Text>
+                      <View>
+                        <Text style={styles.spokenTitle}>{t.spokenFeedbackTitle}</Text>
+                        <View style={styles.spokenMuseBadge}>
+                          <Ionicons name="sparkles" size={10} color="#6366f1" />
+                          <Text style={styles.spokenMuseBadgeText}>Meta Muse Spark 1.3 • Audio</Text>
+                        </View>
+                      </View>
                     </View>
-                    <TouchableOpacity
-                      style={styles.replayAudioBtn}
-                      onPress={() => spokenFeedback && handlePlayVoice(spokenFeedback)}
-                      activeOpacity={0.8}
-                    >
-                      <Ionicons
-                        name={isPlayingAudio ? 'volume-high' : 'play'}
-                        size={16}
-                        color="#ffffff"
-                      />
-                      <Text style={styles.replayAudioText}>
-                        {isPlayingAudio ? 'Speaking...' : t.listenToSparky}
-                      </Text>
-                    </TouchableOpacity>
+                    <View style={styles.spokenActionsGroup}>
+                      <TouchableOpacity
+                        style={[
+                          styles.replayAudioBtn,
+                          { backgroundColor: isPlayingAudio ? '#ef4444' : '#6366f1' },
+                        ]}
+                        onPress={() => handlePlayVoice(spokenFeedback || getSparkyVoiceSample(language))}
+                        activeOpacity={0.8}
+                      >
+                        <Ionicons
+                          name={isPlayingAudio ? 'stop-circle' : 'volume-high'}
+                          size={16}
+                          color="#ffffff"
+                        />
+                        <Text style={styles.replayAudioText}>
+                          {isPlayingAudio
+                            ? (language === 'es' ? 'Detener' : 'Stop')
+                            : (language === 'es' ? 'Escuchar a Sparky' : t.listenToSparky)}
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.refreshSpokenBtn}
+                        onPress={handleRegenerateSpokenFeedback}
+                        disabled={loadingFeedback}
+                        activeOpacity={0.8}
+                      >
+                        <Ionicons name="refresh" size={13} color="#6366f1" />
+                      </TouchableOpacity>
+                    </View>
                   </View>
 
                   {loadingFeedback ? (
-                    <ActivityIndicator size="small" color="#6366f1" />
+                    <View style={styles.spokenLoadingRow}>
+                      <ActivityIndicator size="small" color="#6366f1" />
+                      <Text style={styles.spokenLoadingText}>
+                        {language === 'es'
+                          ? 'Meta Muse Spark creando palabras de ánimo...'
+                          : 'Generating encouraging cheer with Meta Muse...'}
+                      </Text>
+                    </View>
                   ) : (
-                    <Text style={styles.feedbackBodyText}>"{spokenFeedback}"</Text>
+                    <Text style={styles.feedbackBodyText}>
+                      "{spokenFeedback || getSparkyVoiceSample(language)}"
+                    </Text>
                   )}
                 </View>
 
@@ -1199,6 +1252,22 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#4338ca',
   },
+  spokenMuseBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 2,
+  },
+  spokenMuseBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#6366f1',
+  },
+  spokenActionsGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
   replayAudioBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1212,6 +1281,25 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 11,
     fontWeight: '800',
+  },
+  refreshSpokenBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#e0e7ff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  spokenLoadingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 8,
+  },
+  spokenLoadingText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#6366f1',
   },
   feedbackBodyText: {
     fontSize: 15,

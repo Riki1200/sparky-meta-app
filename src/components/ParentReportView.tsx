@@ -8,12 +8,14 @@ import {
   Alert,
   Platform,
   Modal,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ReadingSessionResult, ReadingErrorDetail, SupportedLanguage } from '../types';
 import { getReadingHistory, getReadingStats } from '../services/storageService';
-import { speakWordPhonetically, playChime } from '../services/ttsService';
+import { speakWordPhonetically, playChime, speakText, stopSpeaking, getSparkyVoiceSample } from '../services/ttsService';
+import { generateTutorSpokenFeedback } from '../services/metaApi';
 import { getTranslation } from '../i18n/translations';
 import { useTheme } from '../context/ThemeContext';
 
@@ -264,6 +266,57 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
   };
 
   const activeSession = currentSession || (history.length > 0 ? history[0] : defaultDemoSession);
+
+  const [isPlayingAudio, setIsPlayingAudio] = useState<boolean>(false);
+  const [spokenFeedbackText, setSpokenFeedbackText] = useState<string>('');
+  const [loadingFeedback, setLoadingFeedback] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (activeSession) {
+      if (activeSession.tutorFeedback) {
+        setSpokenFeedbackText(activeSession.tutorFeedback);
+      } else {
+        setLoadingFeedback(true);
+        generateTutorSpokenFeedback(activeSession)
+          .then((fb) => setSpokenFeedbackText(fb))
+          .catch(() => setSpokenFeedbackText(getSparkyVoiceSample(language)))
+          .finally(() => setLoadingFeedback(false));
+      }
+    }
+    return () => {
+      stopSpeaking();
+      setIsPlayingAudio(false);
+    };
+  }, [activeSession?.id, language]);
+
+  const handleToggleEncouragementVoice = () => {
+    if (isPlayingAudio) {
+      stopSpeaking();
+      setIsPlayingAudio(false);
+      return;
+    }
+    const textToSpeak = spokenFeedbackText || activeSession?.tutorFeedback || getSparkyVoiceSample(language);
+    setIsPlayingAudio(true);
+    speakText(textToSpeak, language, 0.88, () => setIsPlayingAudio(false));
+  };
+
+  const handleRefreshFeedback = async () => {
+    if (!activeSession) return;
+    stopSpeaking();
+    setIsPlayingAudio(false);
+    setLoadingFeedback(true);
+    playChime('sparkle');
+    try {
+      const newFeedback = await generateTutorSpokenFeedback(activeSession);
+      setSpokenFeedbackText(newFeedback);
+      setIsPlayingAudio(true);
+      speakText(newFeedback, language, 0.88, () => setIsPlayingAudio(false));
+    } catch (e) {
+      console.warn('Feedback refresh error:', e);
+    } finally {
+      setLoadingFeedback(false);
+    }
+  };
 
   const getWpmEvaluation = (wpm: number) => {
     if (wpm >= 70) {
@@ -567,6 +620,103 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
             <Text style={styles.breakdownLabel}>{t.legendSkipped}</Text>
           </View>
         </View>
+      </View>
+
+      {/* Spoken Tutor Encouragement from Meta Muse Spark */}
+      <View
+        style={[
+          styles.spokenFeedbackCard,
+          {
+            backgroundColor: themeMode === 'dark' ? '#1e1b4b' : '#f5f3ff',
+            borderColor: themeMode === 'dark' ? '#3730a3' : '#c7d2fe',
+          },
+        ]}
+      >
+        <View style={styles.spokenHeaderRow}>
+          <View style={styles.spokenHeaderLeft}>
+            <View style={styles.spokenIconCircle}>
+              <Ionicons name="chatbubble-ellipses" size={18} color="#6366f1" />
+            </View>
+            <View>
+              <Text
+                style={[
+                  styles.spokenTitle,
+                  { color: themeMode === 'dark' ? '#c7d2fe' : '#4338ca' },
+                ]}
+              >
+                {t.spokenFeedbackTitle}
+              </Text>
+              <View style={styles.spokenMuseBadge}>
+                <Ionicons name="sparkles" size={10} color="#6366f1" />
+                <Text style={styles.spokenMuseBadgeText}>
+                  Meta Muse Spark 1.3 • Audio
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.spokenActionButtons}>
+            <TouchableOpacity
+              style={[
+                styles.replayAudioBtn,
+                { backgroundColor: isPlayingAudio ? '#ef4444' : '#6366f1' },
+              ]}
+              onPress={handleToggleEncouragementVoice}
+              activeOpacity={0.8}
+            >
+              <Ionicons
+                name={isPlayingAudio ? 'stop-circle' : 'volume-high'}
+                size={16}
+                color="#ffffff"
+              />
+              <Text style={styles.replayAudioText}>
+                {isPlayingAudio
+                  ? (language === 'es' ? 'Detener Voz' : 'Stop')
+                  : (language === 'es' ? 'Escuchar a Sparky' : t.listenToSparky)}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.refreshFeedbackBtn,
+                {
+                  backgroundColor:
+                    themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : '#e0e7ff',
+                },
+              ]}
+              onPress={handleRefreshFeedback}
+              disabled={loadingFeedback}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="refresh" size={14} color="#6366f1" />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {loadingFeedback ? (
+          <View style={styles.feedbackLoadingBox}>
+            <ActivityIndicator size="small" color="#6366f1" />
+            <Text
+              style={[
+                styles.feedbackLoadingText,
+                { color: themeMode === 'dark' ? '#a5b4fc' : '#6366f1' },
+              ]}
+            >
+              {language === 'es'
+                ? 'Meta Muse Spark creando palabras de ánimo...'
+                : 'Sparky is generating encouraging words...'}
+            </Text>
+          </View>
+        ) : (
+          <Text
+            style={[
+              styles.feedbackBodyText,
+              { color: themeMode === 'dark' ? '#e0e7ff' : '#312e81' },
+            ]}
+          >
+            "{spokenFeedbackText || getSparkyVoiceSample(language)}"
+          </Text>
+        )}
       </View>
 
       {/* Interactive Practice Flashcards Deck */}
@@ -1481,6 +1631,91 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 14,
     fontWeight: '800',
+  },
+  spokenFeedbackCard: {
+    borderRadius: 20,
+    padding: 16,
+    borderWidth: 1.5,
+    marginVertical: 4,
+    gap: 12,
+  },
+  spokenHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  spokenHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flex: 1,
+    minWidth: 160,
+  },
+  spokenIconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(99, 102, 241, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  spokenTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  spokenMuseBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 2,
+  },
+  spokenMuseBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#6366f1',
+  },
+  spokenActionButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  replayAudioBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 14,
+  },
+  replayAudioText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  refreshFeedbackBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  feedbackLoadingBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 10,
+  },
+  feedbackLoadingText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  feedbackBodyText: {
+    fontSize: 15,
+    lineHeight: 22,
+    fontWeight: '600',
+    fontStyle: 'italic',
   },
   museAuditBadge: {
     flexDirection: 'row',
