@@ -1383,7 +1383,7 @@ const styles = StyleSheet.create({
   illustrationCard: {
     borderRadius: 20,
     overflow: 'hidden',
-    height: 160,
+    height: 240,
     borderWidth: 1.5,
     position: 'relative',
     backgroundColor: '#f1f5f9',

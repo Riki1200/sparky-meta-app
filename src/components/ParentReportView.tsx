@@ -331,6 +331,14 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
               <Text style={[styles.headerSubtitle, { color: theme.textSecondary }]}>
                 {activeSession ? `${activeSession.pageTitle} • ${activeSession.gradeLevel}` : t.reportSubtitle}
               </Text>
+              {activeSession?.metaMuseTranscript ? (
+                <View style={styles.museAuditBadge}>
+                  <Ionicons name="sparkles" size={10} color="#6366f1" />
+                  <Text style={styles.museAuditBadgeText}>
+                    Meta Muse Voice Transcribe
+                  </Text>
+                </View>
+              ) : null}
             </View>
           </View>
         </View>
@@ -1473,6 +1481,22 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 14,
     fontWeight: '800',
+  },
+  museAuditBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: 'rgba(99, 102, 241, 0.12)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    marginTop: 4,
+    alignSelf: 'flex-start',
+  },
+  museAuditBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#6366f1',
   },
 });
 

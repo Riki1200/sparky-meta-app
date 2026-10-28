@@ -53,6 +53,8 @@ export interface ReadingSessionResult {
   errors: ReadingErrorDetail[];
   tutorFeedback?: string;
   gradeLevel: string;
+  metaMuseTranscript?: string;
+  evaluatedBy?: 'meta-muse-voice' | 'hybrid' | 'device';
 }
 
 export interface ComprehensionQuestion {

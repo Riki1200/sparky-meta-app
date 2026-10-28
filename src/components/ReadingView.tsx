@@ -8,6 +8,7 @@ import {
   Platform,
   useWindowDimensions,
   Image,
+  Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -69,7 +70,8 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
   const [isSimulating, setIsSimulating] = useState<boolean>(false);
   const [recentSpokenText, setRecentSpokenText] = useState<string>('');
   const [showConfetti, setShowConfetti] = useState<boolean>(false);
-  const [showSceneIllustration, setShowSceneIllustration] = useState<boolean>(false);
+  const [showSceneIllustration, setShowSceneIllustration] = useState<boolean>(true);
+  const [isImageZoomed, setIsImageZoomed] = useState<boolean>(false);
 
   const speechControllerRef = useRef<SpeechRecognitionController | null>(null);
   const lastWordTimestampRef = useRef<number>(Date.now());
@@ -248,6 +250,15 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
     const accuracy = totalWords > 0 ? Math.round((correctCount / totalWords) * 100) : 100;
     const calcWpm = durationSec > 0 ? Math.round((totalWords / durationSec) * 60) : wpm;
 
+    let metaTranscript = '';
+    if (speechControllerRef.current) {
+      try {
+        metaTranscript = await speechControllerRef.current.transcribeCurrentAudio();
+      } catch (e) {
+        console.warn('Meta Muse session transcription error:', e);
+      }
+    }
+
     const result: ReadingSessionResult = {
       id: 'session-' + Date.now(),
       pageId: page.id,
@@ -265,6 +276,8 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
       wordsPerMinute: calcWpm,
       errors: finalErrors,
       gradeLevel: page.gradeLevel,
+      metaMuseTranscript: metaTranscript || undefined,
+      evaluatedBy: metaTranscript ? 'meta-muse-voice' : 'hybrid',
     };
 
     await saveReadingSession(result);
@@ -477,14 +490,29 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
 
         {/* Story Scene Illustration Hero Banner */}
         {showSceneIllustration && (
-          <View style={[styles.storySceneCard, { borderColor: theme.border }]}>
+          <TouchableOpacity
+            style={[
+              styles.storySceneCard,
+              { borderColor: theme.border, height: isCompact ? 240 : 340 },
+            ]}
+            onPress={() => setIsImageZoomed(true)}
+            activeOpacity={0.92}
+          >
             <Image
               source={{ uri: getStorySceneIllustrationUrl(page.title, page.text, page.imageUrl) }}
               style={styles.storySceneImage}
               resizeMode="cover"
             />
+            {/* Top Right Zoom Pill */}
+            <View style={styles.sceneExpandBadge}>
+              <Ionicons name="expand" size={13} color="#ffffff" />
+              <Text style={styles.sceneExpandText}>
+                {language === 'es' ? 'Ver en Grande' : 'Tap to Enlarge'}
+              </Text>
+            </View>
+
             <LinearGradient
-              colors={['transparent', 'rgba(15, 23, 42, 0.82)']}
+              colors={['transparent', 'rgba(15, 23, 42, 0.88)']}
               style={styles.storySceneGradient}
             >
               <Text style={styles.storySceneCaption} numberOfLines={1}>
@@ -494,7 +522,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
                 {t.sceneArtDesc}
               </Text>
             </LinearGradient>
-          </View>
+          </TouchableOpacity>
         )}
 
         {/* Elevated Tactile Reading Paper Board */}
@@ -837,6 +865,33 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
           </TouchableOpacity>
         )}
       </View>
+
+      {/* Fullscreen Illustration Lightbox Modal */}
+      <Modal
+        visible={isImageZoomed}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setIsImageZoomed(false)}
+      >
+        <View style={styles.lightboxBackdrop}>
+          <TouchableOpacity
+            style={styles.lightboxCloseBtn}
+            onPress={() => setIsImageZoomed(false)}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="close" size={26} color="#ffffff" />
+          </TouchableOpacity>
+          <Image
+            source={{ uri: getStorySceneIllustrationUrl(page.title, page.text, page.imageUrl) }}
+            style={styles.lightboxImage}
+            resizeMode="contain"
+          />
+          <View style={styles.lightboxCaptionBox}>
+            <Text style={styles.lightboxTitle}>📖 {page.title}</Text>
+            <Text style={styles.lightboxSubtitle}>{t.sceneArtDesc}</Text>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -1226,43 +1281,101 @@ const styles = StyleSheet.create({
   },
   storySceneCard: {
     width: '100%',
-    height: 180,
-    borderRadius: 22,
+    height: 320,
+    borderRadius: 24,
     overflow: 'hidden',
     borderWidth: 1.5,
-    marginVertical: 6,
+    marginVertical: 10,
     position: 'relative',
     backgroundColor: '#0f172a',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.22,
+    shadowRadius: 14,
+    elevation: 6,
   },
   storySceneImage: {
     width: '100%',
     height: '100%',
+  },
+  sceneExpandBadge: {
+    position: 'absolute',
+    top: 14,
+    right: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(15, 23, 42, 0.72)',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.22)',
+  },
+  sceneExpandText: {
+    color: '#ffffff',
+    fontSize: 11,
+    fontWeight: '800',
   },
   storySceneGradient: {
     position: 'absolute',
     left: 0,
     right: 0,
     bottom: 0,
-    height: 80,
+    height: 90,
     justifyContent: 'flex-end',
-    paddingHorizontal: 16,
-    paddingBottom: 12,
+    paddingHorizontal: 18,
+    paddingBottom: 14,
   },
   storySceneCaption: {
     color: '#ffffff',
-    fontSize: 15,
+    fontSize: 17,
     fontWeight: '900',
     letterSpacing: 0.2,
   },
   storySceneSub: {
     color: '#cbd5e1',
-    fontSize: 11,
-    marginTop: 2,
+    fontSize: 12,
+    marginTop: 3,
+    fontWeight: '600',
+  },
+  lightboxBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.94)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  lightboxCloseBtn: {
+    position: 'absolute',
+    top: 40,
+    right: 24,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+  },
+  lightboxImage: {
+    width: '100%',
+    height: '75%',
+    borderRadius: 18,
+  },
+  lightboxCaptionBox: {
+    marginTop: 16,
+    alignItems: 'center',
+  },
+  lightboxTitle: {
+    color: '#ffffff',
+    fontSize: 20,
+    fontWeight: '900',
+  },
+  lightboxSubtitle: {
+    color: '#94a3b8',
+    fontSize: 13,
+    marginTop: 4,
     fontWeight: '600',
   },
 });
