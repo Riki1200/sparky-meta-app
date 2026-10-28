@@ -100,3 +100,56 @@ async function updateStreak() {
   }
 }
 
+const STORAGE_KEY_ONBOARDING = '@Sparky_onboarding_completed';
+const STORAGE_KEY_USER_PROFILE = '@Sparky_user_profile';
+
+export interface UserProfile {
+  name: string;
+  level: 'beginner' | 'intermediate' | 'advanced';
+  dailyGoalMinutes: number;
+  avatar: string;
+}
+
+export async function hasCompletedOnboarding(): Promise<boolean> {
+  try {
+    const raw = await AsyncStorage.getItem(STORAGE_KEY_ONBOARDING);
+    return raw === 'true';
+  } catch (e) {
+    return false;
+  }
+}
+
+export async function setOnboardingCompleted(completed: boolean = true): Promise<void> {
+  try {
+    await AsyncStorage.setItem(STORAGE_KEY_ONBOARDING, completed ? 'true' : 'false');
+  } catch (e) {
+    console.warn('Error setting onboarding completed:', e);
+  }
+}
+
+export async function getUserProfile(): Promise<UserProfile> {
+  try {
+    const raw = await AsyncStorage.getItem(STORAGE_KEY_USER_PROFILE);
+    if (raw) return JSON.parse(raw);
+  } catch (e) {
+    // fallback
+  }
+  return {
+    name: 'Pequeño Lector',
+    level: 'intermediate',
+    dailyGoalMinutes: 10,
+    avatar: '🌟',
+  };
+}
+
+export async function saveUserProfile(profile: Partial<UserProfile>): Promise<UserProfile> {
+  const current = await getUserProfile();
+  const updated: UserProfile = { ...current, ...profile };
+  try {
+    await AsyncStorage.setItem(STORAGE_KEY_USER_PROFILE, JSON.stringify(updated));
+  } catch (e) {
+    console.warn('Error saving user profile:', e);
+  }
+  return updated;
+}
+

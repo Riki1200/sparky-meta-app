@@ -24,6 +24,7 @@ interface HeaderProps {
   onOpenPrivacy: () => void;
   onOpenScan?: () => void;
   onOpenSettings?: () => void;
+  onOpenTutorial?: () => void;
 }
 
 const AVAILABLE_LANGUAGES: { code: SupportedLanguage; label: string; flag: string; short: string; country: string }[] = [
@@ -48,6 +49,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenPrivacy,
   onOpenScan,
   onOpenSettings,
+  onOpenTutorial,
 }) => {
   const t = getTranslation(language);
   const { themeMode, theme, toggleTheme } = useTheme();
@@ -165,6 +167,22 @@ export const Header: React.FC<HeaderProps> = ({
             accessibilityLabel="Ajustes de Fuente Infantil y Accesibilidad"
           >
             <Text style={[styles.fontBtnText, { color: theme.text }]}>Aa</Text>
+          </TouchableOpacity>
+
+          {/* ❓ Setup Wizard / Tutorial Button */}
+          <TouchableOpacity
+            style={[
+              styles.iconCircleBtn,
+              { backgroundColor: theme.surfaceSecondary, borderColor: theme.border },
+            ]}
+            onPress={() => {
+              playChime("sparkle");
+              if (onOpenTutorial) onOpenTutorial();
+            }}
+            activeOpacity={0.75}
+            accessibilityLabel="Guía y Cómo usar Sparky"
+          >
+            <Text style={styles.themeEmojiText}>❓</Text>
           </TouchableOpacity>
 
           {/* Compact Language Picker Button */}

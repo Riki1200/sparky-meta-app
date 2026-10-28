@@ -9,9 +9,10 @@ import { CameraCaptureModal } from './src/components/CameraCaptureModal';
 import { TutorDrawer } from './src/components/TutorDrawer';
 import { PrivacyBadgeModal } from './src/components/PrivacyBadgeModal';
 import { ReadingSettingsModal } from './src/components/ReadingSettingsModal';
+import { OnboardingWizardModal } from './src/components/OnboardingWizardModal';
 import { BookPage, ReadingSessionResult, SupportedLanguage } from './src/types';
 import { SAMPLE_BOOK_PAGES } from './src/data/sampleBooks';
-import { getReadingStats, getStarsCount } from './src/services/storageService';
+import { getReadingStats, getStarsCount, hasCompletedOnboarding } from './src/services/storageService';
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 
 function MainApp() {
@@ -23,6 +24,7 @@ function MainApp() {
   const [starsCount, setStarsCount] = useState<number>(45);
 
   // Modals state
+  const [onboardingVisible, setOnboardingVisible] = useState<boolean>(false);
   const [cameraModalVisible, setCameraModalVisible] = useState<boolean>(false);
   const [privacyModalVisible, setPrivacyModalVisible] = useState<boolean>(false);
   const [readingSettingsVisible, setReadingSettingsVisible] = useState<boolean>(false);
@@ -34,7 +36,15 @@ function MainApp() {
 
   useEffect(() => {
     loadStatsAndStars();
+    checkFirstLaunch();
   }, []);
+
+  const checkFirstLaunch = async () => {
+    const done = await hasCompletedOnboarding();
+    if (!done) {
+      setOnboardingVisible(true);
+    }
+  };
 
   const loadStatsAndStars = async () => {
     const stats = await getReadingStats();
@@ -96,6 +106,7 @@ function MainApp() {
           onOpenPrivacy={() => setPrivacyModalVisible(true)}
           onOpenScan={() => setCameraModalVisible(true)}
           onOpenSettings={() => setReadingSettingsVisible(true)}
+          onOpenTutorial={() => setOnboardingVisible(true)}
         />
 
         {/* Tab 1: Reading Room */}
@@ -171,6 +182,14 @@ function MainApp() {
           visible={readingSettingsVisible}
           onClose={() => setReadingSettingsVisible(false)}
           language={language}
+        />
+
+        {/* Setup Wizard / Onboarding Tour Modal */}
+        <OnboardingWizardModal
+          visible={onboardingVisible}
+          onClose={() => setOnboardingVisible(false)}
+          language={language}
+          onSelectLanguage={handleSelectLanguage}
         />
       </View>
     </SafeAreaView>
