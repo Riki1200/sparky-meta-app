@@ -148,7 +148,7 @@ Phones only allow the microphone and camera on HTTPS pages, so a LAN `http://` a
 npx expo export --platform web
 npx eas-cli@latest deploy
 ```
-Open the preview URL on the phone and use *Add to Home Screen* to launch it like an app. The Meta API proxy must also be reachable over HTTPS (deploy `server/meta-proxy.mjs` to any Node host and point `EXPO_PUBLIC_META_API_BASE_URL` at it).
+Open the preview URL on the phone and install it: Chrome → *Install app*, or Safari → *Share → Add to Home Screen*. Sparky is a **PWA** (`public/manifest.json`, `public/sw.js`): it launches full-screen from its own icon and opens offline; the Meta tutor, page reading and verification need a connection. The service worker only registers on deployed builds, not on `localhost`. The Meta API proxy must also be reachable over HTTPS (deploy `server/meta-proxy.mjs` to any Node host and point `EXPO_PUBLIC_META_API_BASE_URL` at it).
 
 ### 6. What to try
 - **Read**: tap the big microphone in the bottom bar and read the page aloud; words turn green, yellow (hesitation) or red (practice).
