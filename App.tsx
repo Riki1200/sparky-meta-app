@@ -91,7 +91,7 @@ function MainApp() {
   };
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.surface }]}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.bg }]}>
       <StatusBar style={themeMode === 'dark' ? 'light' : 'dark'} />
       <View style={[styles.appContainer, { backgroundColor: theme.bg }]}>
         {/* Persistent Top Navigation Bar */}

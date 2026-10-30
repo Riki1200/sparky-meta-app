@@ -6,15 +6,14 @@ import {
   TouchableOpacity,
   Modal,
   Platform,
-  useWindowDimensions,
   Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import { SupportedLanguage } from "../types";
 import { getTranslation } from "../i18n/translations";
 import { playChime } from "../services/ttsService";
 import { useTheme } from "../context/ThemeContext";
+import { FONTS } from "../styles/theme";
 
 interface HeaderProps {
   language: SupportedLanguage;
@@ -58,8 +57,6 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const t = getTranslation(language);
   const { themeMode, theme, toggleTheme } = useTheme();
-  const { width } = useWindowDimensions();
-  const isCompact = width < 540;
   const [langModalVisible, setLangModalVisible] = useState(false);
   const [menuVisible, setMenuVisible] = useState(false);
 
@@ -126,264 +123,90 @@ export const Header: React.FC<HeaderProps> = ({
     },
   ];
 
-  return (
-    <View style={[styles.container, { backgroundColor: theme.surface, borderBottomColor: theme.border }]}>
-      {/* Top Accent Gradient Shimmer Line */}
-      <LinearGradient
-        colors={theme.gradients.rainbow}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={styles.topAccentLine}
-      />
+  // Inline so the global UI font rule leaves the storybook heading font alone
+  const displayFont = Platform.OS === "web" ? { fontFamily: FONTS.display } : null;
 
-      {/* Top Main Bar: Brand + Quick Badges */}
-      <View style={styles.topBar}>
-        {/* Brand Identity */}
-        <TouchableOpacity
-          style={styles.brandRow}
-          onPress={() => playChime("sparkle")}
-          activeOpacity={0.8}
+  const renderTab = (tab: "reading" | "report", label: string) => {
+    const isActive = activeTab === tab;
+    return (
+      <TouchableOpacity
+        style={styles.tab}
+        onPress={() => {
+          playChime("tap");
+          onSelectTab(tab);
+        }}
+        activeOpacity={0.7}
+        accessibilityRole="tab"
+        accessibilityState={{ selected: isActive }}
+      >
+        <Text
+          style={[styles.tabText, { color: isActive ? theme.text : theme.textMuted }, isActive && styles.tabTextActive]}
+          numberOfLines={1}
         >
-          <LinearGradient
-            colors={theme.gradients.sparkyMascot}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={[styles.mascotCircle, isCompact && styles.mascotCircleCompact]}
-          >
-            <Image source={OWL_MARK} style={isCompact ? styles.brandMarkCompact : styles.brandMark} />
-          </LinearGradient>
-          <View style={[styles.titleWrap, isCompact && styles.titleWrapCompact]}>
-            <Text style={[styles.brandTitle, isCompact && styles.brandTitleCompact, { color: theme.text }]}>
-              Sparky<Text style={styles.brandAccent}>.</Text>
-            </Text>
-            <LinearGradient
-              colors={theme.gradients.metaAi}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.aiBadge}
-            >
-              <Ionicons name="sparkles" size={10} color="#ffffff" />
-              <Text style={styles.aiBadgeText}>Meta AI</Text>
-            </LinearGradient>
+          {label}
+        </Text>
+        <View style={[styles.tabIndicator, { backgroundColor: isActive ? theme.primary : "transparent" }]} />
+      </TouchableOpacity>
+    );
+  };
+
+  return (
+    <View style={[styles.container, { backgroundColor: theme.bg, borderBottomColor: theme.border }]}>
+      {/* Brand + status */}
+      <View style={styles.topBar}>
+        <View style={styles.brandRow}>
+          <View style={[styles.owlCircle, { backgroundColor: theme.primary }]}>
+            <Image source={OWL_MARK} style={styles.owlMark} />
           </View>
-        </TouchableOpacity>
+          <View>
+            <Text style={[styles.brandTitle, displayFont, { color: theme.text }]}>Sparky</Text>
+            <Text style={[styles.brandSub, { color: theme.textMuted }]}>Meta AI</Text>
+          </View>
+        </View>
 
-        {/* Right Status Actions */}
         <View style={styles.rightCluster}>
-          {isCompact ? (
-            /* Combined Stars + Streak Pill (saves space on phones) */
-            <LinearGradient
-              colors={theme.gradients.starPill}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={[styles.miniPillGradient, { borderColor: theme.border }]}
-            >
-              <Ionicons name="star" size={12} color={theme.badges.starBadgeText} />
-              <Text style={[styles.goldNumber, { color: theme.badges.starBadgeText }]}>{starsCount}</Text>
-              <View style={[styles.pillDivider, { backgroundColor: theme.badges.starBadgeText }]} />
-              <Ionicons name="flame" size={12} color={theme.badges.streakBadgeText} />
-              <Text style={[styles.flameNumber, { color: theme.badges.streakBadgeText }]}>{streakDays}</Text>
-            </LinearGradient>
-          ) : (
-            <>
-              {/* Stars Pill with Radiant Gradient */}
-              <LinearGradient
-                colors={theme.gradients.starPill}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={[styles.miniPillGradient, { borderColor: theme.border }]}
-              >
-                <Ionicons name="star" size={12} color={theme.badges.starBadgeText} />
-                <Text style={[styles.goldNumber, { color: theme.badges.starBadgeText }]}>{starsCount}</Text>
-              </LinearGradient>
+          {/* Stars and streak in one quiet chip */}
+          <View style={[styles.statusChip, { backgroundColor: theme.surfaceSecondary }]}>
+            <Ionicons name="star" size={13} color={theme.badges.starBadgeText} />
+            <Text style={[styles.statusText, { color: theme.text }]}>{starsCount}</Text>
+            <View style={[styles.statusDivider, { backgroundColor: theme.border }]} />
+            <Ionicons name="flame" size={13} color={theme.badges.streakBadgeText} />
+            <Text style={[styles.statusText, { color: theme.text }]}>{streakDays}</Text>
+          </View>
 
-              {/* Streak Pill with Fire Gradient */}
-              <LinearGradient
-                colors={theme.gradients.streakPill}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={[styles.miniPillGradient, { borderColor: theme.borderActive }]}
-              >
-                <Ionicons name="flame" size={12} color={theme.badges.streakBadgeText} />
-                <Text style={[styles.flameNumber, { color: theme.badges.streakBadgeText }]}>{streakDays}</Text>
-              </LinearGradient>
-            </>
-          )}
-
-          {isCompact ? (
-            /* Compact Menu Button: keeps the active language flag visible */
-            <TouchableOpacity
-              style={[
-                styles.langPickerButton,
-                { backgroundColor: theme.surfaceSecondary, borderColor: theme.border },
-              ]}
-              onPress={() => {
-                playChime("tap");
-                setMenuVisible(true);
-              }}
-              activeOpacity={0.75}
-              accessibilityLabel={t.selectLanguageTitle}
-            >
-              <Text style={[styles.langPickerCode, { color: theme.text }]}>{currentLangObj.short}</Text>
-              <Ionicons name="menu" size={16} color={theme.text} />
-            </TouchableOpacity>
-          ) : (
-            <>
-              {/* Light / Dark Theme Toggle Button */}
-              <TouchableOpacity
-                style={[
-                  styles.iconCircleBtn,
-                  { backgroundColor: theme.surfaceSecondary, borderColor: theme.border },
-                ]}
-                onPress={() => {
-                  playChime("tap");
-                  toggleTheme();
-                }}
-                activeOpacity={0.75}
-                accessibilityLabel={t.themeToggleLabel}
-              >
-                <Ionicons name={themeMode === "light" ? "sunny" : "moon"} size={16} color={themeMode === "light" ? "#f59e0b" : "#a5b4fc"} />
-              </TouchableOpacity>
-
-              {/* Child Font & Reading Settings Button */}
-              <TouchableOpacity
-                style={[
-                  styles.iconCircleBtn,
-                  { backgroundColor: theme.surfaceSecondary, borderColor: theme.border },
-                ]}
-                onPress={() => {
-                  playChime("tap");
-                  if (onOpenSettings) onOpenSettings();
-                }}
-                activeOpacity={0.75}
-                accessibilityLabel={t.settingsBtnLabel}
-              >
-                <Text style={[styles.fontBtnText, { color: theme.text }]}>Aa</Text>
-              </TouchableOpacity>
-
-              {/* Setup Wizard / Tutorial Button */}
-              <TouchableOpacity
-                style={[
-                  styles.iconCircleBtn,
-                  { backgroundColor: theme.surfaceSecondary, borderColor: theme.border },
-                ]}
-                onPress={() => {
-                  playChime("sparkle");
-                  if (onOpenTutorial) onOpenTutorial();
-                }}
-                activeOpacity={0.75}
-                accessibilityLabel={t.tutorialBtnLabel}
-              >
-                <Ionicons name="help" size={17} color={theme.text} />
-              </TouchableOpacity>
-
-              {/* Compact Language Picker Button */}
-              <TouchableOpacity
-                style={[
-                  styles.langPickerButton,
-                  { backgroundColor: theme.surfaceSecondary, borderColor: theme.border },
-                ]}
-                onPress={() => setLangModalVisible(true)}
-                activeOpacity={0.75}
-                accessibilityLabel={t.selectLanguageTitle}
-              >
-                <Ionicons name="globe-outline" size={13} color={theme.textSecondary} />
-                <Text style={[styles.langPickerCode, { color: theme.text }]}>{currentLangObj.short}</Text>
-                <Ionicons name="chevron-down" size={12} color={theme.textMuted} />
-              </TouchableOpacity>
-
-              {/* Privacy Shield Button */}
-              <TouchableOpacity
-                style={[styles.shieldButton, { backgroundColor: theme.badges.kpiAccuracyBg, borderColor: theme.border }]}
-                onPress={onOpenPrivacy}
-                activeOpacity={0.7}
-                accessibilityLabel={t.privacyBadge}
-              >
-                <Ionicons name="shield-checkmark" size={16} color={theme.badges.kpiAccuracyText} />
-              </TouchableOpacity>
-            </>
-          )}
+          <TouchableOpacity
+            style={[styles.menuButton, { backgroundColor: theme.surfaceSecondary }]}
+            onPress={() => {
+              playChime("tap");
+              setMenuVisible(true);
+            }}
+            activeOpacity={0.75}
+            accessibilityLabel={t.selectLanguageTitle}
+          >
+            <Text style={[styles.menuLang, { color: theme.text }]}>{currentLangObj.short}</Text>
+            <Ionicons name="menu" size={18} color={theme.text} />
+          </TouchableOpacity>
         </View>
       </View>
 
-      {/* Bottom Segmented Controller: Kid Reading vs Parent/Teacher Report */}
-      <View style={styles.segmentedRow}>
-        <View style={[styles.segmentedContainer, { backgroundColor: theme.surfaceSecondary }]}>
-          {/* Reading Room Segment */}
-          <TouchableOpacity
-            style={styles.segmentItemTouch}
-            onPress={() => onSelectTab("reading")}
-            activeOpacity={0.8}
-          >
-            {activeTab === "reading" ? (
-              <LinearGradient
-                colors={theme.gradients.tabActiveReading}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.segmentItemActiveGradient}
-              >
-                <Ionicons name="book" size={15} color="#ffffff" />
-                <Text style={styles.segmentTextActive} numberOfLines={1}>{t.navReading}</Text>
-              </LinearGradient>
-            ) : (
-              <View style={styles.segmentItemInactive}>
-                <Ionicons name="book-outline" size={15} color={theme.textSecondary} />
-                <Text style={[styles.segmentText, { color: theme.textSecondary }]} numberOfLines={1}>{t.navReading}</Text>
-              </View>
-            )}
-          </TouchableOpacity>
-
-          {/* Parent Report Segment */}
-          <TouchableOpacity
-            style={styles.segmentItemTouch}
-            onPress={() => onSelectTab("report")}
-            activeOpacity={0.8}
-          >
-            {activeTab === "report" ? (
-              <LinearGradient
-                colors={theme.gradients.tabActiveReport}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.segmentItemActiveGradient}
-              >
-                <Ionicons name="stats-chart" size={15} color="#ffffff" />
-                <Text style={styles.segmentTextActive} numberOfLines={1}>{t.navReport}</Text>
-              </LinearGradient>
-            ) : (
-              <View style={styles.segmentItemInactive}>
-                <Ionicons name="stats-chart-outline" size={15} color={theme.textSecondary} />
-                <Text style={[styles.segmentText, { color: theme.textSecondary }]} numberOfLines={1}>{t.navReport}</Text>
-              </View>
-            )}
-          </TouchableOpacity>
+      {/* Child / family sections, plus the book scanner */}
+      <View style={styles.tabsRow}>
+        <View style={styles.tabs}>
+          {renderTab("reading", t.navReading)}
+          {renderTab("report", t.navReport)}
         </View>
-
-        {/* Quick OCR Scan Button: solid sunset CTA (icon-only on phones) */}
         <TouchableOpacity
-          style={styles.quickScanTouch}
+          style={[styles.scanButton, { borderColor: theme.border, backgroundColor: theme.surface }]}
           onPress={handleScanClick}
-          activeOpacity={0.85}
+          activeOpacity={0.8}
           accessibilityLabel={t.navScan}
         >
-          <LinearGradient
-            colors={theme.gradients.btnMicIdle}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={[styles.quickScanGradient, isCompact && styles.quickScanGradientCompact]}
-          >
-            <Ionicons name="camera" size={isCompact ? 19 : 15} color="#ffffff" />
-            {!isCompact && <Text style={styles.quickScanText}>{t.navScan}</Text>}
-          </LinearGradient>
+          <Ionicons name="camera-outline" size={18} color={theme.primary} />
         </TouchableOpacity>
       </View>
 
-      {/* Compact Overflow Menu (phones) */}
-      <Modal
-        visible={menuVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setMenuVisible(false)}
-      >
+      {/* Menu */}
+      <Modal visible={menuVisible} transparent animationType="fade" onRequestClose={() => setMenuVisible(false)}>
         <TouchableOpacity
           style={[styles.menuBackdrop, { backgroundColor: theme.modalBackdrop }]}
           activeOpacity={1}
@@ -400,14 +223,12 @@ export const Header: React.FC<HeaderProps> = ({
                 onPress={item.onPress}
                 activeOpacity={0.7}
               >
-                <View style={[styles.menuIconCircle, { backgroundColor: theme.surfaceSecondary }]}>
-                  <Ionicons name={item.icon} size={17} color={theme.primary} />
-                </View>
+                <Ionicons name={item.icon} size={19} color={theme.textSecondary} />
                 <Text style={[styles.menuLabel, { color: theme.text }]} numberOfLines={2}>
                   {item.label}
                 </Text>
                 {item.trailing ? (
-                  <Text style={[styles.menuTrailing, { color: theme.textSecondary }]} numberOfLines={1}>
+                  <Text style={[styles.menuTrailing, { color: theme.textMuted }]} numberOfLines={1}>
                     {item.trailing}
                   </Text>
                 ) : (
@@ -423,7 +244,7 @@ export const Header: React.FC<HeaderProps> = ({
         </TouchableOpacity>
       </Modal>
 
-      {/* Language Modal Grid */}
+      {/* Language picker */}
       <Modal
         visible={langModalVisible}
         transparent
@@ -436,73 +257,45 @@ export const Header: React.FC<HeaderProps> = ({
           onPress={() => setLangModalVisible(false)}
         >
           <View style={[styles.modalCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-            <View style={[styles.modalHeader, { borderBottomColor: theme.borderLight }]}>
-              <View style={styles.modalHeaderLeft}>
-                <Ionicons name="globe-outline" size={18} color={theme.text} />
-                <Text style={[styles.modalTitle, { color: theme.text }]}>
-                  {t.selectLanguageTitle}
-                </Text>
-              </View>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, displayFont, { color: theme.text }]}>{t.selectLanguageTitle}</Text>
               <TouchableOpacity
                 onPress={() => setLangModalVisible(false)}
-                style={[styles.modalCloseCircle, { backgroundColor: theme.surfaceSecondary }]}
+                style={[styles.modalClose, { backgroundColor: theme.surfaceSecondary }]}
               >
                 <Ionicons name="close" size={16} color={theme.textSecondary} />
               </TouchableOpacity>
             </View>
 
-            <View style={styles.langGrid}>
-              {AVAILABLE_LANGUAGES.map((item) => {
-                const isSelected = language === item.code;
-                return (
-                  <TouchableOpacity
-                    key={item.code}
-                    style={[
-                      styles.langGridCard,
-                      {
-                        backgroundColor: isSelected ? theme.primaryLight : theme.surfaceSecondary,
-                        borderColor: isSelected ? theme.borderActive : theme.border,
-                      },
-                    ]}
-                    onPress={() => {
-                      playChime("tap");
-                      onSelectLanguage(item.code);
-                      setLangModalVisible(false);
-                    }}
-                    activeOpacity={0.7}
-                  >
-                    <View
-                      style={[
-                        styles.langCodeBadge,
-                        { backgroundColor: isSelected ? theme.primary : theme.surface, borderColor: isSelected ? theme.primary : theme.border },
-                      ]}
-                    >
-                      <Text style={[styles.langCodeBadgeText, { color: isSelected ? "#ffffff" : theme.textSecondary }]}>
-                        {item.short}
-                      </Text>
-                    </View>
-                    <View style={styles.langGridCol}>
-                      <Text
-                        style={[
-                          styles.langGridLabel,
-                          { color: isSelected ? theme.primary : theme.text },
-                        ]}
-                      >
-                        {item.label}
-                      </Text>
-                      <Text style={[styles.langGridCountry, { color: theme.textSecondary }]}>{item.country}</Text>
-                    </View>
-                    {isSelected && (
-                      <Ionicons
-                        name="checkmark-circle"
-                        size={18}
-                        color={theme.primary}
-                      />
-                    )}
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
+            {AVAILABLE_LANGUAGES.map((item, idx) => {
+              const isSelected = language === item.code;
+              return (
+                <TouchableOpacity
+                  key={item.code}
+                  style={[
+                    styles.langRow,
+                    idx < AVAILABLE_LANGUAGES.length - 1 && { borderBottomWidth: 1, borderBottomColor: theme.borderLight },
+                  ]}
+                  onPress={() => {
+                    playChime("tap");
+                    onSelectLanguage(item.code);
+                    setLangModalVisible(false);
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.langCode, { color: isSelected ? theme.primary : theme.textMuted }]}>
+                    {item.short}
+                  </Text>
+                  <View style={styles.langCol}>
+                    <Text style={[styles.langLabel, { color: theme.text }, isSelected && styles.langLabelActive]}>
+                      {item.label}
+                    </Text>
+                    <Text style={[styles.langCountry, { color: theme.textMuted }]}>{item.country}</Text>
+                  </View>
+                  {isSelected && <Ionicons name="checkmark" size={18} color={theme.primary} />}
+                </TouchableOpacity>
+              );
+            })}
           </View>
         </TouchableOpacity>
       </Modal>
@@ -514,271 +307,145 @@ const styles = StyleSheet.create({
   container: {
     borderBottomWidth: 1,
     paddingHorizontal: 16,
-    paddingTop: 0,
-    paddingBottom: 10,
+    paddingTop: 12,
     gap: 10,
     zIndex: 20,
-    position: 'relative',
-    ...(Platform.OS === "web"
-      ? {
-          position: "sticky" as any,
-          top: 0,
-          backdropFilter: "blur(16px)",
-        }
-      : {}),
-  },
-  topAccentLine: {
-    height: 3,
-    width: '100%',
-    marginBottom: 8,
+    ...(Platform.OS === "web" ? { position: "sticky" as any, top: 0 } : {}),
   },
   topBar: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    maxWidth: 760,
+    width: "100%",
+    alignSelf: "center",
   },
   brandRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
   },
-  mascotCircle: {
+  owlCircle: {
     width: 38,
     height: 38,
     borderRadius: 19,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: '#ea580c',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 3,
   },
-  brandMark: {
-    width: 30,
-    height: 30,
-  },
-  brandMarkCompact: {
-    width: 27,
-    height: 27,
-  },
-  mascotCircleCompact: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-  },
-  titleWrap: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  titleWrapCompact: {
-    flexDirection: "column",
-    alignItems: "flex-start",
-    gap: 1,
+  owlMark: {
+    width: 28,
+    height: 28,
   },
   brandTitle: {
-    fontSize: 19,
-    fontWeight: "900",
-    letterSpacing: -0.5,
+    fontSize: 22,
+    fontWeight: "700",
+    letterSpacing: -0.3,
+    lineHeight: 24,
   },
-  brandTitleCompact: {
-    fontSize: 17,
-    lineHeight: 20,
-  },
-  brandAccent: {
-    color: "#ea580c",
-  },
-  aiBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 2.5,
-    borderRadius: 12,
-    shadowColor: '#6366f1',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-  },
-  aiBadgeText: {
-    fontSize: 10,
-    fontWeight: "900",
-    color: "#ffffff",
-    letterSpacing: 0.2,
+  brandSub: {
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 0.4,
   },
   rightCluster: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 8,
   },
-  miniPillGradient: {
+  statusChip: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 5,
-    borderRadius: 14,
-    borderWidth: 1,
+    height: 34,
+    paddingHorizontal: 12,
+    borderRadius: 17,
   },
-  pillDivider: {
-    width: 1,
-    height: 12,
-    marginHorizontal: 4,
-    opacity: 0.3,
-  },
-  goldNumber: {
-    fontSize: 12,
-    fontWeight: "900",
-  },
-  flameNumber: {
-    fontSize: 12,
-    fontWeight: "900",
-  },
-  iconCircleBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  fontBtnText: {
+  statusText: {
     fontSize: 13,
-    fontWeight: "900",
-  },
-  langPickerButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 5,
-    borderRadius: 14,
-    borderWidth: 1,
-  },
-  langPickerCode: {
-    fontSize: 11,
     fontWeight: "800",
   },
-  shieldButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+  statusDivider: {
+    width: 1,
+    height: 14,
+    marginHorizontal: 5,
+  },
+  menuButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    height: 34,
+    paddingHorizontal: 12,
+    borderRadius: 17,
+  },
+  menuLang: {
+    fontSize: 12,
+    fontWeight: "800",
+  },
+  tabsRow: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+    maxWidth: 760,
+    width: "100%",
+    alignSelf: "center",
+  },
+  tabs: {
+    flexDirection: "row",
+    gap: 22,
+    flexShrink: 1,
+  },
+  tab: {
+    paddingTop: 4,
+    flexShrink: 1,
+  },
+  tabText: {
+    fontSize: 15,
+    fontWeight: "700",
+    paddingBottom: 9,
+  },
+  tabTextActive: {
+    fontWeight: "800",
+  },
+  tabIndicator: {
+    height: 3,
+    borderRadius: 2,
+  },
+  scanButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
-  },
-  segmentedRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 10,
-  },
-  segmentedContainer: {
-    flex: 1,
-    flexDirection: "row",
-    borderRadius: 16,
-    padding: 3,
-    gap: 3,
-  },
-  segmentItemTouch: {
-    flex: 1,
-  },
-  segmentItemActiveGradient: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    paddingHorizontal: 6,
-    height: 32,
-    borderRadius: 13,
-    shadowColor: "#ea580c",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 5,
-    elevation: 3,
-  },
-  segmentItemInactive: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    paddingHorizontal: 6,
-    height: 32,
-    borderRadius: 13,
-  },
-  segmentText: {
-    fontSize: 12,
-    fontWeight: "700",
-    flexShrink: 1,
-  },
-  segmentTextActive: {
-    color: "#ffffff",
-    fontWeight: "900",
-    fontSize: 12,
-    flexShrink: 1,
-  },
-  quickScanTouch: {
-    borderRadius: 16,
-    overflow: 'hidden',
-  },
-  quickScanGradient: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    height: 38,
-    paddingHorizontal: 14,
-    borderRadius: 16,
-  },
-  quickScanGradientCompact: {
-    width: 44,
-    paddingHorizontal: 0,
-  },
-  quickScanText: {
-    fontSize: 12,
-    fontWeight: "900",
-    color: "#ffffff",
+    marginBottom: 6,
   },
   menuBackdrop: {
     flex: 1,
     alignItems: "flex-end",
-    paddingTop: 64,
+    paddingTop: 60,
     paddingHorizontal: 12,
   },
   menuCard: {
     width: 300,
     maxWidth: "100%",
-    borderRadius: 20,
+    borderRadius: 18,
     borderWidth: 1,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 20,
-    elevation: 10,
+    paddingVertical: 4,
+    paddingHorizontal: 14,
   },
   menuItem: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    paddingVertical: 11,
-  },
-  menuIconCircle: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    alignItems: "center",
-    justifyContent: "center",
+    paddingVertical: 13,
   },
   menuLabel: {
     flex: 1,
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: "700",
   },
   menuTrailing: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: "700",
     maxWidth: 110,
   },
@@ -790,73 +457,52 @@ const styles = StyleSheet.create({
   },
   modalCard: {
     width: "100%",
-    maxWidth: 440,
-    borderRadius: 22,
-    padding: 18,
+    maxWidth: 400,
+    borderRadius: 20,
     borderWidth: 1,
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 20,
-    elevation: 10,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
   },
   modalHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 14,
-    paddingBottom: 10,
-    borderBottomWidth: 1,
-  },
-  modalHeaderLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
+    marginBottom: 6,
   },
   modalTitle: {
-    fontSize: 15,
-    fontWeight: "800",
+    fontSize: 20,
+    fontWeight: "700",
   },
-  modalCloseCircle: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+  modalClose: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     alignItems: "center",
     justifyContent: "center",
   },
-  langGrid: {
-    gap: 8,
-  },
-  langGridCard: {
+  langRow: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 9,
-    paddingHorizontal: 12,
-    borderRadius: 14,
-    borderWidth: 1.5,
-    gap: 12,
+    gap: 14,
+    paddingVertical: 11,
   },
-  langCodeBadge: {
-    width: 36,
-    height: 28,
-    borderRadius: 8,
-    borderWidth: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  langCodeBadgeText: {
-    fontSize: 11,
-    fontWeight: "900",
+  langCode: {
+    width: 28,
+    fontSize: 12,
+    fontWeight: "800",
     letterSpacing: 0.5,
   },
-  langGridCol: {
+  langCol: {
     flex: 1,
   },
-  langGridLabel: {
-    fontSize: 13,
+  langLabel: {
+    fontSize: 15,
+    fontWeight: "600",
+  },
+  langLabelActive: {
     fontWeight: "800",
   },
-  langGridCountry: {
-    fontSize: 11,
+  langCountry: {
+    fontSize: 12,
   },
 });

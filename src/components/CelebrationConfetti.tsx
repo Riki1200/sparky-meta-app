@@ -7,7 +7,8 @@ interface CelebrationConfettiProps {
 }
 
 const PARTICLE_COUNT = 36;
-const COLORS = ['#f59e0b', '#ec4899', '#6366f1', '#10b981', '#3b82f6', '#f43f5e', '#8b5cf6'];
+// Storybook palette: terracotta, honey, leaf, sky and ink
+const COLORS = ['#D9622B', '#E2B54A', '#5E9A69', '#6FA3C7', '#2B2620', '#F08A55'];
 // Paper confetti pieces: circle, square and ribbon strip
 const SHAPES = [
   { width: 10, height: 10, borderRadius: 5 },

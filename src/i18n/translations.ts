@@ -142,6 +142,7 @@ export interface Translations {
   dockStop: string;
   dockDemo: string;
   dockAsk: string;
+  dockMore: string;
   metaCheckTitle: string;
   metaCheckShort: string;
   metaCheckResult: string;
@@ -483,6 +484,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Translations> = {
     dockStop: 'Stop',
     dockDemo: 'Demo',
     dockAsk: 'Ask',
+    dockMore: 'More',
     metaCheckTitle: 'Meta Muse Voice check',
     metaCheckShort: 'Meta check',
     metaCheckResult: '{meta}% accuracy re-scored from the Meta transcript (device: {device}%)',
@@ -733,6 +735,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Translations> = {
     dockStop: 'Parar',
     dockDemo: 'Demo',
     dockAsk: 'Preguntar',
+    dockMore: 'Más',
     metaCheckTitle: 'Verificación con Meta Muse Voice',
     metaCheckShort: 'Verif. Meta',
     metaCheckResult: '{meta}% de precisión recalculada con la transcripción de Meta (dispositivo: {device}%)',
@@ -983,6 +986,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Translations> = {
     dockStop: 'Arrêter',
     dockDemo: 'Démo',
     dockAsk: 'Demander',
+    dockMore: 'Plus',
     metaCheckTitle: 'Vérification Meta Muse Voice',
     metaCheckShort: 'Vérif. Meta',
     metaCheckResult: '{meta} % de précision recalculée avec la transcription Meta (appareil : {device} %)',
@@ -1233,6 +1237,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Translations> = {
     dockStop: 'Parar',
     dockDemo: 'Demo',
     dockAsk: 'Perguntar',
+    dockMore: 'Mais',
     metaCheckTitle: 'Verificação com Meta Muse Voice',
     metaCheckShort: 'Verif. Meta',
     metaCheckResult: '{meta}% de precisão recalculada com a transcrição da Meta (dispositivo: {device}%)',
@@ -1483,6 +1488,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Translations> = {
     dockStop: 'Stopp',
     dockDemo: 'Demo',
     dockAsk: 'Fragen',
+    dockMore: 'Mehr',
     metaCheckTitle: 'Meta Muse Voice Prüfung',
     metaCheckShort: 'Meta-Prüfung',
     metaCheckResult: '{meta} % Genauigkeit, neu bewertet mit dem Meta-Transkript (Gerät: {device} %)',
@@ -1733,6 +1739,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Translations> = {
     dockStop: 'Stop',
     dockDemo: 'Demo',
     dockAsk: 'Chiedi',
+    dockMore: 'Altro',
     metaCheckTitle: 'Verifica Meta Muse Voice',
     metaCheckShort: 'Verifica Meta',
     metaCheckResult: '{meta}% di precisione ricalcolata con la trascrizione Meta (dispositivo: {device}%)',
@@ -1983,6 +1990,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Translations> = {
     dockStop: 'Stop',
     dockDemo: 'Demo',
     dockAsk: 'Vragen',
+    dockMore: 'Meer',
     metaCheckTitle: 'Meta Muse Voice controle',
     metaCheckShort: 'Meta-check',
     metaCheckResult: '{meta}% nauwkeurigheid herberekend met het Meta-transcript (apparaat: {device}%)',
@@ -2233,6 +2241,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Translations> = {
     dockStop: 'Stop',
     dockDemo: 'Demo',
     dockAsk: 'Zapytaj',
+    dockMore: 'Więcej',
     metaCheckTitle: 'Weryfikacja Meta Muse Voice',
     metaCheckShort: 'Kontrola Meta',
     metaCheckResult: '{meta}% dokładności przeliczonej z transkrypcji Meta (urządzenie: {device}%)',
@@ -2483,6 +2492,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Translations> = {
     dockStop: 'Dur',
     dockDemo: 'Demo',
     dockAsk: 'Sor',
+    dockMore: 'Daha fazla',
     metaCheckTitle: 'Meta Muse Voice kontrolü',
     metaCheckShort: 'Meta kontrol',
     metaCheckResult: 'Meta transkriptiyle yeniden hesaplanan doğruluk %{meta} (cihaz: %{device})',
