@@ -195,6 +195,8 @@ export class SpeechRecognitionController {
   }
 
   public async transcribeCurrentAudio(): Promise<string> {
+    // MediaRecorder delivers its last chunk asynchronously after stop()
+    await new Promise((resolve) => setTimeout(resolve, 300));
     const blob = this.getAudioBlob();
     if (!blob) return '';
     return await transcribeAudioWithMuseVoice(blob, this.language);
@@ -203,6 +205,11 @@ export class SpeechRecognitionController {
   public getAudioBlob(): Blob | null {
     if (this.audioChunks.length === 0) return null;
     return new Blob(this.audioChunks, { type: 'audio/webm' });
+  }
+
+  // Live word-by-word recognition needs the platform Web Speech API (Chrome, Edge, Safari)
+  public hasLiveRecognition(): boolean {
+    return !!this.recognition;
   }
 
   public isAvailable(): boolean {
@@ -401,4 +408,74 @@ export function matchSpokenWordToTokens(
 
   // No confident match yet, keep waiting
   return { updatedTokens: tokens, nextIndex: currentIndex };
+}
+
+export interface TranscriptScore {
+  correctWords: number;
+  mispronouncedWords: number;
+  skippedWords: number;
+  accuracyPercent: number;
+}
+
+/**
+ * Scores a full-session transcript (e.g. from Meta Muse Voice) against the page text.
+ * Word-level edit-distance alignment: extra spoken words (repeats, self-corrections) are cheap
+ * insertions, missing page words are skips, and aligned words that sound different are mispronunciations.
+ */
+export function scoreTranscriptAgainstPage(
+  transcript: string,
+  tokens: WordToken[],
+  language: SupportedLanguage = 'en'
+): TranscriptScore {
+  const target = tokens.map((t) => normalizeWord(t.word, language));
+  const spoken = transcript
+    .split(/\s+/)
+    .map((w) => normalizeWord(w, language))
+    .filter(Boolean);
+  const n = target.length;
+  const m = spoken.length;
+  const INSERT = 0.5;
+  const SKIP = 1;
+  const MISMATCH = 1;
+  const isMatch = (i: number, j: number) => calculateSimilarity(target[i], spoken[j]) >= 0.78;
+
+  // cost[i][j] = cheapest alignment of target[0..i) with spoken[0..j)
+  const cost: number[][] = Array.from({ length: n + 1 }, (_, i) =>
+    Array.from({ length: m + 1 }, (_, j) => (i === 0 ? j * INSERT : j === 0 ? i * SKIP : 0))
+  );
+  for (let i = 1; i <= n; i++) {
+    for (let j = 1; j <= m; j++) {
+      cost[i][j] = Math.min(
+        cost[i - 1][j - 1] + (isMatch(i - 1, j - 1) ? 0 : MISMATCH),
+        cost[i - 1][j] + SKIP,
+        cost[i][j - 1] + INSERT
+      );
+    }
+  }
+
+  let correct = 0;
+  let mispronounced = 0;
+  let skipped = 0;
+  let i = n;
+  let j = m;
+  while (i > 0) {
+    if (j > 0 && cost[i][j] === cost[i - 1][j - 1] + (isMatch(i - 1, j - 1) ? 0 : MISMATCH)) {
+      if (isMatch(i - 1, j - 1)) correct += 1;
+      else mispronounced += 1;
+      i -= 1;
+      j -= 1;
+    } else if (cost[i][j] === cost[i - 1][j] + SKIP) {
+      skipped += 1;
+      i -= 1;
+    } else {
+      j -= 1;
+    }
+  }
+
+  return {
+    correctWords: correct,
+    mispronouncedWords: mispronounced,
+    skippedWords: skipped,
+    accuracyPercent: n > 0 ? Math.round((correct / n) * 100) : 0,
+  };
 }

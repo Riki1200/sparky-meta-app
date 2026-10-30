@@ -57,6 +57,8 @@ export interface ReadingSessionResult {
   tutorFeedback?: string;
   gradeLevel: string;
   metaMuseTranscript?: string;
+  // Accuracy re-scored by aligning the Meta Muse Voice transcript with the page text
+  metaVerifiedAccuracyPercent?: number;
   evaluatedBy?: 'meta-muse-voice' | 'hybrid' | 'device';
 }
 

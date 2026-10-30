@@ -2,6 +2,7 @@ import { createWorker } from 'tesseract.js';
 import { BookPage, ImageRef, OCRResult, SupportedLanguage } from '../types';
 import { createWordTokensFromText } from '../data/sampleBooks';
 import { getTranslation } from '../i18n/translations';
+import { readBookPageWithMuseSpark } from './metaApi';
 
 let workerPromise: Promise<any> | null = null;
 
@@ -34,7 +35,7 @@ async function getOCRWorker(language: SupportedLanguage = 'en') {
 /**
  * Pre-processes an image using an HTML5 Canvas to enhance contrast and readability for OCR.
  */
-export async function preprocessImage(imageUri: string): Promise<string> {
+export async function preprocessImage(imageUri: string, enhanceForOcr: boolean = true): Promise<string> {
   if (typeof document === 'undefined') {
     return imageUri; // Native fallback
   }
@@ -66,6 +67,10 @@ export async function preprocessImage(imageUri: string): Promise<string> {
         canvas.height = height;
 
         ctx.drawImage(img, 0, 0, width, height);
+        if (!enhanceForOcr) {
+          // Color, downscaled copy for Meta Muse Spark vision
+          return resolve(canvas.toDataURL('image/jpeg', 0.85));
+        }
 
         // Image processing: grayscale + high contrast for book text
         const imgData = ctx.getImageData(0, 0, width, height);
@@ -105,14 +110,30 @@ export async function recognizePageText(
   language: SupportedLanguage = 'en',
   onProgress?: (progress: number, status: string) => void
 ): Promise<OCRResult> {
+  const t = getTranslation(language);
   try {
-    if (onProgress) onProgress(0.15, 'Enhancing image for text recognition...');
+    // With parent permission, Meta Muse Spark reads the photo; on-device OCR is the fallback
+    try {
+      const uploadUri = await preprocessImage(imageUri, false);
+      if (uploadUri.startsWith('data:')) {
+        if (onProgress) onProgress(0.2, t.ocrMetaProcessing);
+        const metaText = await readBookPageWithMuseSpark(uploadUri, language);
+        if (metaText) {
+          if (onProgress) onProgress(1.0, t.ocrMetaProcessing);
+          return { text: metaText, confidence: 95, words: metaText.split(/\s+/) };
+        }
+      }
+    } catch (metaErr) {
+      console.warn('Muse Spark page reading failed, using on-device OCR:', metaErr);
+    }
+
+    if (onProgress) onProgress(0.15, t.ocrProcessing);
     const processedUri = await preprocessImage(imageUri);
 
-    if (onProgress) onProgress(0.35, 'Initializing on-device OCR engine...');
+    if (onProgress) onProgress(0.35, t.ocrProcessing);
     const worker = await getOCRWorker(language);
 
-    if (onProgress) onProgress(0.6, 'Detecting words on page...');
+    if (onProgress) onProgress(0.6, t.ocrProcessing);
     const ret = await worker.recognize(processedUri);
 
     await worker.terminate();
@@ -127,7 +148,7 @@ export async function recognizePageText(
 
     const words = cleanedText ? cleanedText.split(/\s+/) : [];
 
-    if (onProgress) onProgress(1.0, 'Page text captured successfully!');
+    if (onProgress) onProgress(1.0, t.ocrProcessing);
 
     return {
       text: cleanedText || getTranslation(language).couldNotDetectText,

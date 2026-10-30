@@ -592,6 +592,14 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
                     <Text style={styles.statPillValue}>{sessionResult.correctWords}</Text>
                     <Text style={styles.statPillLabel}>{t.legendCorrect}</Text>
                   </View>
+                  {sessionResult.metaVerifiedAccuracyPercent != null && (
+                    <View style={[styles.statPill, { borderColor: theme.accent }]}>
+                      <Text style={[styles.statPillValue, { color: theme.accent }]}>
+                        {sessionResult.metaVerifiedAccuracyPercent}%
+                      </Text>
+                      <Text style={styles.statPillLabel}>{t.metaCheckShort}</Text>
+                    </View>
+                  )}
                 </View>
 
                 {/* Spoken Feedback from Meta Muse Spark */}

@@ -183,3 +183,22 @@ export async function setCloudVoiceConsent(allowed: boolean): Promise<void> {
     console.warn('Error saving cloud voice consent:', e);
   }
 }
+
+const STORAGE_KEY_CLOUD_VISION_CONSENT = '@Sparky_cloud_vision_consent';
+
+// Parent permission to send book page photos to Meta Muse Spark for reading (off by default)
+export async function getCloudVisionConsent(): Promise<boolean> {
+  try {
+    return (await AsyncStorage.getItem(STORAGE_KEY_CLOUD_VISION_CONSENT)) === 'true';
+  } catch (e) {
+    return false;
+  }
+}
+
+export async function setCloudVisionConsent(allowed: boolean): Promise<void> {
+  try {
+    await AsyncStorage.setItem(STORAGE_KEY_CLOUD_VISION_CONSENT, allowed ? 'true' : 'false');
+  } catch (e) {
+    console.warn('Error saving cloud vision consent:', e);
+  }
+}

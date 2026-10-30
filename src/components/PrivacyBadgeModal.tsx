@@ -4,7 +4,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { SupportedLanguage } from '../types';
 import { getTranslation } from '../i18n/translations';
 import { useTheme } from '../context/ThemeContext';
-import { getCloudVoiceConsent, setCloudVoiceConsent } from '../services/storageService';
+import {
+  getCloudVisionConsent,
+  getCloudVoiceConsent,
+  setCloudVisionConsent,
+  setCloudVoiceConsent,
+} from '../services/storageService';
 import { playChime } from '../services/ttsService';
 
 interface PrivacyBadgeModalProps {
@@ -21,18 +26,14 @@ export const PrivacyBadgeModal: React.FC<PrivacyBadgeModalProps> = ({
   const t = getTranslation(language);
   const { theme, themeMode } = useTheme();
   const [cloudVoiceAllowed, setCloudVoiceAllowed] = useState(false);
+  const [cloudVisionAllowed, setCloudVisionAllowed] = useState(false);
 
   useEffect(() => {
     if (visible) {
       getCloudVoiceConsent().then(setCloudVoiceAllowed);
+      getCloudVisionConsent().then(setCloudVisionAllowed);
     }
   }, [visible]);
-
-  const handleToggleCloudVoice = (allowed: boolean) => {
-    playChime('tap');
-    setCloudVoiceAllowed(allowed);
-    setCloudVoiceConsent(allowed);
-  };
 
   const isDark = themeMode === 'dark';
   const principles: {
@@ -69,6 +70,47 @@ export const PrivacyBadgeModal: React.FC<PrivacyBadgeModalProps> = ({
     },
   ];
 
+  const renderConsent = (consent: {
+    icon: React.ComponentProps<typeof Ionicons>['name'];
+    title: string;
+    desc: string;
+    allowed: boolean;
+    onChange: (allowed: boolean) => void;
+  }) => (
+    <View
+      style={[
+        styles.consentCard,
+        {
+          backgroundColor: consent.allowed ? theme.accentLight : theme.surfaceSecondary,
+          borderColor: consent.allowed ? theme.accent : theme.border,
+        },
+      ]}
+    >
+      <View style={styles.consentHeader}>
+        <View style={[styles.bulletIcon, { backgroundColor: theme.surface }]}>
+          <Ionicons name={consent.icon} size={18} color={theme.accent} />
+        </View>
+        <View style={styles.principleTextCol}>
+          <Text style={[styles.principleTitle, { color: theme.text }]}>{consent.title}</Text>
+          <Text style={[styles.consentState, { color: consent.allowed ? theme.accent : theme.textMuted }]}>
+            {consent.allowed ? t.cloudVoiceOn : t.cloudVoiceOff}
+          </Text>
+        </View>
+        <Switch
+          value={consent.allowed}
+          onValueChange={(allowed) => {
+            playChime('tap');
+            consent.onChange(allowed);
+          }}
+          trackColor={{ false: isDark ? '#334155' : '#cbd5e1', true: theme.accent }}
+          thumbColor="#ffffff"
+          accessibilityLabel={consent.title}
+        />
+      </View>
+      <Text style={[styles.principleDesc, { color: theme.textSecondary }]}>{consent.desc}</Text>
+    </View>
+  );
+
   return (
     <Modal visible={visible} animationType="fade" transparent onRequestClose={onClose}>
       <View style={[styles.backdrop, { backgroundColor: theme.modalBackdrop }]}>
@@ -103,36 +145,27 @@ export const PrivacyBadgeModal: React.FC<PrivacyBadgeModalProps> = ({
               </View>
             ))}
 
-            {/* Parent control: optional Meta Muse Voice cloud check */}
-            <View
-              style={[
-                styles.consentCard,
-                {
-                  backgroundColor: cloudVoiceAllowed ? theme.accentLight : theme.surfaceSecondary,
-                  borderColor: cloudVoiceAllowed ? theme.accent : theme.border,
-                },
-              ]}
-            >
-              <View style={styles.consentHeader}>
-                <View style={[styles.bulletIcon, { backgroundColor: theme.surface }]}>
-                  <Ionicons name="cloud-upload-outline" size={18} color={theme.accent} />
-                </View>
-                <View style={styles.principleTextCol}>
-                  <Text style={[styles.principleTitle, { color: theme.text }]}>{t.cloudVoiceTitle}</Text>
-                  <Text style={[styles.consentState, { color: cloudVoiceAllowed ? theme.accent : theme.textMuted }]}>
-                    {cloudVoiceAllowed ? t.cloudVoiceOn : t.cloudVoiceOff}
-                  </Text>
-                </View>
-                <Switch
-                  value={cloudVoiceAllowed}
-                  onValueChange={handleToggleCloudVoice}
-                  trackColor={{ false: isDark ? '#334155' : '#cbd5e1', true: theme.accent }}
-                  thumbColor="#ffffff"
-                  accessibilityLabel={t.cloudVoiceTitle}
-                />
-              </View>
-              <Text style={[styles.principleDesc, { color: theme.textSecondary }]}>{t.cloudVoiceDesc}</Text>
-            </View>
+            {/* Parent controls: optional Meta cloud features, each off by default */}
+            {renderConsent({
+              icon: 'cloud-upload-outline',
+              title: t.cloudVoiceTitle,
+              desc: t.cloudVoiceDesc,
+              allowed: cloudVoiceAllowed,
+              onChange: (allowed) => {
+                setCloudVoiceAllowed(allowed);
+                setCloudVoiceConsent(allowed);
+              },
+            })}
+            {renderConsent({
+              icon: 'scan-outline',
+              title: t.cloudVisionTitle,
+              desc: t.cloudVisionDesc,
+              allowed: cloudVisionAllowed,
+              onChange: (allowed) => {
+                setCloudVisionAllowed(allowed);
+                setCloudVisionConsent(allowed);
+              },
+            })}
           </ScrollView>
 
           <TouchableOpacity style={styles.gotItButton} onPress={onClose} activeOpacity={0.8}>

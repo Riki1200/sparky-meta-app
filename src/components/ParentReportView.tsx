@@ -8,12 +8,13 @@ import {
   Alert,
   Platform,
   Modal,
+  Linking,
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ReadingSessionResult, ReadingErrorDetail, SupportedLanguage } from '../types';
-import { getReadingHistory, getReadingStats } from '../services/storageService';
+import { ReadingSessionResult, SupportedLanguage } from '../types';
+import { getReadingHistory, getReadingStats, getUserProfile } from '../services/storageService';
 import { speakWordPhonetically, playChime, speakText, stopSpeaking, getSparkyVoiceSample } from '../services/ttsService';
 import { generateTutorSpokenFeedback } from '../services/metaApi';
 import { getTranslation } from '../i18n/translations';
@@ -46,12 +47,7 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
     avgWpm: 0,
   });
   const [copiedAlert, setCopiedAlert] = useState(false);
-  const studentsList = [
-    { name: 'Leo', grade: t.grade1 },
-    { name: 'Sofía', grade: t.grade2 },
-    { name: 'Mateo', grade: t.grade3 },
-  ];
-  const [selectedStudent, setSelectedStudent] = useState(studentsList[0]);
+  const [readerName, setReaderName] = useState<string>(t.defaultReaderName);
   const [printModalVisible, setPrintModalVisible] = useState(false);
 
   useEffect(() => {
@@ -61,213 +57,15 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
   const loadData = async () => {
     const hist = await getReadingHistory();
     const st = await getReadingStats();
+    const profile = await getUserProfile();
     setHistory(hist);
     setStats(st);
+    // The stored default name is English; show the localized default instead
+    if (profile.name && profile.name !== 'Young Reader') setReaderName(profile.name);
   };
 
-  const demoTitles: Record<SupportedLanguage, { title: string; source: string; errors: ReadingErrorDetail[] }> = {
-    en: {
-      title: "The Little Hummingbird's Flight",
-      source: 'Nature Tales for Young Readers',
-      errors: [
-        {
-          word: 'fluttered',
-          display: 'fluttered',
-          errorType: 'hesitation',
-          hesitationSeconds: 1.9,
-          syllables: ['flut', 'tered'],
-        },
-        {
-          word: 'courage',
-          display: 'courage',
-          errorType: 'mispronounced',
-          spokenWord: 'curage',
-          syllables: ['cour', 'age'],
-        },
-      ],
-    },
-    es: {
-      title: 'El Gallito Cantor del Cibao',
-      source: 'Cuentos y Tradiciones Dominicanas',
-      errors: [
-        {
-          word: 'madrugada',
-          display: 'madrugada.',
-          errorType: 'hesitation',
-          hesitationSeconds: 2.1,
-          syllables: ['ma', 'dru', 'ga', 'da'],
-        },
-        {
-          word: 'resplandor',
-          display: 'resplandor',
-          errorType: 'mispronounced',
-          spokenWord: 'resplandorando',
-          syllables: ['res', 'plan', 'dor'],
-        },
-      ],
-    },
-    fr: {
-      title: 'Le Petit Colibri du Matin',
-      source: 'Contes de la Nature pour Enfants',
-      errors: [
-        {
-          word: 'agitait',
-          display: 'agitait',
-          errorType: 'hesitation',
-          hesitationSeconds: 1.8,
-          syllables: ['a', 'gi', 'tait'],
-        },
-        {
-          word: 'courage',
-          display: 'courage',
-          errorType: 'mispronounced',
-          spokenWord: 'curage',
-          syllables: ['cou', 'rage'],
-        },
-      ],
-    },
-    pt: {
-      title: 'O Pequeno Beija-Flor Dourado',
-      source: 'Contos da Natureza Infantil',
-      errors: [
-        {
-          word: 'coloridas',
-          display: 'coloridas',
-          errorType: 'hesitation',
-          hesitationSeconds: 1.9,
-          syllables: ['co', 'lo', 'ri', 'das'],
-        },
-        {
-          word: 'coragem',
-          display: 'coragem',
-          errorType: 'mispronounced',
-          spokenWord: 'coragem',
-          syllables: ['co', 'ra', 'gem'],
-        },
-      ],
-    },
-    de: {
-      title: 'Der kleine Kolibri und die Zauberblume',
-      source: 'Naturmärchen für Kinder',
-      errors: [
-        {
-          word: 'flatterte',
-          display: 'flatterte',
-          errorType: 'hesitation',
-          hesitationSeconds: 1.9,
-          syllables: ['flat', 'ter', 'te'],
-        },
-        {
-          word: 'friedlich',
-          display: 'friedlich',
-          errorType: 'mispronounced',
-          spokenWord: 'fridlich',
-          syllables: ['fried', 'lich'],
-        },
-      ],
-    },
-    it: {
-      title: "Il Piccolo Colibrì e il Fiore d'Oro",
-      source: 'Fiabe della Natura per Bambini',
-      errors: [
-        {
-          word: 'sbatteva',
-          display: 'sbatteva',
-          errorType: 'hesitation',
-          hesitationSeconds: 1.8,
-          syllables: ['sbat', 'te', 'va'],
-        },
-        {
-          word: 'profumato',
-          display: 'profumato',
-          errorType: 'mispronounced',
-          spokenWord: 'profumate',
-          syllables: ['pro', 'fu', 'ma', 'to'],
-        },
-      ],
-    },
-    nl: {
-      title: 'De Kleine Kolibrie en de Bloem',
-      source: 'Natuurverhalen voor Jonge Lezers',
-      errors: [
-        {
-          word: 'fladderde',
-          display: 'fladderde',
-          errorType: 'hesitation',
-          hesitationSeconds: 2.0,
-          syllables: ['flad', 'der', 'de'],
-        },
-        {
-          word: 'kleurrijke',
-          display: 'kleurrijke',
-          errorType: 'mispronounced',
-          spokenWord: 'kleurrik',
-          syllables: ['kleur', 'rij', 'ke'],
-        },
-      ],
-    },
-    pl: {
-      title: 'Mały Koliber i Kolorowy Ogród',
-      source: 'Bajki Przyrodnicze dla Dzieci',
-      errors: [
-        {
-          word: 'trzepotał',
-          display: 'trzepotał',
-          errorType: 'hesitation',
-          hesitationSeconds: 1.9,
-          syllables: ['trze', 'po', 'tał'],
-        },
-        {
-          word: 'skrzydełkami',
-          display: 'skrzydełkami',
-          errorType: 'mispronounced',
-          spokenWord: 'skrzydelkami',
-          syllables: ['skrzy', 'deł', 'ka', 'mi'],
-        },
-      ],
-    },
-    tr: {
-      title: 'Küçük Sinek Kuşunun Uçuşu',
-      source: 'Çocuklar İçin Doğa Masalları',
-      errors: [
-        {
-          word: 'kanatlarını',
-          display: 'kanatlarını',
-          errorType: 'hesitation',
-          hesitationSeconds: 2.1,
-          syllables: ['ka', 'nat', 'la', 'rı', 'nı'],
-        },
-        {
-          word: 'rengarenk',
-          display: 'rengarenk',
-          errorType: 'mispronounced',
-          spokenWord: 'rengarek',
-          syllables: ['ren', 'ga', 'renk'],
-        },
-      ],
-    },
-  };
-
-  const defaultDemoSession: ReadingSessionResult = {
-    id: 'demo_session_1',
-    pageId: 'default-page',
-    pageTitle: demoTitles[language]?.title || demoTitles.en.title,
-    bookSource: demoTitles[language]?.source || demoTitles.en.source,
-    language,
-    date: t.todayLabel,
-    durationSeconds: 32,
-    totalWords: 36,
-    correctWords: 32,
-    hesitationWords: 2,
-    mispronouncedWords: 2,
-    skippedWords: 0,
-    accuracyPercent: 92,
-    wordsPerMinute: 68,
-    gradeLevel: t.grade12Label,
-    errors: demoTitles[language]?.errors || demoTitles.en.errors,
-  };
-
-  const activeSession = currentSession || (history.length > 0 ? history[0] : defaultDemoSession);
+  // Only real sessions are reported; with none yet the parent sees an empty state
+  const activeSession: ReadingSessionResult | null = currentSession || history[0] || null;
 
   const [isPlayingAudio, setIsPlayingAudio] = useState<boolean>(false);
   const [spokenFeedbackText, setSpokenFeedbackText] = useState<string>('');
@@ -356,17 +154,44 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
       `${t.shareReportWordsRead}: ${activeSession.totalWords}\n` +
       `${t.shareReportPractice}: ${activeSession.errors.map((e) => e.word).join(', ') || t.shareReportPerfect}`;
 
-    if (typeof navigator !== 'undefined' && navigator.clipboard) {
-      navigator.clipboard.writeText(summaryText);
-      setCopiedAlert(true);
-      playChime('sparkle');
-      setTimeout(() => setCopiedAlert(false), 3000);
-    } else {
-      Alert.alert(t.shareReportBtn, summaryText);
-    }
+    playChime('sparkle');
+    Linking.openURL(`https://wa.me/?text=${encodeURIComponent(summaryText)}`).catch(() => {
+      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        navigator.clipboard.writeText(summaryText);
+        setCopiedAlert(true);
+        setTimeout(() => setCopiedAlert(false), 3000);
+      } else {
+        Alert.alert(t.shareReportBtn, summaryText);
+      }
+    });
   };
 
-  const evalInfo = getWpmEvaluation(activeSession ? activeSession.wordsPerMinute : 65);
+  if (!activeSession) {
+    return (
+      <View style={[styles.container, styles.emptyContainer, { backgroundColor: theme.bg }]}>
+        <View style={[styles.emptyCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+          <View style={[styles.headerIconCircle, { backgroundColor: theme.accentLight }]}>
+            <Ionicons name="stats-chart" size={20} color={theme.accent} />
+          </View>
+          <Text style={[styles.emptyTitle, { color: theme.text }]}>{t.reportEmptyTitle}</Text>
+          <Text style={[styles.emptyDesc, { color: theme.textSecondary }]}>{t.reportEmptyDesc}</Text>
+          <TouchableOpacity
+            style={[styles.emptyButton, { backgroundColor: theme.primary }]}
+            onPress={() => {
+              playChime('tap');
+              onBackToReading();
+            }}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="book" size={16} color="#ffffff" />
+            <Text style={styles.emptyButtonText}>{t.backToReadingBtn}</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  const evalInfo = getWpmEvaluation(activeSession.wordsPerMinute);
 
   return (
     <ScrollView
@@ -458,43 +283,17 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
         </View>
 
         <View style={styles.studentsRow}>
-          {studentsList.map((st) => {
-            const isSelected = selectedStudent.name === st.name;
-            return (
-              <TouchableOpacity
-                key={st.name}
-                style={[
-                  styles.studentPill,
-                  {
-                    backgroundColor: isSelected ? theme.primaryLight : theme.surfaceSecondary,
-                    borderColor: isSelected ? theme.primary : theme.border,
-                  },
-                ]}
-                onPress={() => {
-                  playChime('tap');
-                  setSelectedStudent(st);
-                }}
-                activeOpacity={0.8}
-              >
-                <Ionicons name="person-circle" size={24} color={isSelected ? theme.primary : theme.textMuted} />
-                <View>
-                  <Text style={[styles.studentName, { color: isSelected ? theme.primary : theme.text }]}>
-                    {st.name}
-                  </Text>
-                  <Text style={[styles.studentGrade, { color: theme.textSecondary }]}>
-                    {st.grade}
-                  </Text>
-                </View>
-                {isSelected && (
-                  <Ionicons name="checkmark-circle" size={15} color={theme.primary} />
-                )}
-              </TouchableOpacity>
-            );
-          })}
+          <View style={[styles.studentPill, { backgroundColor: theme.primaryLight, borderColor: theme.primary }]}>
+            <Ionicons name="person-circle" size={24} color={theme.primary} />
+            <View>
+              <Text style={[styles.studentName, { color: theme.primary }]}>{readerName}</Text>
+              <Text style={[styles.studentGrade, { color: theme.textSecondary }]}>{activeSession.gradeLevel}</Text>
+            </View>
+          </View>
         </View>
       </View>
 
-      {/* UNESCO Literacy Benchmark Banner */}
+      {/* Fluency Benchmark Banner (Hasbrouck & Tindal 2017 oral reading fluency norms) */}
       <View style={[styles.benchmarkBanner, { backgroundColor: evalInfo.bg, borderColor: evalInfo.color }]}>
         <View style={styles.benchmarkLeft}>
           <Text style={[styles.benchmarkLevel, { color: evalInfo.color }]}>
@@ -505,8 +304,46 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
           </Text>
         </View>
         <View style={[styles.benchmarkTargetChip, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-          <Text style={[styles.benchmarkTargetText, { color: theme.text }]}>UNESCO: 60-80 WPM</Text>
+          <Text style={[styles.benchmarkTargetText, { color: theme.text }]}>{t.benchmarkGoal}</Text>
+          <Text style={[styles.benchmarkSourceText, { color: theme.textMuted }]}>Hasbrouck & Tindal, 2017</Text>
         </View>
+      </View>
+
+      {/* Meta Muse Voice re-scoring: second opinion on the device's live score */}
+      <View
+        style={[
+          styles.metaCheckCard,
+          {
+            backgroundColor: activeSession.metaVerifiedAccuracyPercent != null ? theme.accentLight : theme.surface,
+            borderColor: activeSession.metaVerifiedAccuracyPercent != null ? theme.accent : theme.border,
+          },
+        ]}
+      >
+        <View style={styles.metaCheckHeader}>
+          <Ionicons name="shield-checkmark" size={18} color={theme.accent} />
+          <Text style={[styles.metaCheckTitle, { color: theme.text }]}>{t.metaCheckTitle}</Text>
+          {activeSession.metaVerifiedAccuracyPercent != null && (
+            <Text style={[styles.metaCheckValue, { color: theme.accent }]}>
+              {activeSession.metaVerifiedAccuracyPercent}%
+            </Text>
+          )}
+        </View>
+        {activeSession.metaVerifiedAccuracyPercent != null ? (
+          <>
+            <Text style={[styles.metaCheckDesc, { color: theme.textSecondary }]}>
+              {t.metaCheckResult
+                .replace('{meta}', String(activeSession.metaVerifiedAccuracyPercent))
+                .replace('{device}', String(activeSession.accuracyPercent))}
+            </Text>
+            {activeSession.metaMuseTranscript ? (
+              <Text style={[styles.metaCheckTranscript, { color: theme.text }]} numberOfLines={3}>
+                {t.metaCheckHeard}: "{activeSession.metaMuseTranscript}"
+              </Text>
+            ) : null}
+          </>
+        ) : (
+          <Text style={[styles.metaCheckDesc, { color: theme.textSecondary }]}>{t.metaCheckHint}</Text>
+        )}
       </View>
 
       {/* 4 Bento-Grid KPI Cards with Dynamic Gradients */}
@@ -858,9 +695,9 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
             <ScrollView style={styles.printModalBody} contentContainerStyle={styles.printModalContent}>
               <View style={styles.sheetPaperLook}>
                 <View style={styles.sheetPaperTop}>
-                  <Text style={styles.sheetSchoolName}>SPARKY READING INITIATIVE • UNESCO ERCE</Text>
+                  <Text style={styles.sheetSchoolName}>SPARKY READING PRACTICE</Text>
                   <Text style={styles.sheetDateRow}>
-                    {`${selectedStudent.name} (${selectedStudent.grade})`}
+                    {`${readerName} (${activeSession.gradeLevel})`}
                     {'   •   '}
                     {activeSession ? activeSession.date : new Date().toLocaleDateString()}
                   </Text>
@@ -1115,6 +952,76 @@ const createStyles = (theme: ThemeColors) => {
     borderRadius: 10,
     borderWidth: 1,
     borderColor: theme.border,
+  },
+  benchmarkSourceText: {
+    fontSize: 9,
+    marginTop: 2,
+  },
+  metaCheckCard: {
+    borderRadius: 16,
+    borderWidth: 1.5,
+    padding: 14,
+    gap: 6,
+  },
+  metaCheckHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  metaCheckTitle: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  metaCheckValue: {
+    fontSize: 20,
+    fontWeight: '900',
+  },
+  metaCheckDesc: {
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  metaCheckTranscript: {
+    fontSize: 12,
+    fontStyle: 'italic',
+    lineHeight: 17,
+  },
+  emptyContainer: {
+    justifyContent: 'center',
+    padding: 20,
+  },
+  emptyCard: {
+    alignItems: 'center',
+    gap: 10,
+    padding: 24,
+    borderRadius: 20,
+    borderWidth: 1,
+    maxWidth: 420,
+    width: '100%',
+    alignSelf: 'center',
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '900',
+  },
+  emptyDesc: {
+    fontSize: 13,
+    lineHeight: 19,
+    textAlign: 'center',
+  },
+  emptyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 18,
+    paddingVertical: 11,
+    borderRadius: 14,
+    marginTop: 6,
+  },
+  emptyButtonText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '800',
   },
   benchmarkTargetText: {
     fontSize: 10,
