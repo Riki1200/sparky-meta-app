@@ -16,7 +16,7 @@
     ],
     "headers": [
       {
-        "source": "/_expo/static/**",
+        "source": "/@(_expo/static|assets)/**",
         "headers": [
           {
             "key": "Cache-Control",
