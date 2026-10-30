@@ -13,6 +13,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { SupportedLanguage } from "../types";
 import { useTheme } from "../context/ThemeContext";
+import { DISPLAY_FONT } from "../styles/theme";
 import { playChime } from "../services/ttsService";
 import {
   getUserProfile,
@@ -1017,7 +1018,7 @@ export const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({
                   colors={theme.gradients.starPill}
                   style={styles.welcomeGiftCard}
                 >
-                  <Ionicons name="gift" size={30} color="#f59e0b" />
+                  <Ionicons name="gift" size={30} color={theme.badges.starBadgeText} />
                   <View style={{ flex: 1 }}>
                     <Text style={styles.giftTitle}>{t.welcomeGiftTitle}</Text>
                     <Text style={styles.giftDesc}>{t.welcomeGiftDesc}</Text>
@@ -1153,7 +1154,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 14,
-    shadowColor: "#7c3aed",
+    shadowColor: "#2B2620",
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
     shadowRadius: 12,
@@ -1168,6 +1169,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   stepTitle: {
+    ...DISPLAY_FONT,
     fontSize: 22,
     fontWeight: "800",
     textAlign: "center",

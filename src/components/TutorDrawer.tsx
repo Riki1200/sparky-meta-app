@@ -26,7 +26,7 @@ import { SpeechRecognitionController } from '../services/speechService';
 import { getTranslation } from '../i18n/translations';
 import { getWordIllustrationUrl, toImageSource } from '../services/imageService';
 import { useTheme } from '../context/ThemeContext';
-import { ThemeColors } from '../styles/theme';
+import { ThemeColors, DISPLAY_FONT } from '../styles/theme';
 import { SparkyMascot } from './SparkyMascot';
 
 interface TutorDrawerProps {
@@ -57,7 +57,6 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
   const t = getTranslation(language);
   const { theme, themeMode } = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
-  const dk = (light: string, dark: string) => (themeMode === 'dark' ? dark : light);
 
   // Word Explainer state
   const [explanation, setExplanation] = useState<WordExplanation | null>(null);
@@ -364,17 +363,12 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
                 <View style={styles.headerTitleRow}>
                   <Text style={styles.tutorName}>{t.tutorTitle}</Text>
                   <View style={styles.aiBadge}>
-                    <Ionicons name="sparkles" size={10} color="#6366f1" />
+                    <Ionicons name="sparkles" size={10} color={theme.primary} />
                     <Text style={styles.aiBadgeText}>
                       {usesMuseVoice ? 'Muse Voice + Spark' : 'Meta Muse Spark'}
                     </Text>
                   </View>
                 </View>
-                <Text style={styles.modelPowered}>
-                  {usesMuseVoice
-                    ? 'Meta Model API • muse-voice-transcribe-1.0'
-                    : 'Meta Model API • muse-spark-1.3'}
-                </Text>
               </View>
             </View>
 
@@ -490,7 +484,7 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
 
                 {loadingWord ? (
                   <View style={styles.loadingBox}>
-                    <ActivityIndicator size="large" color="#6366f1" />
+                    <ActivityIndicator size="large" color={theme.primary} />
                     <Text style={styles.loadingText}>
                       {t.preparingExplanation}
                     </Text>
@@ -529,8 +523,8 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
                     {/* Simple Kid Meaning */}
                     <View style={styles.meaningCard}>
                       <View style={styles.iconHeadingRow}>
-                        <View style={[styles.iconCircleMini, { backgroundColor: dk('#fef3c7', 'rgba(245, 158, 11, 0.14)') }]}>
-                          <Ionicons name="bulb" size={16} color="#d97706" />
+                        <View style={[styles.iconCircleMini, { backgroundColor: theme.surfaceSecondary }]}>
+                          <Ionicons name="bulb" size={16} color={theme.badges.starBadgeText} />
                         </View>
                         <Text style={styles.cardHeading}>{t.wordMeaning}</Text>
                       </View>
@@ -540,8 +534,8 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
                     {/* Fun Example Analogy */}
                     <View style={styles.exampleCard}>
                       <View style={styles.iconHeadingRow}>
-                        <View style={[styles.iconCircleMini, { backgroundColor: dk('#eff6ff', 'rgba(59, 130, 246, 0.12)') }]}>
-                          <Ionicons name="sparkles" size={16} color="#2563eb" />
+                        <View style={[styles.iconCircleMini, { backgroundColor: theme.surfaceSecondary }]}>
+                          <Ionicons name="sparkles" size={16} color={theme.primary} />
                         </View>
                         <Text style={styles.cardHeading}>{t.wordExample}</Text>
                       </View>
@@ -562,7 +556,7 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
               <View style={styles.celebrateSection}>
                 <View style={styles.celebrateHeader}>
                   <LinearGradient
-                    colors={['#FBBF24', '#F59E0B', '#EA580C']}
+                    colors={[theme.badges.starBadgeText, theme.badges.starBadgeText, theme.primary]}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                     style={styles.celebrateIconCircle}
@@ -606,11 +600,11 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
                 <View style={styles.spokenFeedbackCard}>
                   <View style={styles.spokenHeaderRow}>
                     <View style={styles.spokenHeaderLeft}>
-                      <Ionicons name="chatbubble-ellipses" size={20} color="#6366f1" />
+                      <Ionicons name="chatbubble-ellipses" size={20} color={theme.primary} />
                       <View style={styles.spokenTitleCol}>
                         <Text style={styles.spokenTitle}>{t.spokenFeedbackTitle}</Text>
                         <View style={styles.spokenMuseBadge}>
-                          <Ionicons name="sparkles" size={10} color="#6366f1" />
+                          <Ionicons name="sparkles" size={10} color={theme.primary} />
                           <Text style={styles.spokenMuseBadgeText}>Meta Muse Spark 1.3 • Audio</Text>
                         </View>
                       </View>
@@ -619,7 +613,7 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
                       <TouchableOpacity
                         style={[
                           styles.replayAudioBtn,
-                          { backgroundColor: isPlayingAudio ? '#ef4444' : '#6366f1' },
+                          { backgroundColor: isPlayingAudio ? theme.gradients.btnMicListening[0] : theme.primary },
                         ]}
                         onPress={() => handlePlayVoice(spokenFeedback || getSparkyVoiceSample(language))}
                         activeOpacity={0.8}
@@ -639,14 +633,14 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
                         disabled={loadingFeedback}
                         activeOpacity={0.8}
                       >
-                        <Ionicons name="refresh" size={13} color="#6366f1" />
+                        <Ionicons name="refresh" size={13} color={theme.primary} />
                       </TouchableOpacity>
                     </View>
                   </View>
 
                   {loadingFeedback ? (
                     <View style={styles.spokenLoadingRow}>
-                      <ActivityIndicator size="small" color="#6366f1" />
+                      <ActivityIndicator size="small" color={theme.primary} />
                       <Text style={styles.spokenLoadingText}>
                         {t.generatingCheer}
                       </Text>
@@ -696,7 +690,7 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
 
                 {loadingQuiz ? (
                   <View style={styles.loadingBox}>
-                    <ActivityIndicator size="large" color="#6366f1" />
+                    <ActivityIndicator size="large" color={theme.primary} />
                     <Text style={styles.loadingText}>
                       {t.craftingQuiz}
                     </Text>
@@ -740,10 +734,10 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
                                   </View>
                                   <Text style={styles.optionLabel}>{opt}</Text>
                                   {answered && isCorrect && (
-                                    <Ionicons name="checkmark-circle" size={20} color="#15803d" />
+                                    <Ionicons name="checkmark-circle" size={20} color={theme.badges.kpiAccuracyText} />
                                   )}
                                   {answered && isThisSelected && !isCorrect && (
-                                    <Ionicons name="close-circle" size={20} color="#b91c1c" />
+                                    <Ionicons name="close-circle" size={20} color={theme.gradients.btnMicListening[0]} />
                                   )}
                                 </TouchableOpacity>
                               );
@@ -752,7 +746,7 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
 
                           {answered && (
                             <View style={styles.explanationBox}>
-                              <Ionicons name="information-circle" size={16} color={dk('#0369a1', '#7dd3fc')} />
+                              <Ionicons name="information-circle" size={16} color={theme.primary} />
                               <Text style={styles.explanationBoxText}>{q.explanation}</Text>
                             </View>
                           )}
@@ -765,7 +759,7 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
                         <Ionicons
                           name={quizScore === questions.length ? 'trophy' : 'thumbs-up'}
                           size={34}
-                          color="#f59e0b"
+                          color={theme.badges.starBadgeText}
                           style={styles.quizScoreIcon}
                         />
                         <Text style={styles.quizScoreTitle}>
@@ -790,7 +784,7 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
               <View style={styles.voiceAskSection}>
                 <View style={[styles.voiceHeroCard, { backgroundColor: theme.surfaceSecondary, borderColor: theme.border }]}>
                   <View style={styles.voiceHeroHeader}>
-                    <Ionicons name="mic-circle" size={36} color="#6366f1" />
+                    <Ionicons name="mic-circle" size={36} color={theme.primary} />
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.voiceHeroTitle, { color: theme.text }]}>
                         {t.askVoiceTitle}
@@ -818,8 +812,8 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
                       <LinearGradient
                         colors={
                           isRecordingQuestion
-                            ? ['#ef4444', '#dc2626']
-                            : ['#6366f1', '#4f46e5']
+                            ? [theme.gradients.btnMicListening[0], theme.gradients.btnMicListening[0]]
+                            : [theme.primary, theme.primary]
                         }
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 1 }}
@@ -855,7 +849,7 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
 
                     {(isTranscribingQuestion || isAnsweringQuestion) && (
                       <View style={styles.voiceLoadingRow}>
-                        <ActivityIndicator size="small" color="#6366f1" />
+                        <ActivityIndicator size="small" color={theme.primary} />
                         <Text style={[styles.voiceLoadingText, { color: theme.textMuted }]}>
                           {isTranscribingQuestion
                             ? t.askVoiceTranscribing
@@ -871,7 +865,7 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
                       {/* Child question bubble */}
                       <View style={styles.childQuestionBubble}>
                         <View style={styles.bubbleTagRow}>
-                          <Ionicons name="mic" size={13} color="#6366f1" />
+                          <Ionicons name="mic" size={13} color={theme.primary} />
                           <Text style={styles.bubbleAuthorTag}>{t.askVoiceYouAsked}</Text>
                         </View>
                         <Text style={styles.childQuestionText}>"{userQuestionTranscript}"</Text>
@@ -882,7 +876,7 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
                         <View
                           style={[
                             styles.sparkyAnswerBubble,
-                            { backgroundColor: themeMode === 'dark' ? '#1e1b4b' : '#f5f3ff' },
+                            { backgroundColor: theme.surfaceSecondary },
                           ]}
                         >
                           <View style={styles.bubbleTagRow}>
@@ -899,7 +893,7 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
                               onPress={() => speakText(sparkyAnswerText, language, 0.88)}
                               activeOpacity={0.7}
                             >
-                              <Ionicons name="volume-high" size={15} color="#6366f1" />
+                              <Ionicons name="volume-high" size={15} color={theme.primary} />
                               <Text style={styles.bubbleListenText}>{t.listenToSparky}</Text>
                             </TouchableOpacity>
 
@@ -967,9 +961,8 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
   );
 };
 
-// Light-mode tints get translucent or lighter equivalents in dark mode
+// Styles read storybook theme tokens, so light and night mode share one definition
 const createStyles = (theme: ThemeColors) => {
-  const dk = (light: string, dark: string) => (theme.mode === 'dark' ? dark : light);
   return StyleSheet.create({
   backdrop: {
     flex: 1,
@@ -1017,6 +1010,7 @@ const createStyles = (theme: ThemeColors) => {
     gap: 8,
   },
   tutorName: {
+    ...DISPLAY_FONT,
     fontSize: 18,
     fontWeight: '900',
     color: theme.text,
@@ -1025,15 +1019,15 @@ const createStyles = (theme: ThemeColors) => {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: dk('#f5f3ff', 'rgba(139, 92, 246, 0.14)'),
+    backgroundColor: theme.surfaceSecondary,
     paddingHorizontal: 7,
     paddingVertical: 2,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: dk('#ddd6fe', 'rgba(139, 92, 246, 0.35)'),
+    borderColor: theme.border,
   },
   aiBadgeText: {
-    color: dk('#6366f1', '#a5b4fc'),
+    color: theme.primary,
     fontSize: 10,
     fontWeight: '800',
   },
@@ -1081,6 +1075,7 @@ const createStyles = (theme: ThemeColors) => {
     letterSpacing: 0.5,
   },
   targetWordDisplay: {
+    ...DISPLAY_FONT,
     fontSize: 26,
     fontWeight: '900',
     color: theme.text,
@@ -1090,12 +1085,12 @@ const createStyles = (theme: ThemeColors) => {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#6366f1',
+    backgroundColor: theme.primary,
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 16,
     borderBottomWidth: 3,
-    borderBottomColor: '#4338ca',
+    borderBottomColor: theme.primary,
   },
   listenWordText: {
     color: '#ffffff',
@@ -1119,16 +1114,16 @@ const createStyles = (theme: ThemeColors) => {
     gap: 14,
   },
   syllablesCard: {
-    backgroundColor: dk('#eff6ff', 'rgba(59, 130, 246, 0.12)'),
+    backgroundColor: theme.surfaceSecondary,
     borderRadius: 18,
     padding: 14,
     borderWidth: 1.5,
-    borderColor: dk('#bfdbfe', 'rgba(59, 130, 246, 0.35)'),
+    borderColor: theme.border,
   },
   cardSmallLabel: {
     fontSize: 11,
     fontWeight: '800',
-    color: dk('#1e40af', '#93c5fd'),
+    color: theme.text,
     marginBottom: 8,
   },
   syllablesChipRow: {
@@ -1142,28 +1137,28 @@ const createStyles = (theme: ThemeColors) => {
     paddingVertical: 8,
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: dk('#93c5fd', 'rgba(59, 130, 246, 0.35)'),
+    borderColor: theme.border,
     borderBottomWidth: 3,
-    borderBottomColor: '#60a5fa',
+    borderBottomColor: theme.border,
   },
   syllableChipActive: {
-    backgroundColor: '#2563eb',
-    borderColor: dk('#1d4ed8', '#60a5fa'),
+    backgroundColor: theme.primary,
+    borderColor: theme.primary,
   },
   syllableChipText: {
     fontSize: 16,
     fontWeight: '800',
-    color: dk('#1e3a8a', '#93c5fd'),
+    color: theme.text,
   },
   syllableChipTextActive: {
     color: '#ffffff',
   },
   meaningCard: {
-    backgroundColor: dk('#fffbeb', 'rgba(245, 158, 11, 0.12)'),
+    backgroundColor: theme.surfaceSecondary,
     borderRadius: 18,
     padding: 16,
     borderWidth: 1.5,
-    borderColor: dk('#fde68a', 'rgba(245, 158, 11, 0.35)'),
+    borderColor: theme.border,
   },
   iconHeadingRow: {
     flexDirection: 'row',
@@ -1185,36 +1180,36 @@ const createStyles = (theme: ThemeColors) => {
   },
   meaningText: {
     fontSize: 15,
-    color: dk('#78350f', '#fcd34d'),
+    color: theme.text,
     lineHeight: 22,
     fontWeight: '600',
   },
   exampleCard: {
-    backgroundColor: dk('#f0fdf4', 'rgba(16, 185, 129, 0.12)'),
+    backgroundColor: theme.badges.kpiAccuracyBg,
     borderRadius: 18,
     padding: 16,
     borderWidth: 1.5,
-    borderColor: dk('#bbf7d0', 'rgba(16, 185, 129, 0.35)'),
+    borderColor: theme.words.correctBorder,
   },
   exampleText: {
     fontSize: 15,
     fontStyle: 'italic',
-    color: dk('#166534', '#6ee7b7'),
+    color: theme.text,
     lineHeight: 22,
     fontWeight: '600',
   },
   cheerCard: {
-    backgroundColor: dk('#faf5ff', 'rgba(139, 92, 246, 0.14)'),
+    backgroundColor: theme.surfaceSecondary,
     borderRadius: 18,
     padding: 14,
     borderWidth: 1.5,
-    borderColor: dk('#e9d5ff', 'rgba(139, 92, 246, 0.35)'),
+    borderColor: theme.border,
     alignItems: 'center',
   },
   cheerText: {
     fontSize: 14,
     fontWeight: '800',
-    color: dk('#6b21a8', '#d8b4fe'),
+    color: theme.text,
     textAlign: 'center',
   },
   celebrateSection: {
@@ -1231,13 +1226,14 @@ const createStyles = (theme: ThemeColors) => {
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 6,
-    shadowColor: '#f59e0b',
+    shadowColor: theme.badges.starBadgeText,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
     shadowRadius: 12,
     elevation: 6,
   },
   celebrateTitle: {
+    ...DISPLAY_FONT,
     fontSize: 22,
     fontWeight: '900',
     color: theme.text,
@@ -1249,18 +1245,18 @@ const createStyles = (theme: ThemeColors) => {
     fontWeight: '600',
   },
   starsRewardPill: {
-    backgroundColor: dk('#fef3c7', 'rgba(245, 158, 11, 0.14)'),
+    backgroundColor: theme.surfaceSecondary,
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 14,
     marginTop: 10,
     borderWidth: 1.5,
-    borderColor: dk('#fde68a', 'rgba(245, 158, 11, 0.35)'),
+    borderColor: theme.border,
   },
   starsRewardText: {
     fontSize: 13,
     fontWeight: '900',
-    color: dk('#b45309', '#fcd34d'),
+    color: theme.badges.starBadgeText,
   },
   statsPillRow: {
     flexDirection: 'row',
@@ -1287,11 +1283,11 @@ const createStyles = (theme: ThemeColors) => {
     marginTop: 2,
   },
   spokenFeedbackCard: {
-    backgroundColor: dk('#f5f3ff', 'rgba(139, 92, 246, 0.14)'),
+    backgroundColor: theme.surfaceSecondary,
     borderRadius: 20,
     padding: 16,
     borderWidth: 1.5,
-    borderColor: dk('#ddd6fe', 'rgba(139, 92, 246, 0.35)'),
+    borderColor: theme.border,
   },
   spokenHeaderRow: {
     flexDirection: 'row',
@@ -1312,7 +1308,7 @@ const createStyles = (theme: ThemeColors) => {
   spokenTitle: {
     fontSize: 13,
     fontWeight: '800',
-    color: dk('#4338ca', '#c7d2fe'),
+    color: theme.primary,
   },
   spokenMuseBadge: {
     flexDirection: 'row',
@@ -1323,7 +1319,7 @@ const createStyles = (theme: ThemeColors) => {
   spokenMuseBadgeText: {
     fontSize: 10,
     fontWeight: '700',
-    color: dk('#6366f1', '#a5b4fc'),
+    color: theme.primary,
   },
   spokenActionsGroup: {
     flexDirection: 'row',
@@ -1334,7 +1330,7 @@ const createStyles = (theme: ThemeColors) => {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: '#6366f1',
+    backgroundColor: theme.primary,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 14,
@@ -1361,11 +1357,11 @@ const createStyles = (theme: ThemeColors) => {
   spokenLoadingText: {
     fontSize: 12,
     fontWeight: '600',
-    color: dk('#6366f1', '#a5b4fc'),
+    color: theme.primary,
   },
   feedbackBodyText: {
     fontSize: 15,
-    color: dk('#312e81', '#c7d2fe'),
+    color: theme.text,
     lineHeight: 22,
     fontWeight: '600',
   },
@@ -1378,11 +1374,11 @@ const createStyles = (theme: ThemeColors) => {
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: '#6366f1',
+    backgroundColor: theme.primary,
     paddingVertical: 14,
     borderRadius: 20,
     borderBottomWidth: 4,
-    borderBottomColor: '#4338ca',
+    borderBottomColor: theme.primary,
   },
   quizActionText: {
     color: '#ffffff',
@@ -1412,6 +1408,7 @@ const createStyles = (theme: ThemeColors) => {
     marginBottom: 8,
   },
   quizTitle: {
+    ...DISPLAY_FONT,
     fontSize: 18,
     fontWeight: '900',
     color: theme.text,
@@ -1434,7 +1431,7 @@ const createStyles = (theme: ThemeColors) => {
   questionNumber: {
     fontSize: 11,
     fontWeight: '800',
-    color: dk('#6366f1', '#a5b4fc'),
+    color: theme.primary,
     textTransform: 'uppercase',
   },
   questionText: {
@@ -1461,14 +1458,14 @@ const createStyles = (theme: ThemeColors) => {
   },
   optionBtn: {},
   optionBtnCorrect: {
-    backgroundColor: dk('#ecfdf5', 'rgba(16, 185, 129, 0.12)'),
-    borderColor: dk('#6ee7b7', 'rgba(16, 185, 129, 0.35)'),
-    borderBottomColor: '#10b981',
+    backgroundColor: theme.badges.kpiAccuracyBg,
+    borderColor: theme.words.correctBorder,
+    borderBottomColor: theme.badges.kpiAccuracyText,
   },
   optionBtnIncorrect: {
-    backgroundColor: dk('#fef2f2', 'rgba(239, 68, 68, 0.12)'),
-    borderColor: dk('#fca5a5', 'rgba(239, 68, 68, 0.4)'),
-    borderBottomColor: '#ef4444',
+    backgroundColor: theme.words.mispronouncedBg,
+    borderColor: theme.words.mispronouncedBorder,
+    borderBottomColor: theme.gradients.btnMicListening[0],
   },
   optionLetterBadge: {
     width: 26,
@@ -1494,7 +1491,7 @@ const createStyles = (theme: ThemeColors) => {
   explanationBox: {
     flexDirection: 'row',
     gap: 6,
-    backgroundColor: dk('#f0f9ff', 'rgba(59, 130, 246, 0.12)'),
+    backgroundColor: theme.surfaceSecondary,
     padding: 10,
     borderRadius: 12,
     marginTop: 10,
@@ -1502,29 +1499,30 @@ const createStyles = (theme: ThemeColors) => {
   explanationBoxText: {
     flex: 1,
     fontSize: 12,
-    color: dk('#0369a1', '#7dd3fc'),
+    color: theme.primary,
     fontWeight: '600',
     lineHeight: 16,
   },
   quizScoreCard: {
     alignItems: 'center',
-    backgroundColor: dk('#fffbeb', 'rgba(245, 158, 11, 0.12)'),
+    backgroundColor: theme.surfaceSecondary,
     padding: 20,
     borderRadius: 22,
     borderWidth: 2,
-    borderColor: dk('#fde68a', 'rgba(245, 158, 11, 0.35)'),
+    borderColor: theme.border,
   },
   quizScoreIcon: {
     marginBottom: 6,
   },
   quizScoreTitle: {
+    ...DISPLAY_FONT,
     fontSize: 18,
     fontWeight: '900',
     color: theme.text,
   },
   quizScoreDesc: {
     fontSize: 13,
-    color: dk('#78350f', '#fcd34d'),
+    color: theme.text,
     textAlign: 'center',
     marginTop: 4,
     fontWeight: '600',
@@ -1601,7 +1599,7 @@ const createStyles = (theme: ThemeColors) => {
     backgroundColor: theme.surfaceSecondary,
   },
   tabChipActive: {
-    backgroundColor: '#6366f1',
+    backgroundColor: theme.primary,
   },
   tabChipText: {
     fontSize: 12,
@@ -1626,6 +1624,7 @@ const createStyles = (theme: ThemeColors) => {
     marginBottom: 16,
   },
   voiceHeroTitle: {
+    ...DISPLAY_FONT,
     fontSize: 18,
     fontWeight: '800',
   },
@@ -1643,7 +1642,7 @@ const createStyles = (theme: ThemeColors) => {
     width: 76,
     height: 76,
     borderRadius: 38,
-    shadowColor: '#6366f1',
+    shadowColor: theme.primary,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
     shadowRadius: 12,
@@ -1651,7 +1650,7 @@ const createStyles = (theme: ThemeColors) => {
     marginBottom: 12,
   },
   voiceMicButtonPulsing: {
-    shadowColor: '#ef4444',
+    shadowColor: theme.gradients.btnMicListening[0],
     transform: [{ scale: 1.08 }],
   },
   voiceMicGradient: {
@@ -1670,7 +1669,7 @@ const createStyles = (theme: ThemeColors) => {
   },
   voiceDoneButton: {
     marginTop: 12,
-    backgroundColor: '#ef4444',
+    backgroundColor: theme.gradients.btnMicListening[0],
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 16,
@@ -1710,7 +1709,7 @@ const createStyles = (theme: ThemeColors) => {
   bubbleAuthorTag: {
     fontSize: 11,
     fontWeight: '800',
-    color: dk('#6366f1', '#a5b4fc'),
+    color: theme.primary,
     textTransform: 'uppercase',
   },
   childQuestionText: {
@@ -1723,12 +1722,12 @@ const createStyles = (theme: ThemeColors) => {
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: dk('#c7d2fe', 'rgba(129, 140, 248, 0.4)'),
+    borderColor: theme.border,
   },
   sparkyAuthorTag: {
     fontSize: 11,
     fontWeight: '800',
-    color: dk('#4f46e5', '#a5b4fc'),
+    color: theme.primary,
     textTransform: 'uppercase',
   },
   sparkyAnswerText: {
@@ -1755,7 +1754,7 @@ const createStyles = (theme: ThemeColors) => {
   bubbleListenText: {
     fontSize: 12,
     fontWeight: '800',
-    color: dk('#4338ca', '#c7d2fe'),
+    color: theme.primary,
   },
   bubbleAskAnotherBtn: {
     flexDirection: 'row',

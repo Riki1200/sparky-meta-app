@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../context/ThemeContext';
-import { ChildFontFamily, ChildFontSize } from '../styles/theme';
+import { ChildFontFamily, ChildFontSize, DISPLAY_FONT } from '../styles/theme';
 import { playChime, speakText, stopSpeaking, getSparkyVoiceSample } from '../services/ttsService';
 import { getTranslation } from '../i18n/translations';
 import { SupportedLanguage } from '../types';
@@ -177,8 +177,8 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
                   style={[
                     styles.themeOptionCard,
                     {
-                      backgroundColor: themeMode === 'light' ? '#fff7ed' : theme.surfaceSecondary,
-                      borderColor: themeMode === 'light' ? '#ea580c' : theme.border,
+                      backgroundColor: themeMode === 'light' ? theme.primaryLight : theme.surfaceSecondary,
+                      borderColor: themeMode === 'light' ? theme.primary : theme.border,
                     },
                   ]}
                   onPress={() => {
@@ -187,9 +187,9 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
                   }}
                   activeOpacity={0.8}
                 >
-                  <Ionicons name="sunny" size={26} color="#f59e0b" />
+                  <Ionicons name="sunny" size={26} color={theme.badges.starBadgeText} />
                   <View style={styles.themeInfo}>
-                    <Text style={[styles.themeLabel, { color: themeMode === 'light' ? '#9a3412' : theme.text }]}>
+                    <Text style={[styles.themeLabel, { color: themeMode === 'light' ? theme.primaryDark : theme.text }]}>
                       {t.lightModeTitle}
                     </Text>
                     <Text style={[styles.themeSub, { color: theme.textSecondary }]}>
@@ -197,7 +197,7 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
                     </Text>
                   </View>
                   {themeMode === 'light' && (
-                    <Ionicons name="checkmark-circle" size={22} color="#ea580c" />
+                    <Ionicons name="checkmark-circle" size={22} color={theme.primary} />
                   )}
                 </TouchableOpacity>
 
@@ -205,8 +205,8 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
                   style={[
                     styles.themeOptionCard,
                     {
-                      backgroundColor: themeMode === 'dark' ? '#1e293b' : theme.surfaceSecondary,
-                      borderColor: themeMode === 'dark' ? '#fb923c' : theme.border,
+                      backgroundColor: themeMode === 'dark' ? theme.primaryLight : theme.surfaceSecondary,
+                      borderColor: themeMode === 'dark' ? theme.primary : theme.border,
                     },
                   ]}
                   onPress={() => {
@@ -215,9 +215,9 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
                   }}
                   activeOpacity={0.8}
                 >
-                  <Ionicons name="moon" size={24} color="#818cf8" />
+                  <Ionicons name="moon" size={24} color={theme.accent} />
                   <View style={styles.themeInfo}>
-                    <Text style={[styles.themeLabel, { color: themeMode === 'dark' ? '#fed7aa' : theme.text }]}>
+                    <Text style={[styles.themeLabel, { color: themeMode === 'dark' ? theme.primary : theme.text }]}>
                       {t.darkModeTitle}
                     </Text>
                     <Text style={[styles.themeSub, { color: theme.textSecondary }]}>
@@ -225,7 +225,7 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
                     </Text>
                   </View>
                   {themeMode === 'dark' && (
-                    <Ionicons name="checkmark-circle" size={22} color="#fb923c" />
+                    <Ionicons name="checkmark-circle" size={22} color={theme.primary} />
                   )}
                 </TouchableOpacity>
               </View>
@@ -441,7 +441,7 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
                   <TouchableOpacity
                     style={[
                       styles.voicePlayBtn,
-                      { backgroundColor: isPlayingVoice ? '#ef4444' : theme.primary },
+                      { backgroundColor: isPlayingVoice ? theme.gradients.btnMicListening[0] : theme.primary },
                     ]}
                     onPress={handleToggleVoiceSample}
                     activeOpacity={0.8}
@@ -530,6 +530,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   title: {
+    ...DISPLAY_FONT,
     fontSize: 17,
     fontWeight: '800',
   },

@@ -21,7 +21,7 @@ import { recognizePageText, createBookPageFromCapture } from '../services/ocrSer
 import { playChime } from '../services/ttsService';
 import { getTranslation } from '../i18n/translations';
 import { useTheme } from '../context/ThemeContext';
-import { ThemeColors } from '../styles/theme';
+import { ThemeColors, DISPLAY_FONT } from '../styles/theme';
 
 interface CameraCaptureModalProps {
   visible: boolean;
@@ -290,7 +290,7 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
         <ScrollView style={styles.scrollBody} contentContainerStyle={styles.scrollContent}>
           {/* Privacy Banner */}
           <View style={styles.privacyBanner}>
-            <Ionicons name="lock-closed" size={18} color="#059669" />
+            <Ionicons name="lock-closed" size={18} color={theme.badges.kpiAccuracyText} />
             <Text style={styles.privacyBannerText}>{t.privacyGuarantee}</Text>
           </View>
 
@@ -302,7 +302,7 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
                   position: 'relative',
                   width: '100%',
                   height: 320,
-                  backgroundColor: '#0f172a',
+                  backgroundColor: '#1D1B22', // camera viewfinder stays dark in both themes
                   borderRadius: 16,
                   overflow: 'hidden',
                   display: 'flex',
@@ -350,7 +350,7 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
                   <span
                     style={{
                       background: 'rgba(15, 23, 42, 0.75)',
-                      color: '#f8fafc',
+                      color: theme.surfaceSecondary,
                       fontSize: '12px',
                       padding: '4px 10px',
                       borderRadius: '8px',
@@ -423,13 +423,13 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
         {isProcessing && (
           <View style={styles.processingOverlay}>
             <View style={styles.processingCard}>
-              <ActivityIndicator size="large" color="#ea580c" />
+              <ActivityIndicator size="large" color={theme.primary} />
               <Text style={styles.processingTitle}>
                 {t.cameraProcessingTitle}
               </Text>
               <Text style={styles.processingSubtitle}>{progressStatus}</Text>
               <View style={styles.processingTip}>
-                <Ionicons name="sparkles" size={16} color="#f59e0b" />
+                <Ionicons name="sparkles" size={16} color={theme.badges.starBadgeText} />
                 <Text style={styles.processingTipText}>
                   {t.cameraProcessingTip}
                 </Text>
@@ -442,9 +442,8 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
   );
 };
 
-// Light-mode tints get translucent or lighter equivalents in dark mode
+// Styles read storybook theme tokens, so light and night mode share one definition
 const createStyles = (theme: ThemeColors) => {
-  const dk = (light: string, dark: string) => (theme.mode === 'dark' ? dark : light);
   return StyleSheet.create({
   container: {
     flex: 1,
@@ -466,6 +465,7 @@ const createStyles = (theme: ThemeColors) => {
     borderBottomColor: theme.border,
   },
   modalTitle: {
+    ...DISPLAY_FONT,
     fontSize: 20,
     fontWeight: '800',
     color: theme.text,
@@ -494,16 +494,16 @@ const createStyles = (theme: ThemeColors) => {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    backgroundColor: dk('#ecfdf5', 'rgba(16, 185, 129, 0.12)'),
+    backgroundColor: theme.badges.kpiAccuracyBg,
     padding: 12,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: dk('#a7f3d0', 'rgba(16, 185, 129, 0.35)'),
+    borderColor: theme.words.correctBorder,
   },
   privacyBannerText: {
     flex: 1,
     fontSize: 12,
-    color: dk('#065f46', '#6ee7b7'),
+    color: theme.text,
     fontWeight: '500',
     lineHeight: 17,
   },
@@ -531,11 +531,11 @@ const createStyles = (theme: ThemeColors) => {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    backgroundColor: '#ea580c',
+    backgroundColor: theme.primary,
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 30,
-    shadowColor: '#ea580c',
+    shadowColor: theme.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -616,16 +616,16 @@ const createStyles = (theme: ThemeColors) => {
   },
   sampleBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: dk('#fff7ed', 'rgba(234, 88, 12, 0.12)'),
+    backgroundColor: theme.primaryLight,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: dk('#fed7aa', 'rgba(234, 88, 12, 0.35)'),
+    borderColor: theme.border,
     marginTop: 6,
   },
   sampleBadgeText: {
-    color: dk('#c2410c', '#fdba74'),
+    color: theme.primaryDark,
     fontSize: 11,
     fontWeight: '700',
   },
@@ -650,6 +650,7 @@ const createStyles = (theme: ThemeColors) => {
     gap: 12,
   },
   processingTitle: {
+    ...DISPLAY_FONT,
     fontSize: 18,
     fontWeight: '800',
     color: theme.text,
@@ -664,7 +665,7 @@ const createStyles = (theme: ThemeColors) => {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: dk('#fef3c7', 'rgba(245, 158, 11, 0.14)'),
+    backgroundColor: theme.surfaceSecondary,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 10,
@@ -672,7 +673,7 @@ const createStyles = (theme: ThemeColors) => {
   },
   processingTipText: {
     fontSize: 11,
-    color: dk('#92400e', '#fcd34d'),
+    color: theme.text,
     fontWeight: '600',
     flex: 1,
   },
