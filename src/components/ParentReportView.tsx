@@ -19,7 +19,7 @@ import { speakWordPhonetically, playChime, speakText, stopSpeaking, getSparkyVoi
 import { generateTutorSpokenFeedback } from '../services/metaApi';
 import { getTranslation } from '../i18n/translations';
 import { useTheme } from '../context/ThemeContext';
-import { ThemeColors } from '../styles/theme';
+import { ThemeColors, DISPLAY_FONT } from '../styles/theme';
 
 interface ParentReportViewProps {
   currentSession?: ReadingSessionResult | null;
@@ -122,23 +122,23 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
     if (wpm >= 70) {
       return {
         level: t.fluencyOptimal,
-        color: '#16a34a',
-        bg: themeMode === 'dark' ? 'rgba(22, 163, 74, 0.14)' : '#ecfdf5',
+        color: theme.badges.kpiAccuracyText,
+        bg: themeMode === 'dark' ? 'rgba(22, 163, 74, 0.14)' : theme.badges.kpiAccuracyBg,
         note: t.fluencyOptimalDesc,
       };
     }
     if (wpm >= 45) {
       return {
         level: t.fluencyDeveloping,
-        color: '#d97706',
-        bg: themeMode === 'dark' ? 'rgba(217, 119, 6, 0.14)' : '#fffbeb',
+        color: theme.badges.starBadgeText,
+        bg: themeMode === 'dark' ? 'rgba(217, 119, 6, 0.14)' : theme.surfaceSecondary,
         note: t.fluencyDevelopingDesc,
       };
     }
     return {
       level: t.fluencySupport,
-      color: '#ea580c',
-      bg: themeMode === 'dark' ? 'rgba(234, 88, 12, 0.14)' : '#fff7ed',
+      color: theme.primary,
+      bg: themeMode === 'dark' ? 'rgba(234, 88, 12, 0.14)' : theme.primaryLight,
       note: t.fluencySupportDesc,
     };
   };
@@ -215,7 +215,7 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
               </Text>
               {activeSession?.metaMuseTranscript ? (
                 <View style={styles.museAuditBadge}>
-                  <Ionicons name="sparkles" size={10} color="#6366f1" />
+                  <Ionicons name="sparkles" size={10} color={theme.primary} />
                   <Text style={styles.museAuditBadgeText}>
                     Meta Muse Voice Transcribe
                   </Text>
@@ -356,7 +356,7 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
             end={{ x: 1, y: 1 }}
             style={styles.kpiGradientCircle}
           >
-            <Ionicons name="speedometer-outline" size={17} color="#ffffff" />
+            <Ionicons name="speedometer-outline" size={17} color={theme.primary} />
           </LinearGradient>
           <Text style={[styles.kpiValue, { color: theme.text }]}>{activeSession.wordsPerMinute}</Text>
           <Text style={[styles.kpiLabel, { color: theme.textSecondary }]}>{t.speedometerLabel}</Text>
@@ -373,7 +373,7 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
             end={{ x: 1, y: 1 }}
             style={styles.kpiGradientCircle}
           >
-            <Ionicons name="checkmark-done-circle-outline" size={17} color="#ffffff" />
+            <Ionicons name="checkmark-done-circle-outline" size={17} color={theme.primary} />
           </LinearGradient>
           <Text style={[styles.kpiValue, { color: theme.text }]}>{activeSession.accuracyPercent}%</Text>
           <Text style={[styles.kpiLabel, { color: theme.textSecondary }]}>{t.summaryAccuracy}</Text>
@@ -392,7 +392,7 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
             end={{ x: 1, y: 1 }}
             style={styles.kpiGradientCircle}
           >
-            <Ionicons name="flame-outline" size={17} color="#ffffff" />
+            <Ionicons name="flame-outline" size={17} color={theme.primary} />
           </LinearGradient>
           <Text style={[styles.kpiValue, { color: theme.text }]}>{stats.streakDays}</Text>
           <Text style={[styles.kpiLabel, { color: theme.textSecondary }]}>{t.daysStreak}</Text>
@@ -411,7 +411,7 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
             end={{ x: 1, y: 1 }}
             style={styles.kpiGradientCircle}
           >
-            <Ionicons name="book-outline" size={17} color="#ffffff" />
+            <Ionicons name="book-outline" size={17} color={theme.primary} />
           </LinearGradient>
           <Text style={[styles.kpiValue, { color: theme.text }]}>{stats.totalWords || activeSession.totalWords}</Text>
           <Text style={[styles.kpiLabel, { color: theme.textSecondary }]}>{t.summaryWordsRead}</Text>
@@ -468,27 +468,27 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
         style={[
           styles.spokenFeedbackCard,
           {
-            backgroundColor: themeMode === 'dark' ? '#1e1b4b' : '#f5f3ff',
-            borderColor: themeMode === 'dark' ? '#3730a3' : '#c7d2fe',
+            backgroundColor: theme.surfaceSecondary,
+            borderColor: theme.border,
           },
         ]}
       >
         <View style={styles.spokenHeaderRow}>
           <View style={styles.spokenHeaderLeft}>
             <View style={styles.spokenIconCircle}>
-              <Ionicons name="chatbubble-ellipses" size={18} color="#6366f1" />
+              <Ionicons name="chatbubble-ellipses" size={18} color={theme.primary} />
             </View>
             <View>
               <Text
                 style={[
                   styles.spokenTitle,
-                  { color: themeMode === 'dark' ? '#c7d2fe' : '#4338ca' },
+                  { color: theme.primary },
                 ]}
               >
                 {t.spokenFeedbackTitle}
               </Text>
               <View style={styles.spokenMuseBadge}>
-                <Ionicons name="sparkles" size={10} color="#6366f1" />
+                <Ionicons name="sparkles" size={10} color={theme.primary} />
                 <Text style={styles.spokenMuseBadgeText}>
                   Meta Muse Spark 1.3 • Audio
                 </Text>
@@ -500,7 +500,7 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
             <TouchableOpacity
               style={[
                 styles.replayAudioBtn,
-                { backgroundColor: isPlayingAudio ? '#ef4444' : '#6366f1' },
+                { backgroundColor: isPlayingAudio ? theme.gradients.btnMicListening[0] : theme.primary },
               ]}
               onPress={handleToggleEncouragementVoice}
               activeOpacity={0.8}
@@ -520,25 +520,25 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
                 styles.refreshFeedbackBtn,
                 {
                   backgroundColor:
-                    themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : '#e0e7ff',
+                    theme.surfaceSecondary,
                 },
               ]}
               onPress={handleRefreshFeedback}
               disabled={loadingFeedback}
               activeOpacity={0.8}
             >
-              <Ionicons name="refresh" size={14} color="#6366f1" />
+              <Ionicons name="refresh" size={14} color={theme.primary} />
             </TouchableOpacity>
           </View>
         </View>
 
         {loadingFeedback ? (
           <View style={styles.feedbackLoadingBox}>
-            <ActivityIndicator size="small" color="#6366f1" />
+            <ActivityIndicator size="small" color={theme.primary} />
             <Text
               style={[
                 styles.feedbackLoadingText,
-                { color: themeMode === 'dark' ? '#a5b4fc' : '#6366f1' },
+                { color: theme.primary },
               ]}
             >
               {t.generatingCheer}
@@ -548,7 +548,7 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
           <Text
             style={[
               styles.feedbackBodyText,
-              { color: themeMode === 'dark' ? '#e0e7ff' : '#312e81' },
+              { color: theme.text },
             ]}
           >
             "{spokenFeedbackText || getSparkyVoiceSample(language)}"
@@ -574,7 +574,7 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
 
         {activeSession.errors.length === 0 ? (
           <View style={styles.emptyDeckBox}>
-            <Ionicons name="star" size={36} color="#f59e0b" style={styles.emptyDeckIcon} />
+            <Ionicons name="star" size={36} color={theme.badges.starBadgeText} style={styles.emptyDeckIcon} />
             <Text style={styles.emptyDeckTitle}>
               {t.flawlessReadingTitle}
             </Text>
@@ -622,7 +622,7 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
                       onPress={() => speakWordPhonetically(err.word, language)}
                       activeOpacity={0.7}
                     >
-                      <Ionicons name="volume-high" size={15} color="#ea580c" />
+                      <Ionicons name="volume-high" size={15} color={theme.primary} />
                       <Text style={styles.listenErrorBtnText}>
                         {t.listenWordBtn}
                       </Text>
@@ -633,7 +633,7 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
                       onPress={() => onOpenWordExplainer(err.word, activeSession.pageTitle)}
                       activeOpacity={0.7}
                     >
-                      <Ionicons name="sparkles" size={14} color="#2563eb" />
+                      <Ionicons name="sparkles" size={14} color={theme.primary} />
                       <Text style={styles.explainErrorBtnText}>
                         {t.explainWordBtn}
                       </Text>
@@ -649,7 +649,7 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
       {/* Meta AI Pedagogical Advice Card */}
       <View style={styles.pedagogicalCard}>
         <View style={styles.pedagogicalHeaderRow}>
-          <Ionicons name="bulb" size={24} color="#f59e0b" />
+          <Ionicons name="bulb" size={24} color={theme.badges.starBadgeText} />
           <View style={{ flex: 1 }}>
             <Text style={styles.pedagogicalTitle}>
               {t.parentPedagogicalTipTitle}
@@ -688,7 +688,7 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
                 </Text>
               </View>
               <TouchableOpacity style={styles.printCloseCircle} onPress={() => setPrintModalVisible(false)}>
-                <Ionicons name="close" size={20} color="#64748b" />
+                <Ionicons name="close" size={20} color={theme.textSecondary} />
               </TouchableOpacity>
             </View>
 
@@ -791,9 +791,8 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
   );
 };
 
-// Light-mode tints get translucent or lighter equivalents in dark mode (printable sheet stays paper-white)
+// Styles read storybook theme tokens, so light and night mode share one definition
 const createStyles = (theme: ThemeColors) => {
-  const dk = (light: string, dark: string) => (theme.mode === 'dark' ? dark : light);
   return StyleSheet.create({
   container: {
     flex: 1,
@@ -828,6 +827,7 @@ const createStyles = (theme: ThemeColors) => {
     gap: 10,
   },
   headerTitle: {
+    ...DISPLAY_FONT,
     fontSize: 16,
     fontWeight: '900',
     color: theme.text,
@@ -840,7 +840,7 @@ const createStyles = (theme: ThemeColors) => {
   shareTouch: {
     borderRadius: 20,
     overflow: 'hidden',
-    shadowColor: '#16a34a',
+    shadowColor: theme.badges.kpiAccuracyText,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 8,
@@ -969,6 +969,7 @@ const createStyles = (theme: ThemeColors) => {
     gap: 8,
   },
   metaCheckTitle: {
+    ...DISPLAY_FONT,
     flex: 1,
     fontSize: 14,
     fontWeight: '800',
@@ -1001,6 +1002,7 @@ const createStyles = (theme: ThemeColors) => {
     alignSelf: 'center',
   },
   emptyTitle: {
+    ...DISPLAY_FONT,
     fontSize: 18,
     fontWeight: '900',
   },
@@ -1100,6 +1102,7 @@ const createStyles = (theme: ThemeColors) => {
     gap: 10,
   },
   sectionTitle: {
+    ...DISPLAY_FONT,
     fontSize: 15,
     fontWeight: '800',
     color: theme.text,
@@ -1140,7 +1143,7 @@ const createStyles = (theme: ThemeColors) => {
     gap: 8,
   },
   deckBadge: {
-    backgroundColor: dk('#eff6ff', 'rgba(59, 130, 246, 0.12)'),
+    backgroundColor: theme.surfaceSecondary,
     paddingHorizontal: 9,
     paddingVertical: 3,
     borderRadius: 10,
@@ -1148,7 +1151,7 @@ const createStyles = (theme: ThemeColors) => {
   deckBadgeText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#1d4ed8',
+    color: theme.primary,
   },
   emptyDeckBox: {
     alignItems: 'center',
@@ -1161,7 +1164,7 @@ const createStyles = (theme: ThemeColors) => {
   emptyDeckTitle: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#059669',
+    color: theme.badges.kpiAccuracyText,
   },
   emptyDeckSubtitle: {
     fontSize: 11,
@@ -1194,6 +1197,7 @@ const createStyles = (theme: ThemeColors) => {
     gap: 6,
   },
   errorWordTitle: {
+    ...DISPLAY_FONT,
     fontSize: 15,
     fontWeight: '800',
     color: theme.text,
@@ -1205,18 +1209,18 @@ const createStyles = (theme: ThemeColors) => {
     borderRadius: 6,
   },
   hesitationTag: {
-    backgroundColor: dk('#fef3c7', 'rgba(245, 158, 11, 0.14)'),
+    backgroundColor: theme.surfaceSecondary,
   },
   hesitationTagText: {
-    color: dk('#92400e', '#fcd34d'),
+    color: theme.text,
     fontSize: 9,
     fontWeight: '700',
   },
   mispronouncedTag: {
-    backgroundColor: '#fee2e2',
+    backgroundColor: theme.words.mispronouncedBg,
   },
   mispronouncedTagText: {
-    color: '#991b1b',
+    color: theme.text,
     fontSize: 9,
     fontWeight: '700',
   },
@@ -1238,40 +1242,40 @@ const createStyles = (theme: ThemeColors) => {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: dk('#fff7ed', 'rgba(234, 88, 12, 0.12)'),
+    backgroundColor: theme.primaryLight,
     paddingHorizontal: 9,
     paddingVertical: 5,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: dk('#fed7aa', 'rgba(234, 88, 12, 0.35)'),
+    borderColor: theme.border,
   },
   listenErrorBtnText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#ea580c',
+    color: theme.primary,
   },
   explainErrorBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: dk('#eff6ff', 'rgba(59, 130, 246, 0.12)'),
+    backgroundColor: theme.surfaceSecondary,
     paddingHorizontal: 9,
     paddingVertical: 5,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: dk('#bfdbfe', 'rgba(59, 130, 246, 0.35)'),
+    borderColor: theme.border,
   },
   explainErrorBtnText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#2563eb',
+    color: theme.primary,
   },
   pedagogicalCard: {
-    backgroundColor: dk('#eff6ff', 'rgba(59, 130, 246, 0.12)'),
+    backgroundColor: theme.surfaceSecondary,
     borderRadius: 16,
     padding: 14,
     borderWidth: 1.5,
-    borderColor: dk('#bfdbfe', 'rgba(59, 130, 246, 0.35)'),
+    borderColor: theme.border,
     gap: 6,
   },
   pedagogicalHeaderRow: {
@@ -1282,15 +1286,15 @@ const createStyles = (theme: ThemeColors) => {
   pedagogicalTitle: {
     fontSize: 13,
     fontWeight: '800',
-    color: dk('#1e3a8a', '#93c5fd'),
+    color: theme.text,
   },
   pedagogicalSub: {
     fontSize: 10,
-    color: '#3b82f6',
+    color: theme.primary,
   },
   pedagogicalText: {
     fontSize: 11,
-    color: dk('#1e3a8a', '#93c5fd'),
+    color: theme.text,
     lineHeight: 16,
   },
   backButton: {
@@ -1320,21 +1324,21 @@ const createStyles = (theme: ThemeColors) => {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#eff6ff',
+    backgroundColor: theme.surfaceSecondary,
     paddingHorizontal: 12,
     paddingVertical: 9,
     borderRadius: 20,
     borderWidth: 1.5,
-    borderColor: '#bfdbfe',
+    borderColor: theme.border,
   },
   printSheetText: {
-    color: '#1e40af',
+    color: theme.text,
     fontSize: 12,
     fontWeight: '800',
   },
   studentPillActive: {
-    backgroundColor: '#0284c7',
-    borderColor: '#0369a1',
+    backgroundColor: theme.primary,
+    borderColor: theme.primary,
   },
   studentNameTextActive: {
     color: '#ffffff',
@@ -1346,7 +1350,7 @@ const createStyles = (theme: ThemeColors) => {
     borderRadius: 6,
   },
   studentGradeTagActive: {
-    backgroundColor: '#0369a1',
+    backgroundColor: theme.primary,
   },
   studentGradeText: {
     fontSize: 9,
@@ -1383,7 +1387,7 @@ const createStyles = (theme: ThemeColors) => {
     paddingHorizontal: 20,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    borderBottomColor: theme.surfaceSecondary,
   },
   printHeaderLeft: {
     flex: 1,
@@ -1391,18 +1395,18 @@ const createStyles = (theme: ThemeColors) => {
   printHeaderTitle: {
     fontSize: 16,
     fontWeight: '900',
-    color: '#0f172a',
+    color: theme.text,
   },
   printHeaderSub: {
     fontSize: 11,
-    color: '#64748b',
+    color: theme.textSecondary,
     marginTop: 2,
   },
   printCloseCircle: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: theme.surfaceSecondary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1413,10 +1417,10 @@ const createStyles = (theme: ThemeColors) => {
     padding: 16,
   },
   sheetPaperLook: {
-    backgroundColor: '#fffdfa',
+    backgroundColor: theme.surface,
     borderRadius: 14,
     borderWidth: 2,
-    borderColor: '#cbd5e1',
+    borderColor: theme.border,
     borderStyle: 'dashed',
     padding: 18,
     gap: 16,
@@ -1424,25 +1428,25 @@ const createStyles = (theme: ThemeColors) => {
   sheetPaperTop: {
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
+    borderBottomColor: theme.border,
     paddingBottom: 12,
     gap: 4,
   },
   sheetSchoolName: {
     fontSize: 10,
     fontWeight: '800',
-    color: '#64748b',
+    color: theme.textSecondary,
     letterSpacing: 1,
   },
   sheetDateRow: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#1e293b',
+    color: theme.text,
   },
   sheetBookTitle: {
     fontSize: 15,
     fontWeight: '900',
-    color: '#0f172a',
+    color: theme.text,
   },
   sheetSection: {
     gap: 8,
@@ -1450,7 +1454,7 @@ const createStyles = (theme: ThemeColors) => {
   sheetSectionTitle: {
     fontSize: 13,
     fontWeight: '800',
-    color: '#1e293b',
+    color: theme.text,
   },
   sheetWordRow: {
     flexDirection: 'row',
@@ -1460,19 +1464,19 @@ const createStyles = (theme: ThemeColors) => {
     padding: 8,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: theme.border,
     flexWrap: 'wrap',
     gap: 6,
   },
   sheetTargetWord: {
     fontSize: 13,
     fontWeight: '800',
-    color: '#0f172a',
+    color: theme.text,
   },
   sheetSyllableDots: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#2563eb',
+    color: theme.primary,
   },
   flexText: {
     flex: 1,
@@ -1493,12 +1497,12 @@ const createStyles = (theme: ThemeColors) => {
     width: 14,
     height: 14,
     borderWidth: 1.5,
-    borderColor: '#334155',
+    borderColor: theme.text,
     borderRadius: 3,
   },
   sheetCheckBox: {
     fontSize: 11,
-    color: '#64748b',
+    color: theme.textSecondary,
   },
   sheetLinedPaper: {
     gap: 12,
@@ -1506,7 +1510,7 @@ const createStyles = (theme: ThemeColors) => {
   },
   sheetLine: {
     height: 1,
-    backgroundColor: '#94a3b8',
+    backgroundColor: theme.textMuted,
     borderStyle: 'dashed',
   },
   sheetSignRow: {
@@ -1515,7 +1519,7 @@ const createStyles = (theme: ThemeColors) => {
     marginTop: 12,
     paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: '#e2e8f0',
+    borderTopColor: theme.border,
   },
   sheetSignCol: {
     alignItems: 'center',
@@ -1524,30 +1528,30 @@ const createStyles = (theme: ThemeColors) => {
   sheetSignLine: {
     width: '100%',
     height: 1,
-    backgroundColor: '#64748b',
+    backgroundColor: theme.textSecondary,
     marginBottom: 6,
   },
   sheetSignText: {
     fontSize: 10,
     fontWeight: '600',
-    color: '#64748b',
+    color: theme.textSecondary,
   },
   printModalFooter: {
     padding: 16,
     borderTopWidth: 1,
-    borderTopColor: '#f1f5f9',
-    backgroundColor: '#f8fafc',
+    borderTopColor: theme.surfaceSecondary,
+    backgroundColor: theme.surfaceSecondary,
   },
   printActionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: '#10b981',
+    backgroundColor: theme.badges.kpiAccuracyText,
     paddingVertical: 12,
     borderRadius: 18,
     borderBottomWidth: 3,
-    borderBottomColor: '#059669',
+    borderBottomColor: theme.badges.kpiAccuracyText,
   },
   printActionBtnText: {
     color: '#ffffff',
@@ -1596,7 +1600,7 @@ const createStyles = (theme: ThemeColors) => {
   spokenMuseBadgeText: {
     fontSize: 10,
     fontWeight: '700',
-    color: dk('#6366f1', '#a5b4fc'),
+    color: theme.primary,
   },
   spokenActionButtons: {
     flexDirection: 'row',
@@ -1653,7 +1657,7 @@ const createStyles = (theme: ThemeColors) => {
   museAuditBadgeText: {
     fontSize: 10,
     fontWeight: '800',
-    color: dk('#6366f1', '#a5b4fc'),
+    color: theme.primary,
   },
 });
 };

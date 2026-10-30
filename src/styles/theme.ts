@@ -1,3 +1,5 @@
+import { Platform } from 'react-native';
+
 export type ThemeMode = 'light' | 'dark';
 export type ChildFontFamily = 'lexend' | 'comic' | 'dyslexic' | 'system';
 export type ChildFontSize = 'normal' | 'large' | 'extra';
@@ -105,6 +107,9 @@ export const FONTS = {
   display: "'Fraunces', Georgia, 'Times New Roman', serif",
   ui: "'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
 };
+
+// Storybook heading font for StyleSheet styles (web only; native keeps the system font)
+export const DISPLAY_FONT = Platform.OS === 'web' ? { fontFamily: FONTS.display } : {};
 
 export const LIGHT_THEME: ThemeColors = {
   mode: 'light',

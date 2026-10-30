@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { SupportedLanguage } from '../types';
 import { getTranslation } from '../i18n/translations';
 import { useTheme } from '../context/ThemeContext';
+import { DISPLAY_FONT } from '../styles/theme';
 import {
   getCloudVisionConsent,
   getCloudVoiceConsent,
@@ -24,7 +25,7 @@ export const PrivacyBadgeModal: React.FC<PrivacyBadgeModalProps> = ({
   language,
 }) => {
   const t = getTranslation(language);
-  const { theme, themeMode } = useTheme();
+  const { theme } = useTheme();
   const [cloudVoiceAllowed, setCloudVoiceAllowed] = useState(false);
   const [cloudVisionAllowed, setCloudVisionAllowed] = useState(false);
 
@@ -35,7 +36,6 @@ export const PrivacyBadgeModal: React.FC<PrivacyBadgeModalProps> = ({
     }
   }, [visible]);
 
-  const isDark = themeMode === 'dark';
   const principles: {
     key: string;
     icon: React.ComponentProps<typeof Ionicons>['name'];
@@ -81,18 +81,18 @@ export const PrivacyBadgeModal: React.FC<PrivacyBadgeModalProps> = ({
       style={[
         styles.consentCard,
         {
-          backgroundColor: consent.allowed ? theme.accentLight : theme.surfaceSecondary,
-          borderColor: consent.allowed ? theme.accent : theme.border,
+          backgroundColor: consent.allowed ? theme.primaryLight : theme.surfaceSecondary,
+          borderColor: consent.allowed ? theme.primary : theme.border,
         },
       ]}
     >
       <View style={styles.consentHeader}>
         <View style={[styles.bulletIcon, { backgroundColor: theme.surface }]}>
-          <Ionicons name={consent.icon} size={18} color={theme.accent} />
+          <Ionicons name={consent.icon} size={18} color={theme.primary} />
         </View>
         <View style={styles.principleTextCol}>
           <Text style={[styles.principleTitle, { color: theme.text }]}>{consent.title}</Text>
-          <Text style={[styles.consentState, { color: consent.allowed ? theme.accent : theme.textMuted }]}>
+          <Text style={[styles.consentState, { color: consent.allowed ? theme.primary : theme.textMuted }]}>
             {consent.allowed ? t.cloudVoiceOn : t.cloudVoiceOff}
           </Text>
         </View>
@@ -102,7 +102,7 @@ export const PrivacyBadgeModal: React.FC<PrivacyBadgeModalProps> = ({
             playChime('tap');
             consent.onChange(allowed);
           }}
-          trackColor={{ false: isDark ? '#334155' : '#cbd5e1', true: theme.accent }}
+          trackColor={{ false: theme.border, true: theme.primary }}
           thumbColor="#ffffff"
           accessibilityLabel={consent.title}
         />
@@ -168,7 +168,7 @@ export const PrivacyBadgeModal: React.FC<PrivacyBadgeModalProps> = ({
             })}
           </ScrollView>
 
-          <TouchableOpacity style={styles.gotItButton} onPress={onClose} activeOpacity={0.8}>
+          <TouchableOpacity style={[styles.gotItButton, { backgroundColor: theme.primary }]} onPress={onClose} activeOpacity={0.8}>
             <Text style={styles.gotItText}>{t.gotItBtn}</Text>
           </TouchableOpacity>
         </View>
@@ -212,6 +212,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   title: {
+    ...DISPLAY_FONT,
     fontSize: 16,
     fontWeight: '800',
   },
@@ -274,7 +275,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   gotItButton: {
-    backgroundColor: '#059669',
     margin: 16,
     paddingVertical: 12,
     borderRadius: 14,
