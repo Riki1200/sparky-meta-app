@@ -2,8 +2,8 @@
 // - Pages: network first, so a new deploy is picked up right away; cached copy when offline.
 // - Hashed build files and bundled assets: cache first (their names change when content changes).
 // - Everything else (Meta API, external images) is left to the network.
-// Bump to drop every cached file (v1 could hold HTML stored in place of missing icon fonts)
-const CACHE = 'sparky-v2';
+// Bump whenever files with fixed names change (icons, manifest) so browsers refetch them
+const CACHE = 'sparky-v3';
 const APP_SHELL = ['/', '/manifest.json', '/icon-192.png', '/icon-512.png'];
 
 self.addEventListener('install', (event) => {

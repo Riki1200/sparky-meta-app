@@ -7,6 +7,7 @@ import {
   Modal,
   Platform,
   useWindowDimensions,
+  Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -27,6 +28,9 @@ interface HeaderProps {
   onOpenSettings?: () => void;
   onOpenTutorial?: () => void;
 }
+
+// Sparky the reading owl, same mark as the app icon
+const OWL_MARK = require("../../assets/brand/owl-mark.png");
 
 const AVAILABLE_LANGUAGES: { code: SupportedLanguage; label: string; short: string; country: string }[] = [
   { code: "es", label: "Español", short: "ES", country: "Rep. Dominicana" },
@@ -146,7 +150,7 @@ export const Header: React.FC<HeaderProps> = ({
             end={{ x: 1, y: 1 }}
             style={[styles.mascotCircle, isCompact && styles.mascotCircleCompact]}
           >
-            <Ionicons name="sparkles" size={isCompact ? 17 : 20} color="#ffffff" />
+            <Image source={OWL_MARK} style={isCompact ? styles.brandMarkCompact : styles.brandMark} />
           </LinearGradient>
           <View style={[styles.titleWrap, isCompact && styles.titleWrapCompact]}>
             <Text style={[styles.brandTitle, isCompact && styles.brandTitleCompact, { color: theme.text }]}>
@@ -549,6 +553,14 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 6,
     elevation: 3,
+  },
+  brandMark: {
+    width: 30,
+    height: 30,
+  },
+  brandMarkCompact: {
+    width: 27,
+    height: 27,
   },
   mascotCircleCompact: {
     width: 34,
