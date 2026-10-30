@@ -8,8 +8,7 @@ Dilo al empezar, con honestidad:
 ## Preparación
 
 **Equipo**
-- [ ] App publicada en HTTPS (README §5) e **instalada en el teléfono** desde el navegador: Chrome → *Instalar app*, o Safari → *Compartir → Agregar a inicio*.
-- [ ] Proxy de la API de Meta en línea y `EXPO_PUBLIC_META_API_BASE_URL` apuntando a él.
+- [ ] Publicada con `npm run deploy` (README §5) e **instalada en el teléfono** desde `https://sparky-lector.web.app`: Chrome → *Instalar app*, o Safari → *Compartir → Agregar a inicio*.
 - [ ] En **Escudo de Privacidad** (menú ☰): activar **Meta Muse Voice** y **Lectura de páginas con Meta Muse Spark**.
 - [ ] Una lectura de prueba ese mismo día, para que el micrófono y la cámara ya tengan permiso.
 - [ ] Si el reconocimiento de voz no responde con la app instalada, ábrela en una pestaña normal de Chrome o Safari y repite la prueba.

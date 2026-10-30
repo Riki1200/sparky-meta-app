@@ -27,7 +27,10 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "proxy": "node server/meta-proxy.mjs"
+    "proxy": "node server/meta-proxy.mjs",
+    "build:web": "EXPO_PUBLIC_META_API_KEY= EXPO_PUBLIC_META_API_BASE_URL=/api expo export --platform web --output-dir dist",
+    "check:bundle": "node scripts/check-bundle.mjs",
+    "deploy": "npm run build:web && npm run check:bundle && firebase deploy"
   },
   "private": true
 }

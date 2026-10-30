@@ -106,7 +106,7 @@ What leaves the device, exactly:
 - ☁️ **Meta Muse Voice: only with parent permission.** Off by default. A parent can enable it in the Privacy Shield; then a session's audio (or a spoken question) is sent to `muse-voice-transcribe-1.0` to double-check the reading. Without permission, *Ask Sparky* uses the device speech service instead.
 - 💬 **Meta Muse Spark: text by default.** The page text, single vocabulary words and anonymous scores, to create explanations, quizzes and feedback. No names or audio. Book page photos are sent only if a parent turns on *Meta Muse Spark page reading*.
 - 🖼️ **Picture dictionary:** single vocabulary words (never page text) go to an external illustration service.
-- 🔑 **API key stays on the server** when using the bundled proxy (`server/meta-proxy.mjs`).
+- 🔑 **API key stays on the server**: in production a Firebase Function proxies Meta calls (`functions/index.js`); for local development use `server/meta-proxy.mjs`.
 
 ---
 
@@ -142,13 +142,25 @@ npm run web
 ```
 Sparky is a **mobile web app**: live reading uses the browser's Web Speech API and the camera/OCR pipeline runs in the browser. Use Chrome, Edge or Safari (Firefox has no Web Speech API). The native Expo Go build does not support live reading.
 
-### 5. Run it on a phone (HTTPS)
-Phones only allow the microphone and camera on HTTPS pages, so a LAN `http://` address will not work. Publish a preview build with EAS Hosting:
+### 5. Publish (Firebase Hosting + Functions)
+Phones only allow the microphone, camera and app install on HTTPS pages. Sparky deploys to Firebase project `sparky-lector`:
+- **Hosting** serves the PWA at `https://sparky-lector.web.app`.
+- **Cloud Functions** runs the Meta API proxy (`functions/index.js`), reached through the same domain at `/api/**`. The Meta key lives in Secret Manager, never in the app.
+
+One-time setup (the project must be on the Blaze plan):
 ```bash
-npx expo export --platform web
-npx eas-cli@latest deploy
+npm install -g firebase-tools
+firebase login
+cd functions && npm install && cd ..
+firebase functions:secrets:set META_API_KEY   # paste the key when prompted
 ```
-Open the preview URL on the phone and install it: Chrome → *Install app*, or Safari → *Share → Add to Home Screen*. Sparky is a **PWA** (`public/manifest.json`, `public/sw.js`): it launches full-screen from its own icon and opens offline; the Meta tutor, page reading and verification need a connection. The service worker only registers on deployed builds, not on `localhost`. The Meta API proxy must also be reachable over HTTPS (deploy `server/meta-proxy.mjs` to any Node host and point `EXPO_PUBLIC_META_API_BASE_URL` at it).
+Deploy:
+```bash
+npm run deploy
+```
+`npm run deploy` builds the web app pointing at `/api` without any key, fails if a key leaked into `dist/` (`scripts/check-bundle.mjs`), then runs `firebase deploy`.
+
+On the phone, open `https://sparky-lector.web.app` and install it: Chrome → *Install app*, or Safari → *Share → Add to Home Screen*. Sparky is a **PWA** (`public/manifest.json`, `public/sw.js`): it launches full-screen from its own icon and opens offline; the Meta tutor, page reading and verification need a connection. The service worker only registers on deployed builds, not on `localhost`.
 
 ### 6. What to try
 - **Read**: tap the big microphone in the bottom bar and read the page aloud; words turn green, yellow (hesitation) or red (practice).
