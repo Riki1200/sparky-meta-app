@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   ThemeColors,
@@ -54,19 +53,6 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [syllableMode, setSyllableModeState] = useState<boolean>(false);
 
   useEffect(() => {
-    // Inject child-friendly reading fonts dynamically in Web environment
-    if (Platform.OS === 'web' && typeof document !== 'undefined') {
-      const fontLinkId = 'sparky-reading-fonts';
-      if (!document.getElementById(fontLinkId)) {
-        const link = document.createElement('link');
-        link.id = fontLinkId;
-        link.rel = 'stylesheet';
-        link.href =
-          'https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&family=Lexend:wght@400;500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap';
-        document.head.appendChild(link);
-      }
-    }
-
     // Load persisted settings
     (async () => {
       try {

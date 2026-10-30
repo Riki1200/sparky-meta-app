@@ -23,8 +23,8 @@
       "name": "Sparky Reader - AI reading tutor",
       "shortName": "Sparky",
       "description": "A patient Meta AI reading tutor for children who read real, physical books.",
-      "themeColor": "#ea580c",
-      "backgroundColor": "#f8fafc",
+      "themeColor": "#f7f1e6",
+      "backgroundColor": "#f7f1e6",
       "display": "standalone",
       "orientation": "portrait"
     }
