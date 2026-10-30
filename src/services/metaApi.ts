@@ -1,6 +1,6 @@
 import { ComprehensionQuestion, ReadingSessionResult, WordExplanation, SupportedLanguage } from '../types';
 import { convertAudioBlobToWav16kMono } from './audioUtils';
-import { getCloudVoiceConsent } from './storageService';
+import { getCloudVisionConsent, getCloudVoiceConsent } from './storageService';
 
 const META_DIRECT_BASE_URL = 'https://api.meta.ai/v1';
 
@@ -29,7 +29,12 @@ function stripEmoji(text: string): string {
  * Call Meta Model API (Muse Spark) with OpenAI-compatible chat completions format.
  * Muse Spark uses internal reasoning tokens (~300-500 tokens), so max_tokens is generously sized.
  */
-async function callMuseSpark(messages: { role: 'system' | 'user' | 'assistant'; content: string }[], maxTokens: number = 1800): Promise<string> {
+type MuseContentPart = { type: 'text'; text: string } | { type: 'image_url'; image_url: { url: string } };
+
+async function callMuseSpark(
+  messages: { role: 'system' | 'user' | 'assistant'; content: string | MuseContentPart[] }[],
+  maxTokens: number = 1800
+): Promise<string> {
   if (!isMetaApiConfigured()) {
     throw new Error('Meta API not configured. Run server/meta-proxy.mjs and set EXPO_PUBLIC_META_API_BASE_URL (see README).');
   }
@@ -820,4 +825,49 @@ function getLocalComprehensionQuestions(pageText: string, language: SupportedLan
       explanation: 'Super! The characters were curious and courageous throughout.',
     },
   ];
+}
+
+const PAGE_LANGUAGE_NAMES: Record<SupportedLanguage, string> = {
+  en: 'English',
+  es: 'Spanish',
+  fr: 'French',
+  pt: 'Portuguese',
+  de: 'German',
+  it: 'Italian',
+  nl: 'Dutch',
+  pl: 'Polish',
+  tr: 'Turkish',
+};
+
+/**
+ * Reads the story text from a photo of a physical book page with Muse Spark vision.
+ * Only runs when a parent allowed it; returns '' so callers fall back to on-device OCR.
+ */
+export async function readBookPageWithMuseSpark(
+  imageDataUrl: string,
+  language: SupportedLanguage = 'en'
+): Promise<string> {
+  if (!isMetaApiConfigured() || !(await getCloudVisionConsent())) {
+    return '';
+  }
+
+  const answer = await callMuseSpark([
+    {
+      role: 'user',
+      content: [
+        {
+          type: 'text',
+          text:
+            `This is a photo of a children's book page written in ${PAGE_LANGUAGE_NAMES[language] || 'English'}. ` +
+            'Transcribe exactly the main story text in reading order, keeping punctuation. ' +
+            'Ignore page numbers, headers and any words inside illustrations. ' +
+            'Reply with only the text. If there is no readable text, reply NONE.',
+        },
+        { type: 'image_url', image_url: { url: imageDataUrl } },
+      ],
+    },
+  ]);
+
+  const text = answer.replace(/\s+/g, ' ').trim();
+  return /^NONE\.?$/i.test(text) ? '' : text;
 }

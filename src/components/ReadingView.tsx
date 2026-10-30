@@ -17,9 +17,10 @@ import { BookPage, WordToken, ReadingSessionResult, ReadingErrorDetail, Supporte
 import {
   SpeechRecognitionController,
   matchSpokenWordToTokens,
+  scoreTranscriptAgainstPage,
 } from '../services/speechService';
 import { speakText, stopSpeaking, playChime } from '../services/ttsService';
-import { saveReadingSession, addStars } from '../services/storageService';
+import { saveReadingSession, addStars, getCloudVoiceConsent } from '../services/storageService';
 import { getTranslation } from '../i18n/translations';
 import { getStorySceneIllustrationUrl, toImageSource } from '../services/imageService';
 import { SparkyMascot } from './SparkyMascot';
@@ -72,6 +73,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
   const [showConfetti, setShowConfetti] = useState<boolean>(false);
   const [showSceneIllustration, setShowSceneIllustration] = useState<boolean>(true);
   const [isImageZoomed, setIsImageZoomed] = useState<boolean>(false);
+  const [voiceNotice, setVoiceNotice] = useState<string>('');
 
   const speechControllerRef = useRef<SpeechRecognitionController | null>(null);
   const lastWordTimestampRef = useRef<number>(Date.now());
@@ -135,7 +137,16 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
     lastWordTimestampRef.current = Date.now();
   };
 
-  const startReadingSession = () => {
+  const startReadingSession = async () => {
+    // Without live recognition only a consented Muse Voice transcript can score the reading
+    const controller = speechControllerRef.current;
+    if (controller && !controller.hasLiveRecognition() && !(await getCloudVoiceConsent())) {
+      setVoiceNotice(t.voiceUnavailable);
+      playChime('tap');
+      return;
+    }
+    setVoiceNotice('');
+
     if (isSparkyReading) {
       sparkyCancelRef.current = true;
       stopSpeaking();
@@ -295,6 +306,9 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
       errors: finalErrors,
       gradeLevel: page.gradeLevel,
       metaMuseTranscript: metaTranscript || undefined,
+      metaVerifiedAccuracyPercent: metaTranscript
+        ? scoreTranscriptAgainstPage(metaTranscript, finalTokens, language).accuracyPercent
+        : undefined,
       evaluatedBy: metaTranscript ? 'meta-muse-voice' : 'hybrid',
     };
 
@@ -406,6 +420,9 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
   const getMascotPrompt = () => {
     if (showConfetti) {
       return t.promptCelebration;
+    }
+    if (voiceNotice) {
+      return voiceNotice;
     }
     if (isSparkyReading) {
       return t.promptSparkyReads;

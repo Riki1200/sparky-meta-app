@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "mata_hackhaton",
+    "name": "Sparky Reader",
     "slug": "mata_hackhaton",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -19,7 +19,14 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "name": "Sparky Reader - AI reading tutor",
+      "shortName": "Sparky",
+      "description": "A patient Meta AI reading tutor for children who read real, physical books.",
+      "themeColor": "#ea580c",
+      "backgroundColor": "#f8fafc",
+      "display": "standalone",
+      "orientation": "portrait"
     }
   }
 }
