@@ -12,6 +12,7 @@ import { BookPage, SupportedLanguage } from "../types";
 import { SAMPLE_BOOK_PAGES } from "../data/sampleBooks";
 import { getTranslation } from "../i18n/translations";
 import { playChime } from "../services/ttsService";
+import { toImageSource } from "../services/imageService";
 import { useTheme } from "../context/ThemeContext";
 
 interface PageSelectorProps {
@@ -133,7 +134,7 @@ export const PageSelector: React.FC<PageSelectorProps> = ({
                 >
                   <View style={styles.coverWrapper}>
                     <Image
-                      source={{ uri: pageItem.imageUrl }}
+                      source={toImageSource(pageItem.imageUrl)}
                       style={styles.bookCover}
                       resizeMode="cover"
                     />

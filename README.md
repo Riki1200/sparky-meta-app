@@ -26,7 +26,7 @@ Children learn best from real, tactile paper books. With **Sparky Reader**, a ch
    - Speaks warm, spoken encouragement after every reading session.
    - Generates interactive, 2-question comprehension trivia games derived solely from the text the child just read.
 5. **Cloud Voice Fallback with Meta Muse Voice Transcribe (`muse-voice-transcribe-1.0`)**: Provides fallback transcription for noisy classrooms or low-connectivity environments.
-6. **Strict Child Privacy (COPPA/FERPA Compliant)**: Camera images and microphone audio **never leave the child's device**. Only anonymized vocabulary words are sent to Meta Model API.
+6. **Child Privacy by Design (COPPA principles)**: Book photos **never leave the child's device**. Child audio is only sent to Meta Muse Voice when a parent turns it on in the Privacy Shield (off by default).
 7. **Parent & Teacher Progress Dashboard**: Tracks Words Per Minute (**WPM**), accuracy rate, hesitation analysis against grade-level reading benchmarks (Grade 1–3), and generates actionable vocabulary flashcards.
 
 ---
@@ -97,11 +97,16 @@ Switching languages immediately synchronizes:
 
 ---
 
-## 🔒 Guaranteed Child Privacy (COPPA Compliant)
+## 🔒 Child Privacy by Design (COPPA principles)
 
-- 🛡️ **Zero Image Uploads**: Book photos and camera frames are processed directly inside the client's WebAssembly sandbox. Images are never uploaded to any server or cloud storage.
-- 🎙️ **On-Device Voice Recognition**: Microphones evaluate speech locally via the device's Speech API.
-- 💬 **No Personal Identifiable Information (PII)**: Only isolated vocabulary words and anonymized reading metrics are sent to Meta Model API to fetch explanations and trivia.
+What leaves the device, exactly:
+
+- 🛡️ **Book photos: never.** OCR runs inside the app (Tesseract.js / WebAssembly). Images are never uploaded or stored on a server.
+- 🎙️ **Live reading audio: handled by the platform speech service.** Word-by-word recognition uses the device/browser Web Speech API (in some browsers, e.g. Chrome, the browser vendor processes it). Sparky never stores recordings.
+- ☁️ **Meta Muse Voice: only with parent permission.** Off by default. A parent can enable it in the Privacy Shield; then a session's audio (or a spoken question) is sent to `muse-voice-transcribe-1.0` to double-check the reading. Without permission, *Ask Sparky* uses the device speech service instead.
+- 💬 **Meta Muse Spark: text only.** The page text, single vocabulary words and anonymous scores, to create explanations, quizzes and feedback. No names, photos or audio.
+- 🖼️ **Picture dictionary:** single vocabulary words (never page text) go to an external illustration service.
+- 🔑 **API key stays on the server** when using the bundled proxy (`server/meta-proxy.mjs`).
 
 ---
 
@@ -121,11 +126,15 @@ Copy `.env.example` to `.env` (this file is excluded from git to keep credential
 ```bash
 cp .env.example .env
 ```
-Set your Meta Model API key inside `.env`:
-```env
-EXPO_PUBLIC_META_API_KEY=your_meta_api_key_here
-EXPO_PUBLIC_META_API_BASE_URL=https://api.meta.ai/v1
+Start the API proxy, which keeps your Meta key on the server (never inside the app bundle):
+```bash
+META_API_KEY=your_meta_api_key_here npm run proxy   # listens on http://localhost:8787
 ```
+and point the app at it in `.env`:
+```env
+EXPO_PUBLIC_META_API_BASE_URL=http://localhost:8787
+```
+> For a quick local test you can still call Meta directly with `EXPO_PUBLIC_META_API_KEY`, but anything prefixed `EXPO_PUBLIC_` is visible to anyone who opens the app. In production, set `ALLOWED_ORIGIN` on the proxy to your app's URL.
 
 ### 4. Run the Development Server
 ```bash
@@ -153,4 +162,4 @@ Developed for the **Meta Global AI Developer Hackathon**:
 - **Primary AI Model**: `muse-spark-1.3` via Meta Model API (`https://api.meta.ai/v1`)
 - **Voice Fallback Model**: `muse-voice-transcribe-1.0`
 - **Application Framework**: React Native with Expo SDK 58
-- **Core Mission**: Solving global childhood reading poverty through privacy-first on-device AI.
+- **Core Mission**: Solving global childhood reading poverty with privacy-first AI.

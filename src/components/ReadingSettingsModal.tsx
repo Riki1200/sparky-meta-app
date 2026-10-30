@@ -118,7 +118,7 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
               <View style={[styles.iconCircle, { backgroundColor: theme.primaryLight }]}>
                 <Ionicons name="text" size={20} color={theme.primary} />
               </View>
-              <View>
+              <View style={styles.headerTextCol}>
                 <Text style={[styles.title, { color: theme.text }]}>
                   {t.settingsModalTitle}
                 </Text>
@@ -187,7 +187,7 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
                   }}
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.themeEmoji}>☀️</Text>
+                  <Ionicons name="sunny" size={26} color="#f59e0b" />
                   <View style={styles.themeInfo}>
                     <Text style={[styles.themeLabel, { color: themeMode === 'light' ? '#9a3412' : theme.text }]}>
                       {t.lightModeTitle}
@@ -215,7 +215,7 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
                   }}
                   activeOpacity={0.8}
                 >
-                  <Text style={styles.themeEmoji}>🌙</Text>
+                  <Ionicons name="moon" size={24} color="#818cf8" />
                   <View style={styles.themeInfo}>
                     <Text style={[styles.themeLabel, { color: themeMode === 'dark' ? '#fed7aa' : theme.text }]}>
                       {t.darkModeTitle}
@@ -289,7 +289,7 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
             {/* Section 3: Text Size */}
             <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: theme.text }]}>
-                🔍 {t.fontSizeTitle}
+                {t.fontSizeTitle}
               </Text>
               <View style={styles.sizeRow}>
                 {(['normal', 'large', 'extra'] as ChildFontSize[]).map((sz) => {
@@ -339,7 +339,7 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
             {/* Section 4: Visual Reading Aids */}
             <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: theme.text }]}>
-                🛠️ {t.visualAidsTitle}
+                {t.visualAidsTitle}
               </Text>
 
               {/* Reading Ruler Toggle */}
@@ -358,7 +358,7 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
                 activeOpacity={0.8}
               >
                 <View style={styles.aidLeft}>
-                  <Text style={styles.aidEmoji}>📏</Text>
+                  <Ionicons name="reorder-three" size={24} color={theme.primary} />
                   <View style={styles.aidTexts}>
                     <Text style={[styles.aidTitle, { color: theme.text }]}>
                       {t.focusRulerTitle}
@@ -391,7 +391,7 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
                 activeOpacity={0.8}
               >
                 <View style={styles.aidLeft}>
-                  <Text style={styles.aidEmoji}>🔤</Text>
+                  <Ionicons name="text" size={22} color={theme.primary} />
                   <View style={styles.aidTexts}>
                     <Text style={[styles.aidTitle, { color: theme.text }]}>
                       {t.syllablesTitle}
@@ -412,7 +412,7 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
             {/* Section 5: Voice & Speech Preview (Meta Muse Encouragement) */}
             <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: theme.text }]}>
-                🎙️ {t.sparkyVoicePreviewTitle}
+                {t.sparkyVoicePreviewTitle}
               </Text>
               <View
                 style={[
@@ -517,6 +517,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     flex: 1,
+    marginRight: 12,
+  },
+  headerTextCol: {
+    flex: 1,
   },
   iconCircle: {
     width: 40,
@@ -589,9 +593,6 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 16,
     borderWidth: 1.5,
-  },
-  themeEmoji: {
-    fontSize: 24,
   },
   themeInfo: {
     flex: 1,
@@ -676,9 +677,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     flex: 1,
-  },
-  aidEmoji: {
-    fontSize: 22,
   },
   aidTexts: {
     flex: 1,

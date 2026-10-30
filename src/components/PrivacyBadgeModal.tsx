@@ -1,8 +1,11 @@
-import React from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView, Switch } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SupportedLanguage } from '../types';
 import { getTranslation } from '../i18n/translations';
+import { useTheme } from '../context/ThemeContext';
+import { getCloudVoiceConsent, setCloudVoiceConsent } from '../services/storageService';
+import { playChime } from '../services/ttsService';
 
 interface PrivacyBadgeModalProps {
   visible: boolean;
@@ -16,56 +19,119 @@ export const PrivacyBadgeModal: React.FC<PrivacyBadgeModalProps> = ({
   language,
 }) => {
   const t = getTranslation(language);
+  const { theme, themeMode } = useTheme();
+  const [cloudVoiceAllowed, setCloudVoiceAllowed] = useState(false);
+
+  useEffect(() => {
+    if (visible) {
+      getCloudVoiceConsent().then(setCloudVoiceAllowed);
+    }
+  }, [visible]);
+
+  const handleToggleCloudVoice = (allowed: boolean) => {
+    playChime('tap');
+    setCloudVoiceAllowed(allowed);
+    setCloudVoiceConsent(allowed);
+  };
+
+  const isDark = themeMode === 'dark';
+  const principles: {
+    key: string;
+    icon: React.ComponentProps<typeof Ionicons>['name'];
+    tint: string;
+    bg: string;
+    title: string;
+    desc: string;
+  }[] = [
+    {
+      key: 'ocr',
+      icon: 'camera-outline',
+      tint: theme.badges.kpiAccuracyText,
+      bg: theme.badges.kpiAccuracyBg,
+      title: t.localDataTitle,
+      desc: t.localDataDesc,
+    },
+    {
+      key: 'speech',
+      icon: 'mic-outline',
+      tint: theme.badges.kpiSpeedText,
+      bg: theme.badges.kpiSpeedBg,
+      title: t.coppaTitle,
+      desc: t.coppaDesc,
+    },
+    {
+      key: 'meta',
+      icon: 'sparkles-outline',
+      tint: theme.badges.kpiStreakText,
+      bg: theme.badges.kpiStreakBg,
+      title: t.metaApiTitle,
+      desc: t.metaApiDesc,
+    },
+  ];
 
   return (
     <Modal visible={visible} animationType="fade" transparent onRequestClose={onClose}>
-      <View style={styles.backdrop}>
-        <View style={styles.dialogCard}>
-          <View style={styles.headerRow}>
-            <View style={styles.shieldIconCircle}>
-              <Ionicons name="shield-checkmark" size={28} color="#059669" />
+      <View style={[styles.backdrop, { backgroundColor: theme.modalBackdrop }]}>
+        <View style={[styles.dialogCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+          <View style={[styles.headerRow, { borderBottomColor: theme.borderLight }]}>
+            <View style={[styles.shieldIconCircle, { backgroundColor: theme.badges.kpiAccuracyBg }]}>
+              <Ionicons name="shield-checkmark" size={26} color={theme.badges.kpiAccuracyText} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.title}>{t.privacyModalTitle}</Text>
-              <Text style={styles.subtitle}>{t.privacyModalSubtitle}</Text>
+              <Text style={[styles.title, { color: theme.text }]}>{t.privacyModalTitle}</Text>
+              <Text style={[styles.subtitle, { color: theme.textSecondary }]}>{t.privacyModalSubtitle}</Text>
             </View>
-            <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
-              <Ionicons name="close" size={22} color="#64748b" />
+            <TouchableOpacity
+              style={[styles.closeBtn, { backgroundColor: theme.surfaceSecondary }]}
+              onPress={onClose}
+              accessibilityLabel={t.gotItBtn}
+            >
+              <Ionicons name="close" size={20} color={theme.textSecondary} />
             </TouchableOpacity>
           </View>
 
           <ScrollView style={styles.body} contentContainerStyle={styles.bodyContent}>
-            {/* Principle 1 */}
-            <View style={styles.principleItem}>
-              <View style={[styles.bulletIcon, { backgroundColor: '#ecfdf5' }]}>
-                <Ionicons name="camera-outline" size={18} color="#059669" />
+            {principles.map((item) => (
+              <View key={item.key} style={styles.principleItem}>
+                <View style={[styles.bulletIcon, { backgroundColor: item.bg }]}>
+                  <Ionicons name={item.icon} size={18} color={item.tint} />
+                </View>
+                <View style={styles.principleTextCol}>
+                  <Text style={[styles.principleTitle, { color: theme.text }]}>{item.title}</Text>
+                  <Text style={[styles.principleDesc, { color: theme.textSecondary }]}>{item.desc}</Text>
+                </View>
               </View>
-              <View style={styles.principleTextCol}>
-                <Text style={styles.principleTitle}>{t.localDataTitle}</Text>
-                <Text style={styles.principleDesc}>{t.localDataDesc}</Text>
-              </View>
-            </View>
+            ))}
 
-            {/* Principle 2 */}
-            <View style={styles.principleItem}>
-              <View style={[styles.bulletIcon, { backgroundColor: '#eff6ff' }]}>
-                <Ionicons name="mic-outline" size={18} color="#2563eb" />
+            {/* Parent control: optional Meta Muse Voice cloud check */}
+            <View
+              style={[
+                styles.consentCard,
+                {
+                  backgroundColor: cloudVoiceAllowed ? theme.accentLight : theme.surfaceSecondary,
+                  borderColor: cloudVoiceAllowed ? theme.accent : theme.border,
+                },
+              ]}
+            >
+              <View style={styles.consentHeader}>
+                <View style={[styles.bulletIcon, { backgroundColor: theme.surface }]}>
+                  <Ionicons name="cloud-upload-outline" size={18} color={theme.accent} />
+                </View>
+                <View style={styles.principleTextCol}>
+                  <Text style={[styles.principleTitle, { color: theme.text }]}>{t.cloudVoiceTitle}</Text>
+                  <Text style={[styles.consentState, { color: cloudVoiceAllowed ? theme.accent : theme.textMuted }]}>
+                    {cloudVoiceAllowed ? t.cloudVoiceOn : t.cloudVoiceOff}
+                  </Text>
+                </View>
+                <Switch
+                  value={cloudVoiceAllowed}
+                  onValueChange={handleToggleCloudVoice}
+                  trackColor={{ false: isDark ? '#334155' : '#cbd5e1', true: theme.accent }}
+                  thumbColor="#ffffff"
+                  accessibilityLabel={t.cloudVoiceTitle}
+                />
               </View>
-              <View style={styles.principleTextCol}>
-                <Text style={styles.principleTitle}>{t.coppaTitle}</Text>
-                <Text style={styles.principleDesc}>{t.coppaDesc}</Text>
-              </View>
-            </View>
-
-            {/* Principle 3 */}
-            <View style={styles.principleItem}>
-              <View style={[styles.bulletIcon, { backgroundColor: '#fff7ed' }]}>
-                <Ionicons name="sparkles-outline" size={18} color="#ea580c" />
-              </View>
-              <View style={styles.principleTextCol}>
-                <Text style={styles.principleTitle}>{t.metaApiTitle}</Text>
-                <Text style={styles.principleDesc}>{t.metaApiDesc}</Text>
-              </View>
+              <Text style={[styles.principleDesc, { color: theme.textSecondary }]}>{t.cloudVoiceDesc}</Text>
             </View>
           </ScrollView>
 
@@ -81,17 +147,16 @@ export const PrivacyBadgeModal: React.FC<PrivacyBadgeModalProps> = ({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.65)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
   },
   dialogCard: {
-    backgroundColor: '#ffffff',
     borderRadius: 20,
+    borderWidth: 1,
     width: '100%',
     maxWidth: 500,
-    maxHeight: '80%',
+    maxHeight: '85%',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.15,
@@ -105,36 +170,31 @@ const styles = StyleSheet.create({
     gap: 12,
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
   },
   shieldIconCircle: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#ecfdf5',
     alignItems: 'center',
     justifyContent: 'center',
   },
   title: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#0f172a',
   },
   subtitle: {
     fontSize: 12,
-    color: '#64748b',
     marginTop: 2,
   },
   closeBtn: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#f1f5f9',
     alignItems: 'center',
     justifyContent: 'center',
   },
   body: {
-    flex: 1,
+    flexGrow: 0,
   },
   bodyContent: {
     padding: 20,
@@ -160,12 +220,25 @@ const styles = StyleSheet.create({
   principleTitle: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#0f172a',
   },
   principleDesc: {
     fontSize: 12,
-    color: '#475569',
     lineHeight: 18,
+  },
+  consentCard: {
+    borderRadius: 16,
+    borderWidth: 1.5,
+    padding: 14,
+    gap: 10,
+  },
+  consentHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  consentState: {
+    fontSize: 12,
+    fontWeight: '800',
   },
   gotItButton: {
     backgroundColor: '#059669',

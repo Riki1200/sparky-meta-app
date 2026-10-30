@@ -1,5 +1,5 @@
 import { createWorker } from 'tesseract.js';
-import { BookPage, OCRResult, SupportedLanguage } from '../types';
+import { BookPage, ImageRef, OCRResult, SupportedLanguage } from '../types';
 import { createWordTokensFromText } from '../data/sampleBooks';
 import { getTranslation } from '../i18n/translations';
 
@@ -164,7 +164,7 @@ export async function recognizePageText(
  */
 export function createBookPageFromCapture(
   text: string,
-  imageUrl: string,
+  imageUrl: ImageRef,
   language: SupportedLanguage = 'en'
 ): BookPage {
   const words = createWordTokensFromText(text);

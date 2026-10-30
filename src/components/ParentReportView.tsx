@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -18,6 +18,7 @@ import { speakWordPhonetically, playChime, speakText, stopSpeaking, getSparkyVoi
 import { generateTutorSpokenFeedback } from '../services/metaApi';
 import { getTranslation } from '../i18n/translations';
 import { useTheme } from '../context/ThemeContext';
+import { ThemeColors } from '../styles/theme';
 
 interface ParentReportViewProps {
   currentSession?: ReadingSessionResult | null;
@@ -34,6 +35,7 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
 }) => {
   const t = getTranslation(language);
   const { theme, themeMode } = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const [history, setHistory] = useState<ReadingSessionResult[]>([]);
   const [stats, setStats] = useState<any>({
     totalMinutes: 0,
@@ -45,9 +47,9 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
   });
   const [copiedAlert, setCopiedAlert] = useState(false);
   const studentsList = [
-    { name: 'Leo', emoji: '👦', grade: t.grade1 },
-    { name: 'Sofía', emoji: '👧', grade: t.grade2 },
-    { name: 'Mateo', emoji: '🧒', grade: t.grade3 },
+    { name: 'Leo', grade: t.grade1 },
+    { name: 'Sofía', grade: t.grade2 },
+    { name: 'Mateo', grade: t.grade3 },
   ];
   const [selectedStudent, setSelectedStudent] = useState(studentsList[0]);
   const [printModalVisible, setPrintModalVisible] = useState(false);
@@ -323,7 +325,7 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
       return {
         level: t.fluencyOptimal,
         color: '#16a34a',
-        bg: '#ecfdf5',
+        bg: themeMode === 'dark' ? 'rgba(22, 163, 74, 0.14)' : '#ecfdf5',
         note: t.fluencyOptimalDesc,
       };
     }
@@ -331,14 +333,14 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
       return {
         level: t.fluencyDeveloping,
         color: '#d97706',
-        bg: '#fffbeb',
+        bg: themeMode === 'dark' ? 'rgba(217, 119, 6, 0.14)' : '#fffbeb',
         note: t.fluencyDevelopingDesc,
       };
     }
     return {
       level: t.fluencySupport,
       color: '#ea580c',
-      bg: '#fff7ed',
+      bg: themeMode === 'dark' ? 'rgba(234, 88, 12, 0.14)' : '#fff7ed',
       note: t.fluencySupportDesc,
     };
   };
@@ -346,7 +348,7 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
   const handleShareReport = () => {
     if (!activeSession) return;
     const summaryText =
-      `📚 ${t.reportTitle} - ${t.appName} (Meta AI)\n` +
+      `${t.reportTitle} - ${t.appName} (Meta AI)\n` +
       `${t.shareReportStory}: ${activeSession.pageTitle}\n` +
       `${t.timeLabel}: ${activeSession.date}\n` +
       `${t.shareReportSpeed}: ${activeSession.wordsPerMinute} WPM\n` +
@@ -376,8 +378,10 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
       <View style={[styles.headerCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
         <View style={styles.headerLeft}>
           <View style={styles.headerTitleRow}>
-            <Text style={styles.headerEmoji}>📊</Text>
-            <View>
+            <View style={[styles.headerIconCircle, { backgroundColor: theme.accentLight }]}>
+              <Ionicons name="stats-chart" size={20} color={theme.accent} />
+            </View>
+            <View style={styles.flexText}>
               <Text style={[styles.headerTitle, { color: theme.text }]}>
                 {t.reportTitle}
               </Text>
@@ -425,8 +429,10 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
       <View style={[styles.studentSharedCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
         <View style={styles.studentSharedHeader}>
           <View style={styles.studentSharedLeft}>
-            <Text style={styles.studentSharedEmoji}>📱</Text>
-            <View>
+            <View style={[styles.headerIconCircle, { backgroundColor: theme.primaryLight }]}>
+              <Ionicons name="phone-portrait-outline" size={18} color={theme.primary} />
+            </View>
+            <View style={styles.flexText}>
               <Text style={[styles.studentSharedTitle, { color: theme.text }]}>
                 {t.sharedDeviceModeTitle}
               </Text>
@@ -470,7 +476,7 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
                 }}
                 activeOpacity={0.8}
               >
-                <Text style={styles.studentEmoji}>{st.emoji}</Text>
+                <Ionicons name="person-circle" size={24} color={isSelected ? theme.primary : theme.textMuted} />
                 <View>
                   <Text style={[styles.studentName, { color: isSelected ? theme.primary : theme.text }]}>
                     {st.name}
@@ -489,17 +495,17 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
       </View>
 
       {/* UNESCO Literacy Benchmark Banner */}
-      <View style={[styles.benchmarkBanner, { backgroundColor: evalInfo.bg }]}>
+      <View style={[styles.benchmarkBanner, { backgroundColor: evalInfo.bg, borderColor: evalInfo.color }]}>
         <View style={styles.benchmarkLeft}>
           <Text style={[styles.benchmarkLevel, { color: evalInfo.color }]}>
             {evalInfo.level}
           </Text>
-          <Text style={styles.benchmarkDesc}>
+          <Text style={[styles.benchmarkDesc, { color: theme.textSecondary }]}>
             {activeSession.wordsPerMinute} WPM — {evalInfo.note}
           </Text>
         </View>
-        <View style={styles.benchmarkTargetChip}>
-          <Text style={styles.benchmarkTargetText}>UNESCO: 60-80 WPM</Text>
+        <View style={[styles.benchmarkTargetChip, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+          <Text style={[styles.benchmarkTargetText, { color: theme.text }]}>UNESCO: 60-80 WPM</Text>
         </View>
       </View>
 
@@ -590,29 +596,29 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
         </Text>
 
         <View style={styles.breakdownRow}>
-          <View style={[styles.breakdownBox, { backgroundColor: '#ecfdf5', borderColor: '#a7f3d0' }]}>
-            <Text style={[styles.breakdownNumber, { color: '#047857' }]}>
+          <View style={[styles.breakdownBox, { backgroundColor: theme.words.correctBg, borderColor: theme.words.correctBorder }]}>
+            <Text style={[styles.breakdownNumber, { color: theme.words.correctText }]}>
               {activeSession.correctWords}
             </Text>
             <Text style={styles.breakdownLabel}>{t.legendCorrect}</Text>
           </View>
 
-          <View style={[styles.breakdownBox, { backgroundColor: '#fefce8', borderColor: '#fde047' }]}>
-            <Text style={[styles.breakdownNumber, { color: '#a16207' }]}>
+          <View style={[styles.breakdownBox, { backgroundColor: theme.words.hesitationBg, borderColor: theme.words.hesitationBorder }]}>
+            <Text style={[styles.breakdownNumber, { color: theme.words.hesitationText }]}>
               {activeSession.hesitationWords}
             </Text>
             <Text style={styles.breakdownLabel}>{t.legendHesitation}</Text>
           </View>
 
-          <View style={[styles.breakdownBox, { backgroundColor: '#fff1f2', borderColor: '#fecdd3' }]}>
-            <Text style={[styles.breakdownNumber, { color: '#be123c' }]}>
+          <View style={[styles.breakdownBox, { backgroundColor: theme.words.mispronouncedBg, borderColor: theme.words.mispronouncedBorder }]}>
+            <Text style={[styles.breakdownNumber, { color: theme.words.mispronouncedText }]}>
               {activeSession.mispronouncedWords}
             </Text>
             <Text style={styles.breakdownLabel}>{t.legendMispronounced}</Text>
           </View>
 
-          <View style={[styles.breakdownBox, { backgroundColor: '#f5f3ff', borderColor: '#ddd6fe' }]}>
-            <Text style={[styles.breakdownNumber, { color: '#6d28d9' }]}>
+          <View style={[styles.breakdownBox, { backgroundColor: theme.accentLight, borderColor: theme.accent }]}>
+            <Text style={[styles.breakdownNumber, { color: theme.accent }]}>
               {activeSession.skippedWords}
             </Text>
             <Text style={styles.breakdownLabel}>{t.legendSkipped}</Text>
@@ -731,7 +737,7 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
 
         {activeSession.errors.length === 0 ? (
           <View style={styles.emptyDeckBox}>
-            <Text style={styles.emptyDeckEmoji}>🌟</Text>
+            <Ionicons name="star" size={36} color="#f59e0b" style={styles.emptyDeckIcon} />
             <Text style={styles.emptyDeckTitle}>
               {t.flawlessReadingTitle}
             </Text>
@@ -806,7 +812,7 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
       {/* Meta AI Pedagogical Advice Card */}
       <View style={styles.pedagogicalCard}>
         <View style={styles.pedagogicalHeaderRow}>
-          <Text style={styles.pedagogicalMascot}>💡</Text>
+          <Ionicons name="bulb" size={24} color="#f59e0b" />
           <View style={{ flex: 1 }}>
             <Text style={styles.pedagogicalTitle}>
               {t.parentPedagogicalTipTitle}
@@ -825,7 +831,7 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
         onPress={onBackToReading}
         activeOpacity={0.8}
       >
-        <Ionicons name="arrow-back" size={16} color="#0f172a" />
+        <Ionicons name="arrow-back" size={16} color={theme.text} />
         <Text style={styles.backButtonText}>
           {t.backToReadingBtn}
         </Text>
@@ -838,7 +844,7 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
             <View style={styles.printModalHeader}>
               <View style={styles.printHeaderLeft}>
                 <Text style={styles.printHeaderTitle}>
-                  📄 {t.printModalTitle}
+                  {t.printModalTitle}
                 </Text>
                 <Text style={styles.printHeaderSub}>
                   {t.printModalDesc}
@@ -854,11 +860,11 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
                 <View style={styles.sheetPaperTop}>
                   <Text style={styles.sheetSchoolName}>SPARKY READING INITIATIVE • UNESCO ERCE</Text>
                   <Text style={styles.sheetDateRow}>
-                    `${selectedStudent.name} (${selectedStudent.grade})`
+                    {`${selectedStudent.name} (${selectedStudent.grade})`}
                     {'   •   '}
                     {activeSession ? activeSession.date : new Date().toLocaleDateString()}
                   </Text>
-                  <Text style={styles.sheetBookTitle}>📖 {activeSession?.pageTitle}</Text>
+                  <Text style={styles.sheetBookTitle}>{activeSession?.pageTitle}</Text>
                 </View>
 
                 {/* Exercise 1: Syllable breakdown */}
@@ -873,11 +879,21 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
                         <Text style={styles.sheetSyllableDots}>
                           [ {err.syllables ? err.syllables.join(' - ') : err.word} ]
                         </Text>
-                        <Text style={styles.sheetCheckBox}>☐ {t.readSuccessfullyCheckBox}</Text>
+                        <View style={styles.sheetCheckRow}>
+                          <View style={styles.sheetCheckSquare} />
+                          <Text style={styles.sheetCheckBox}>{t.readSuccessfullyCheckBox}</Text>
+                        </View>
                       </View>
                     ))
                   ) : (
-                    <Text style={styles.sheetWordRow}>• hummingbird [ hum - ming - bird ]  ☐ {t.readSuccessfullyCheckBox}</Text>
+                    <View style={styles.sheetWordRow}>
+                      <Text style={styles.sheetTargetWord}>• hummingbird</Text>
+                      <Text style={styles.sheetSyllableDots}>[ hum - ming - bird ]</Text>
+                      <View style={styles.sheetCheckRow}>
+                        <View style={styles.sheetCheckSquare} />
+                        <Text style={styles.sheetCheckBox}>{t.readSuccessfullyCheckBox}</Text>
+                      </View>
+                    </View>
                   )}
                 </View>
 
@@ -938,10 +954,13 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+// Light-mode tints get translucent or lighter equivalents in dark mode (printable sheet stays paper-white)
+const createStyles = (theme: ThemeColors) => {
+  const dk = (light: string, dark: string) => (theme.mode === 'dark' ? dark : light);
+  return StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: theme.surfaceSecondary,
   },
   contentContainer: {
     padding: 16,
@@ -954,11 +973,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.surface,
     borderRadius: 18,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: theme.border,
     flexWrap: 'wrap',
     gap: 12,
   },
@@ -971,17 +990,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
   },
-  headerEmoji: {
-    fontSize: 24,
-  },
   headerTitle: {
     fontSize: 16,
     fontWeight: '900',
-    color: '#0f172a',
+    color: theme.text,
   },
   headerSubtitle: {
     fontSize: 11,
-    color: '#64748b',
+    color: theme.textSecondary,
     marginTop: 2,
   },
   shareTouch: {
@@ -1025,9 +1041,6 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 200,
   },
-  studentSharedEmoji: {
-    fontSize: 22,
-  },
   studentSharedTitle: {
     fontSize: 13,
     fontWeight: '800',
@@ -1064,9 +1077,6 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     borderWidth: 1.5,
   },
-  studentEmoji: {
-    fontSize: 18,
-  },
   studentName: {
     fontSize: 12,
     fontWeight: '800',
@@ -1081,7 +1091,7 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: theme.border,
     flexWrap: 'wrap',
     gap: 8,
   },
@@ -1095,21 +1105,21 @@ const styles = StyleSheet.create({
   },
   benchmarkDesc: {
     fontSize: 11,
-    color: '#475569',
+    color: theme.textSecondary,
     marginTop: 1,
   },
   benchmarkTargetChip: {
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.surface,
     paddingHorizontal: 9,
     paddingVertical: 4,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#cbd5e1',
+    borderColor: theme.border,
   },
   benchmarkTargetText: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#334155',
+    color: theme.text,
   },
   kpiGrid: {
     flexDirection: 'row',
@@ -1119,11 +1129,11 @@ const styles = StyleSheet.create({
   kpiCard: {
     flex: 1,
     minWidth: 130,
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.surface,
     borderRadius: 18,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: theme.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
@@ -1154,11 +1164,11 @@ const styles = StyleSheet.create({
   kpiValue: {
     fontSize: 22,
     fontWeight: '900',
-    color: '#0f172a',
+    color: theme.text,
   },
   kpiLabel: {
     fontSize: 11,
-    color: '#64748b',
+    color: theme.textSecondary,
     fontWeight: '600',
     marginTop: 2,
   },
@@ -1175,21 +1185,21 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
   sectionCard: {
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.surface,
     borderRadius: 18,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: theme.border,
     gap: 10,
   },
   sectionTitle: {
     fontSize: 15,
     fontWeight: '800',
-    color: '#0f172a',
+    color: theme.text,
   },
   sectionSubtitle: {
     fontSize: 11,
-    color: '#64748b',
+    color: theme.textSecondary,
   },
   breakdownRow: {
     flexDirection: 'row',
@@ -1211,7 +1221,7 @@ const styles = StyleSheet.create({
   breakdownLabel: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#475569',
+    color: theme.textSecondary,
     marginTop: 2,
     textAlign: 'center',
   },
@@ -1223,7 +1233,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   deckBadge: {
-    backgroundColor: '#eff6ff',
+    backgroundColor: dk('#eff6ff', 'rgba(59, 130, 246, 0.12)'),
     paddingHorizontal: 9,
     paddingVertical: 3,
     borderRadius: 10,
@@ -1238,8 +1248,8 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
     gap: 4,
   },
-  emptyDeckEmoji: {
-    fontSize: 28,
+  emptyDeckIcon: {
+    marginBottom: 4,
   },
   emptyDeckTitle: {
     fontSize: 14,
@@ -1248,7 +1258,7 @@ const styles = StyleSheet.create({
   },
   emptyDeckSubtitle: {
     fontSize: 11,
-    color: '#64748b',
+    color: theme.textSecondary,
     textAlign: 'center',
   },
   errorsCardsList: {
@@ -1258,11 +1268,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#f8fafc',
+    backgroundColor: theme.surfaceSecondary,
     borderRadius: 12,
     padding: 10,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: theme.border,
     flexWrap: 'wrap',
     gap: 8,
   },
@@ -1279,7 +1289,7 @@ const styles = StyleSheet.create({
   errorWordTitle: {
     fontSize: 15,
     fontWeight: '800',
-    color: '#0f172a',
+    color: theme.text,
     textTransform: 'capitalize',
   },
   errorTypeTag: {
@@ -1288,10 +1298,10 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   hesitationTag: {
-    backgroundColor: '#fef3c7',
+    backgroundColor: dk('#fef3c7', 'rgba(245, 158, 11, 0.14)'),
   },
   hesitationTagText: {
-    color: '#92400e',
+    color: dk('#92400e', '#fcd34d'),
     fontSize: 9,
     fontWeight: '700',
   },
@@ -1306,10 +1316,10 @@ const styles = StyleSheet.create({
   errorTypeTagText: {},
   syllableBreakdown: {
     fontSize: 11,
-    color: '#64748b',
+    color: theme.textSecondary,
   },
   syllableBold: {
-    color: '#0f172a',
+    color: theme.text,
     fontWeight: '700',
   },
   errorCardActions: {
@@ -1321,12 +1331,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#fff7ed',
+    backgroundColor: dk('#fff7ed', 'rgba(234, 88, 12, 0.12)'),
     paddingHorizontal: 9,
     paddingVertical: 5,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#fed7aa',
+    borderColor: dk('#fed7aa', 'rgba(234, 88, 12, 0.35)'),
   },
   listenErrorBtnText: {
     fontSize: 11,
@@ -1337,12 +1347,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#eff6ff',
+    backgroundColor: dk('#eff6ff', 'rgba(59, 130, 246, 0.12)'),
     paddingHorizontal: 9,
     paddingVertical: 5,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#bfdbfe',
+    borderColor: dk('#bfdbfe', 'rgba(59, 130, 246, 0.35)'),
   },
   explainErrorBtnText: {
     fontSize: 11,
@@ -1350,11 +1360,11 @@ const styles = StyleSheet.create({
     color: '#2563eb',
   },
   pedagogicalCard: {
-    backgroundColor: '#eff6ff',
+    backgroundColor: dk('#eff6ff', 'rgba(59, 130, 246, 0.12)'),
     borderRadius: 16,
     padding: 14,
     borderWidth: 1.5,
-    borderColor: '#bfdbfe',
+    borderColor: dk('#bfdbfe', 'rgba(59, 130, 246, 0.35)'),
     gap: 6,
   },
   pedagogicalHeaderRow: {
@@ -1362,13 +1372,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
-  pedagogicalMascot: {
-    fontSize: 20,
-  },
   pedagogicalTitle: {
     fontSize: 13,
     fontWeight: '800',
-    color: '#1e3a8a',
+    color: dk('#1e3a8a', '#93c5fd'),
   },
   pedagogicalSub: {
     fontSize: 10,
@@ -1376,7 +1383,7 @@ const styles = StyleSheet.create({
   },
   pedagogicalText: {
     fontSize: 11,
-    color: '#1e3a8a',
+    color: dk('#1e3a8a', '#93c5fd'),
     lineHeight: 16,
   },
   backButton: {
@@ -1384,15 +1391,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.surface,
     paddingVertical: 12,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#cbd5e1',
+    borderColor: theme.border,
     marginTop: 4,
   },
   backButtonText: {
-    color: '#0f172a',
+    color: theme.text,
     fontSize: 12,
     fontWeight: '700',
   },
@@ -1426,7 +1433,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
   },
   studentGradeTag: {
-    backgroundColor: '#f1f5f9',
+    backgroundColor: theme.surfaceSecondary,
     paddingHorizontal: 5,
     paddingVertical: 1,
     borderRadius: 6,
@@ -1437,7 +1444,7 @@ const styles = StyleSheet.create({
   studentGradeText: {
     fontSize: 9,
     fontWeight: '700',
-    color: '#475569',
+    color: theme.textSecondary,
   },
   studentGradeTextActive: {
     color: '#ffffff',
@@ -1560,6 +1567,28 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#2563eb',
   },
+  flexText: {
+    flex: 1,
+  },
+  headerIconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sheetCheckRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  sheetCheckSquare: {
+    width: 14,
+    height: 14,
+    borderWidth: 1.5,
+    borderColor: '#334155',
+    borderRadius: 3,
+  },
   sheetCheckBox: {
     fontSize: 11,
     color: '#64748b',
@@ -1660,7 +1689,7 @@ const styles = StyleSheet.create({
   spokenMuseBadgeText: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#6366f1',
+    color: dk('#6366f1', '#a5b4fc'),
   },
   spokenActionButtons: {
     flexDirection: 'row',
@@ -1717,7 +1746,7 @@ const styles = StyleSheet.create({
   museAuditBadgeText: {
     fontSize: 10,
     fontWeight: '800',
-    color: '#6366f1',
+    color: dk('#6366f1', '#a5b4fc'),
   },
 });
-
+};

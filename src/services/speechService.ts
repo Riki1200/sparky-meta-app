@@ -1,6 +1,7 @@
 import { WordToken, WordStatus, ReadingErrorDetail, SupportedLanguage } from '../types';
 import { playChime } from './ttsService';
 import { transcribeAudioWithMuseVoice } from './metaApi';
+import { getCloudVoiceConsent } from './storageService';
 
 export interface AlignmentResult {
   tokens: WordToken[];
@@ -127,11 +128,12 @@ export class SpeechRecognitionController {
       }
     }
 
-    // Start local audio recording for fallback (stays on device unless cloud fallback explicitly invoked)
+    // Record audio for the Meta Muse Voice check only when a parent allowed cloud voice
     if (typeof navigator !== 'undefined' && navigator.mediaDevices?.getUserMedia) {
-      navigator.mediaDevices
-        .getUserMedia({ audio: true })
+      getCloudVoiceConsent()
+        .then((allowed) => (allowed && this.isListening ? navigator.mediaDevices.getUserMedia({ audio: true }) : null))
         .then((stream) => {
+          if (!stream) return;
           try {
             this.mediaRecorder = new MediaRecorder(stream);
             this.mediaRecorder.ondataavailable = (e: any) => {
@@ -172,6 +174,8 @@ export class SpeechRecognitionController {
         // ignore
       }
     }
+    // Release the microphone so the browser's recording indicator turns off
+    this.mediaRecorder?.stream?.getTracks().forEach((track: any) => track.stop());
 
     // If device SpeechRecognition API is absent, transcribe recorded audio via Meta Muse Voice
     if (this.isCloudFallback && this.audioChunks.length > 0) {

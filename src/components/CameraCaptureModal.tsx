@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -12,10 +12,16 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { BookPage, SupportedLanguage } from '../types';
+import { BookPage, ImageRef, SupportedLanguage } from '../types';
+import { toImageSource } from '../services/imageService';
+
+// Bundled photo of an open children's picture book for the 1-click scan demo
+const SAMPLE_BOOK_PHOTO = require('../../assets/stories/book-photo.jpg');
 import { recognizePageText, createBookPageFromCapture } from '../services/ocrService';
 import { playChime } from '../services/ttsService';
 import { getTranslation } from '../i18n/translations';
+import { useTheme } from '../context/ThemeContext';
+import { ThemeColors } from '../styles/theme';
 
 interface CameraCaptureModalProps {
   visible: boolean;
@@ -31,7 +37,9 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
   language,
 }) => {
   const t = getTranslation(language);
-  const [capturedImageUri, setCapturedImageUri] = useState<string | null>(null);
+  const { theme } = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  const [capturedImageUri, setCapturedImageUri] = useState<ImageRef | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progressStatus, setProgressStatus] = useState<string>('');
   const [cameraActive, setCameraActive] = useState(false);
@@ -39,7 +47,7 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
   const streamRef = useRef<MediaStream | null>(null);
 
   // Sample physical book photos for quick demonstration
-  const samplePhotoMap: Record<SupportedLanguage, { title: string; sampleText: string; uri: string }[]> = {
+  const samplePhotoMap: Record<SupportedLanguage, { title: string; sampleText: string; uri: ImageRef }[]> = {
     en: [
       {
         title: 'Children’s Nature Reader',
@@ -49,7 +57,7 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
       {
         title: 'Bedtime Classic Story',
         sampleText: 'Deep in the enchanted forest, the ancient oak tree whispered secrets to the stars. The silver moon shone brightly through the peaceful branches.',
-        uri: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=900&auto=format&fit=crop&q=80',
+        uri: SAMPLE_BOOK_PHOTO,
       },
     ],
     es: [
@@ -61,7 +69,7 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
       {
         title: 'Cuentos de Fábulas',
         sampleText: 'La pequeña tortuga nadaba feliz en las aguas tibias de Samaná. Observaba las gigantescas ballenas jorobadas saltar sobre las olas azules con gran emoción.',
-        uri: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=900&auto=format&fit=crop&q=80',
+        uri: SAMPLE_BOOK_PHOTO,
       },
     ],
     fr: [
@@ -73,7 +81,7 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
       {
         title: 'Contes Illustrés',
         sampleText: "Au fond de la forêt enchantée, le grand chêne chuchotait des secrets aux étoiles. La lune d'argent brillait paisiblement.",
-        uri: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=900&auto=format&fit=crop&q=80',
+        uri: SAMPLE_BOOK_PHOTO,
       },
     ],
     pt: [
@@ -85,7 +93,7 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
       {
         title: 'Aventuras Ilustradas',
         sampleText: 'Lucas caminhava pela praia ao pôr do sol. O farol dourado brilhava com uma luz amarela e quente sobre as ondas do oceano.',
-        uri: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=900&auto=format&fit=crop&q=80',
+        uri: SAMPLE_BOOK_PHOTO,
       },
     ],
     de: [
@@ -97,7 +105,7 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
       {
         title: 'Abenteuer am Meer',
         sampleText: 'Lukas spazierte am felsigen Ufer im goldenen Licht der Abendsonne. Der Leuchtturm strahlte ein warmes gelbes Licht über die sanften Meereswellen.',
-        uri: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=900&auto=format&fit=crop&q=80',
+        uri: SAMPLE_BOOK_PHOTO,
       },
     ],
     it: [
@@ -109,7 +117,7 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
       {
         title: 'Avventure sul Mare',
         sampleText: 'Matteo camminava lungo la riva rocciosa al tramonto. Il vecchio faro emanava una luce calda e dorata sopra le onde calme del mare.',
-        uri: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=900&auto=format&fit=crop&q=80',
+        uri: SAMPLE_BOOK_PHOTO,
       },
     ],
     nl: [
@@ -121,7 +129,7 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
       {
         title: 'Klassieke Zeeavonturen',
         sampleText: 'Daan wandelde over het schelpenstrand tijdens de zonsondergang. De gouden vuurtoren scheen een warm geel licht over de golven van de zee.',
-        uri: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=900&auto=format&fit=crop&q=80',
+        uri: SAMPLE_BOOK_PHOTO,
       },
     ],
     pl: [
@@ -133,7 +141,7 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
       {
         title: 'Morskie Bajki Ilustrowane',
         sampleText: 'Jaś spacerował wzdłuż kamienistego brzegu o zachodzie słońca. Złota latarnia morska rzucała ciepłe żółte światło na błękitne fale oceanu.',
-        uri: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=900&auto=format&fit=crop&q=80',
+        uri: SAMPLE_BOOK_PHOTO,
       },
     ],
     tr: [
@@ -145,7 +153,7 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
       {
         title: 'Okyanus Maceraları',
         sampleText: 'Emre gün batımında taşlı kumsalda yürüyordu. Altın renkli deniz feneri dalgaların üzerine sıcacık sarı bir ışık saçıyordu.',
-        uri: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=900&auto=format&fit=crop&q=80',
+        uri: SAMPLE_BOOK_PHOTO,
       },
     ],
   };
@@ -270,12 +278,12 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
       <View style={styles.container}>
         {/* Header */}
         <View style={styles.modalHeader}>
-          <View>
+          <View style={styles.headerTextCol}>
             <Text style={styles.modalTitle}>{t.cameraTitle}</Text>
             <Text style={styles.modalSubtitle}>{t.cameraSubtitle}</Text>
           </View>
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-            <Ionicons name="close" size={24} color="#334155" />
+            <Ionicons name="close" size={24} color={theme.text} />
           </TouchableOpacity>
         </View>
 
@@ -349,7 +357,7 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
                       fontWeight: 600,
                     }}
                   >
-                    📖 {t.cameraAlignHint}
+                    {t.cameraAlignHint}
                   </span>
                 </div>
               </div>
@@ -373,7 +381,7 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
                 disabled={isProcessing}
                 activeOpacity={0.8}
               >
-                <Ionicons name="images-outline" size={20} color="#0f172a" />
+                <Ionicons name="images-outline" size={20} color={theme.text} />
                 <Text style={styles.galleryButtonText}>{t.uploadPhotoBtn}</Text>
               </TouchableOpacity>
             </View>
@@ -393,7 +401,7 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
                   activeOpacity={0.7}
                   disabled={isProcessing}
                 >
-                  <Image source={{ uri: sample.uri }} style={styles.sampleImage} />
+                  <Image source={toImageSource(sample.uri)} style={styles.sampleImage} />
                   <View style={styles.sampleCardContent}>
                     <Text style={styles.sampleCardTitle}>{sample.title}</Text>
                     <Text style={styles.sampleCardSnippet} numberOfLines={2}>
@@ -434,10 +442,17 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+// Light-mode tints get translucent or lighter equivalents in dark mode
+const createStyles = (theme: ThemeColors) => {
+  const dk = (light: string, dark: string) => (theme.mode === 'dark' ? dark : light);
+  return StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8fafc',
+    backgroundColor: theme.surfaceSecondary,
+  },
+  headerTextCol: {
+    flex: 1,
+    marginRight: 12,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -446,25 +461,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 16,
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
+    borderBottomColor: theme.border,
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#0f172a',
+    color: theme.text,
   },
   modalSubtitle: {
     fontSize: 13,
-    color: '#64748b',
+    color: theme.textSecondary,
     marginTop: 2,
   },
   closeButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: theme.surfaceSecondary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -479,25 +494,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    backgroundColor: '#ecfdf5',
+    backgroundColor: dk('#ecfdf5', 'rgba(16, 185, 129, 0.12)'),
     padding: 12,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#a7f3d0',
+    borderColor: dk('#a7f3d0', 'rgba(16, 185, 129, 0.35)'),
   },
   privacyBannerText: {
     flex: 1,
     fontSize: 12,
-    color: '#065f46',
+    color: dk('#065f46', '#6ee7b7'),
     fontWeight: '500',
     lineHeight: 17,
   },
   viewfinderContainer: {
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.surface,
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: theme.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -530,7 +545,7 @@ const styles = StyleSheet.create({
     width: 16,
     height: 16,
     borderRadius: 8,
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.surface,
   },
   shutterText: {
     color: '#ffffff',
@@ -541,15 +556,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: theme.surfaceSecondary,
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 30,
     borderWidth: 1,
-    borderColor: '#cbd5e1',
+    borderColor: theme.border,
   },
   galleryButtonText: {
-    color: '#0f172a',
+    color: theme.text,
     fontWeight: '600',
     fontSize: 14,
   },
@@ -559,7 +574,7 @@ const styles = StyleSheet.create({
   sampleSectionTitle: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#334155',
+    color: theme.text,
     marginBottom: 10,
   },
   sampleCardsRow: {
@@ -567,10 +582,10 @@ const styles = StyleSheet.create({
   },
   sampleCard: {
     flexDirection: 'row',
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.surface,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: theme.border,
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
@@ -581,7 +596,7 @@ const styles = StyleSheet.create({
   sampleImage: {
     width: 100,
     height: 100,
-    backgroundColor: '#cbd5e1',
+    backgroundColor: theme.border,
   },
   sampleCardContent: {
     flex: 1,
@@ -591,26 +606,26 @@ const styles = StyleSheet.create({
   sampleCardTitle: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#0f172a',
+    color: theme.text,
   },
   sampleCardSnippet: {
     fontSize: 12,
-    color: '#64748b',
+    color: theme.textSecondary,
     marginTop: 4,
     fontStyle: 'italic',
   },
   sampleBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: '#fff7ed',
+    backgroundColor: dk('#fff7ed', 'rgba(234, 88, 12, 0.12)'),
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#fed7aa',
+    borderColor: dk('#fed7aa', 'rgba(234, 88, 12, 0.35)'),
     marginTop: 6,
   },
   sampleBadgeText: {
-    color: '#c2410c',
+    color: dk('#c2410c', '#fdba74'),
     fontSize: 11,
     fontWeight: '700',
   },
@@ -626,7 +641,7 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   processingCard: {
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.surface,
     padding: 28,
     borderRadius: 20,
     alignItems: 'center',
@@ -637,19 +652,19 @@ const styles = StyleSheet.create({
   processingTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#0f172a',
+    color: theme.text,
     textAlign: 'center',
   },
   processingSubtitle: {
     fontSize: 13,
-    color: '#64748b',
+    color: theme.textSecondary,
     textAlign: 'center',
   },
   processingTip: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#fef3c7',
+    backgroundColor: dk('#fef3c7', 'rgba(245, 158, 11, 0.14)'),
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 10,
@@ -657,8 +672,9 @@ const styles = StyleSheet.create({
   },
   processingTipText: {
     fontSize: 11,
-    color: '#92400e',
+    color: dk('#92400e', '#fcd34d'),
     fontWeight: '600',
     flex: 1,
   },
 });
+};

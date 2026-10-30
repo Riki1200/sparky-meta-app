@@ -90,11 +90,22 @@ export async function addStars(amount: number): Promise<number> {
   }
 }
 
+const STORAGE_KEY_LAST_READ_DAY = '@Sparky_last_read_day';
+
+// Streak counts consecutive calendar days with at least one session, not sessions
 async function updateStreak() {
   try {
+    const today = new Date().toDateString();
+    const lastDay = await AsyncStorage.getItem(STORAGE_KEY_LAST_READ_DAY);
+    if (lastDay === today) return;
+
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toDateString();
     const raw = await AsyncStorage.getItem(STORAGE_KEY_STREAK);
-    const current = raw ? parseInt(raw, 10) : 1;
-    await AsyncStorage.setItem(STORAGE_KEY_STREAK, String(current + 1));
+    const current = raw ? parseInt(raw, 10) : 0;
+    const next = lastDay === yesterday ? current + 1 : 1;
+
+    await AsyncStorage.setItem(STORAGE_KEY_STREAK, String(next));
+    await AsyncStorage.setItem(STORAGE_KEY_LAST_READ_DAY, today);
   } catch (e) {
     // ignore
   }
@@ -138,7 +149,7 @@ export async function getUserProfile(): Promise<UserProfile> {
     name: 'Young Reader',
     level: 'intermediate',
     dailyGoalMinutes: 10,
-    avatar: '🌟',
+    avatar: 'star',
   };
 }
 
@@ -153,3 +164,22 @@ export async function saveUserProfile(profile: Partial<UserProfile>): Promise<Us
   return updated;
 }
 
+
+const STORAGE_KEY_CLOUD_VOICE_CONSENT = '@Sparky_cloud_voice_consent';
+
+// Parent permission to send child audio to Meta Muse Voice Transcribe (off by default)
+export async function getCloudVoiceConsent(): Promise<boolean> {
+  try {
+    return (await AsyncStorage.getItem(STORAGE_KEY_CLOUD_VOICE_CONSENT)) === 'true';
+  } catch (e) {
+    return false;
+  }
+}
+
+export async function setCloudVoiceConsent(allowed: boolean): Promise<void> {
+  try {
+    await AsyncStorage.setItem(STORAGE_KEY_CLOUD_VOICE_CONSENT, allowed ? 'true' : 'false');
+  } catch (e) {
+    console.warn('Error saving cloud voice consent:', e);
+  }
+}

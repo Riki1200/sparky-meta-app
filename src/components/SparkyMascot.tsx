@@ -7,8 +7,10 @@ import {
   Animated,
   Platform,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { MascotMood, SupportedLanguage } from '../types';
 import { playChime } from '../services/ttsService';
+import { useTheme } from '../context/ThemeContext';
 
 interface SparkyMascotProps {
   mood?: MascotMood;
@@ -20,58 +22,58 @@ interface SparkyMascotProps {
 
 const MOTIVATIONAL_MESSAGES: Record<SupportedLanguage, string[]> = {
   en: [
-    "You're doing fantastic! Keep reading! ⭐",
-    "Point at any word if you'd like me to say it! 🗣️",
-    "Take your time, I love listening to you! 📖",
-    "Great reader in action! Let's conquer the page! 🚀",
+    "You're doing fantastic! Keep reading!",
+    "Point at any word if you'd like me to say it!",
+    "Take your time, I love listening to you!",
+    "Great reader in action! Let's conquer the page!",
   ],
   es: [
-    "¡Vas súper bien! ¡Sigue leyendo con ganas! ⭐",
-    "¡Toca cualquier palabra si quieres que la pronuncie! 🗣️",
-    "Lee con calma, ¡me encanta escucharte! 📖",
-    "¡Eres un gran lector! ¡Vamos a terminar la página! 🚀",
+    "¡Vas súper bien! ¡Sigue leyendo con ganas!",
+    "¡Toca cualquier palabra si quieres que la pronuncie!",
+    "Lee con calma, ¡me encanta escucharte!",
+    "¡Eres un gran lector! ¡Vamos a terminar la página!",
   ],
   fr: [
-    "Tu lis très bien ! Continue comme ça ! ⭐",
-    "Touche un mot si tu veux que je le prononce ! 🗣️",
-    "Prends ton temps, j'adore t'écouter lire ! 📖",
-    "Super lecteur en action ! On y va ! 🚀",
+    "Tu lis très bien ! Continue comme ça !",
+    "Touche un mot si tu veux que je le prononce !",
+    "Prends ton temps, j'adore t'écouter lire !",
+    "Super lecteur en action ! On y va !",
   ],
   pt: [
-    "Você está lendo super bem! Continue! ⭐",
-    "Toque em qualquer palavra para ouvir o som! 🗣️",
-    "Vá no seu ritmo, adoro ouvir você! 📖",
-    "Você é um grande leitor! Vamos juntos! 🚀",
+    "Você está lendo super bem! Continue!",
+    "Toque em qualquer palavra para ouvir o som!",
+    "Vá no seu ritmo, adoro ouvir você!",
+    "Você é um grande leitor! Vamos juntos!",
   ],
   de: [
-    "Du machst das fantastisch! Weiter so! ⭐",
-    "Tippe auf ein Wort, wenn ich es vorlesen soll! 🗣️",
-    "Lies ganz in Ruhe, ich höre dir gern zu! 📖",
-    "Toller Leser am Werk! Lass uns die Seite lesen! 🚀",
+    "Du machst das fantastisch! Weiter so!",
+    "Tippe auf ein Wort, wenn ich es vorlesen soll!",
+    "Lies ganz in Ruhe, ich höre dir gern zu!",
+    "Toller Leser am Werk! Lass uns die Seite lesen!",
   ],
   it: [
-    "Stai leggendo benissimo! Continua così! ⭐",
-    "Tocca qualsiasi parola se vuoi ascoltarla! 🗣️",
-    "Fai con calma, adoro ascoltarti leggere! 📖",
-    "Un piccolo grande lettore! Andiamo! 🚀",
+    "Stai leggendo benissimo! Continua così!",
+    "Tocca qualsiasi parola se vuoi ascoltarla!",
+    "Fai con calma, adoro ascoltarti leggere!",
+    "Un piccolo grande lettore! Andiamo!",
   ],
   nl: [
-    "Je doet het geweldig! Blijf lekker lezen! ⭐",
-    "Tik op een woord als je het wilt horen! 🗣️",
-    "Neem je tijd, ik luister met plezier! 📖",
-    "Wat een geweldige lezer! Zet 'm op! 🚀",
+    "Je doet het geweldig! Blijf lekker lezen!",
+    "Tik op een woord als je het wilt horen!",
+    "Neem je tijd, ik luister met plezier!",
+    "Wat een geweldige lezer! Zet 'm op!",
   ],
   pl: [
-    "Idzie ci wspaniale! Czytaj dalej! ⭐",
-    "Dotknij słowa, jeśli chcesz usłyszeć wymowę! 🗣️",
-    "Nie spiesz się, uwielbiam cię słuchać! 📖",
-    "Wspaniały czytelnik! Damy radę! 🚀",
+    "Idzie ci wspaniale! Czytaj dalej!",
+    "Dotknij słowa, jeśli chcesz usłyszeć wymowę!",
+    "Nie spiesz się, uwielbiam cię słuchać!",
+    "Wspaniały czytelnik! Damy radę!",
   ],
   tr: [
-    "Harika okuyorsun! Aynen böyle devam! ⭐",
-    "Kelimeye dokunursan senin için okurum! 🗣️",
-    "Acele etme, seni dinlemeyi çok seviyorum! 📖",
-    "Harika bir okuyucu! Sayfayı bitirelim! 🚀",
+    "Harika okuyorsun! Aynen böyle devam!",
+    "Kelimeye dokunursan senin için okurum!",
+    "Acele etme, seni dinlemeyi çok seviyorum!",
+    "Harika bir okuyucu! Sayfayı bitirelim!",
   ],
 };
 
@@ -82,6 +84,7 @@ export const SparkyMascot: React.FC<SparkyMascotProps> = ({
   onPress,
   language = 'en',
 }) => {
+  const { theme, themeMode } = useTheme();
   const floatAnim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const rotateAnim = useRef(new Animated.Value(0)).current;
@@ -158,19 +161,19 @@ export const SparkyMascot: React.FC<SparkyMascotProps> = ({
     outputRange: ['-12deg', '0deg', '12deg'],
   });
 
-  const getEmoji = () => {
+  const getIcon = (): React.ComponentProps<typeof Ionicons>['name'] => {
     switch (mood) {
       case 'listening':
-        return '🎧';
+        return 'ear';
       case 'celebrating':
-        return '🎉';
+        return 'trophy';
       case 'thinking':
-        return '🧠';
+        return 'bulb';
       case 'encouraging':
-        return '🤗';
+        return 'heart';
       case 'idle':
       default:
-        return '🦉';
+        return 'book';
     }
   };
 
@@ -191,9 +194,9 @@ export const SparkyMascot: React.FC<SparkyMascotProps> = ({
   };
 
   const sizeDimensions = {
-    small: { container: 36, emoji: 20, glow: 44 },
-    medium: { container: 52, emoji: 28, glow: 62 },
-    large: { container: 72, emoji: 38, glow: 86 },
+    small: { container: 36, emoji: 18, glow: 44 },
+    medium: { container: 52, emoji: 24, glow: 62 },
+    large: { container: 72, emoji: 32, glow: 86 },
   }[size];
 
   const handleMascotTap = () => {
@@ -219,7 +222,7 @@ export const SparkyMascot: React.FC<SparkyMascotProps> = ({
   const displayMessage =
     speechBubbleText ||
     MOTIVATIONAL_MESSAGES[language]?.[0] ||
-    "Let's read together! ⭐";
+    "Let's read together!";
 
   return (
     <View style={styles.outerContainer}>
@@ -262,22 +265,20 @@ export const SparkyMascot: React.FC<SparkyMascotProps> = ({
               },
             ]}
           />
-          <Text style={[styles.mascotEmoji, { fontSize: sizeDimensions.emoji }]}>
-            {getEmoji()}
-          </Text>
+          <Ionicons name={getIcon()} size={sizeDimensions.emoji} color="#ffffff" />
 
           {/* Mini Spark Icon */}
           <View style={styles.sparkBadge}>
-            <Text style={styles.sparkEmojiMini}>✨</Text>
+            <Ionicons name="sparkles" size={10} color={getBadgeColor()} />
           </View>
         </TouchableOpacity>
       </Animated.View>
 
       {/* Optional Speech Bubble */}
       {speechBubbleText !== undefined && (
-        <View style={styles.bubbleCard}>
-          <View style={styles.bubbleArrow} />
-          <Text style={styles.bubbleText}>{displayMessage}</Text>
+        <View style={[styles.bubbleCard, { backgroundColor: theme.surface, borderColor: theme.accentLight }]}>
+          <View style={[styles.bubbleArrow, { backgroundColor: theme.surface, borderColor: theme.accentLight }]} />
+          <Text style={[styles.bubbleText, { color: themeMode === 'dark' ? '#c7d2fe' : '#312e81' }]}>{displayMessage}</Text>
         </View>
       )}
     </View>
@@ -309,9 +310,6 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     opacity: 0.25,
   },
-  mascotEmoji: {
-    textAlign: 'center',
-  },
   sparkBadge: {
     position: 'absolute',
     bottom: -2,
@@ -327,9 +325,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 2,
     elevation: 2,
-  },
-  sparkEmojiMini: {
-    fontSize: 10,
   },
   bubbleCard: {
     flex: 1,

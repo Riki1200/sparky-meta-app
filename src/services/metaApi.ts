@@ -1,20 +1,37 @@
 import { ComprehensionQuestion, ReadingSessionResult, WordExplanation, SupportedLanguage } from '../types';
 import { convertAudioBlobToWav16kMono } from './audioUtils';
+import { getCloudVoiceConsent } from './storageService';
+
+const META_DIRECT_BASE_URL = 'https://api.meta.ai/v1';
 
 export const META_API_CONFIG = {
-  baseUrl: process.env.EXPO_PUBLIC_META_API_BASE_URL || 'https://api.meta.ai/v1',
+  // Point this at server/meta-proxy.mjs so the API key never ships inside the app bundle
+  baseUrl: process.env.EXPO_PUBLIC_META_API_BASE_URL || META_DIRECT_BASE_URL,
+  // Only for quick local testing against the Meta API directly; anything EXPO_PUBLIC_ is visible to users
   apiKey: process.env.EXPO_PUBLIC_META_API_KEY || '',
   model: 'muse-spark-1.3',
   voiceModel: 'muse-voice-transcribe-1.0',
 };
+
+const usesProxy = META_API_CONFIG.baseUrl.replace(/\/+$/, '') !== META_DIRECT_BASE_URL;
+const isMetaApiConfigured = () => usesProxy || !!META_API_CONFIG.apiKey;
+const authHeaders = (): Record<string, string> =>
+  META_API_CONFIG.apiKey ? { Authorization: `Bearer ${META_API_CONFIG.apiKey}` } : {};
+
+/**
+ * The UI uses vector icons only, and TTS reads emoji names aloud, so model output is kept emoji-free.
+ */
+function stripEmoji(text: string): string {
+  return text.replace(/[ \t]*[\u{1F000}-\u{1FAFF}\u{2190}-\u{21FF}\u{2300}-\u{23FF}\u{25A0}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}\u{200D}]+/gu, '');
+}
 
 /**
  * Call Meta Model API (Muse Spark) with OpenAI-compatible chat completions format.
  * Muse Spark uses internal reasoning tokens (~300-500 tokens), so max_tokens is generously sized.
  */
 async function callMuseSpark(messages: { role: 'system' | 'user' | 'assistant'; content: string }[], maxTokens: number = 1800): Promise<string> {
-  if (!META_API_CONFIG.apiKey) {
-    throw new Error('Missing Meta API key. Please set EXPO_PUBLIC_META_API_KEY in your .env file.');
+  if (!isMetaApiConfigured()) {
+    throw new Error('Meta API not configured. Run server/meta-proxy.mjs and set EXPO_PUBLIC_META_API_BASE_URL (see README).');
   }
 
   try {
@@ -22,7 +39,7 @@ async function callMuseSpark(messages: { role: 'system' | 'user' | 'assistant'; 
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${META_API_CONFIG.apiKey}`,
+        ...authHeaders(),
       },
       body: JSON.stringify({
         model: META_API_CONFIG.model,
@@ -42,7 +59,7 @@ async function callMuseSpark(messages: { role: 'system' | 'user' | 'assistant'; 
     if (!content) {
       throw new Error('No content returned from Muse Spark');
     }
-    return content.trim();
+    return stripEmoji(content).trim();
   } catch (error) {
     console.error('callMuseSpark failed:', error);
     throw error;
@@ -427,8 +444,12 @@ export async function transcribeAudioWithMuseVoice(
   audioData: Blob | ArrayBuffer,
   language: SupportedLanguage = 'en'
 ): Promise<string> {
-  if (!META_API_CONFIG.apiKey) {
-    console.warn('transcribeAudioWithMuseVoice skipped: No Meta API key configured');
+  if (!isMetaApiConfigured()) {
+    console.warn('transcribeAudioWithMuseVoice skipped: Meta API not configured');
+    return '';
+  }
+  // Child audio only leaves the device when a parent has allowed it in the Privacy Shield
+  if (!(await getCloudVoiceConsent())) {
     return '';
   }
 
@@ -459,9 +480,7 @@ export async function transcribeAudioWithMuseVoice(
 
     const response = await fetch(`${META_API_CONFIG.baseUrl}/asr/transcribe`, {
       method: 'POST',
-      headers: {
-        Authorization: `Bearer ${META_API_CONFIG.apiKey}`,
-      },
+      headers: authHeaders(),
       body: formData,
     });
 
@@ -525,7 +544,8 @@ Bir çocuk okuduğu masal hakkında sana kendi sesiyle bir soru sordu.
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
       ],
-      500
+      // Muse Spark spends ~300-500 reasoning tokens first; a small budget leaves an empty answer
+      1800
     );
     return answer;
   } catch (err) {

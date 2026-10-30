@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, Animated, Dimensions, Text } from 'react-native';
+import { View, StyleSheet, Animated, Dimensions } from 'react-native';
 
 interface CelebrationConfettiProps {
   active: boolean;
@@ -8,7 +8,12 @@ interface CelebrationConfettiProps {
 
 const PARTICLE_COUNT = 36;
 const COLORS = ['#f59e0b', '#ec4899', '#6366f1', '#10b981', '#3b82f6', '#f43f5e', '#8b5cf6'];
-const SHAPES = ['⭐', '🎉', '✨', '🟡', '🟣', '🟢'];
+// Paper confetti pieces: circle, square and ribbon strip
+const SHAPES = [
+  { width: 10, height: 10, borderRadius: 5 },
+  { width: 9, height: 9, borderRadius: 2 },
+  { width: 6, height: 14, borderRadius: 2 },
+];
 
 export const CelebrationConfetti: React.FC<CelebrationConfettiProps> = ({
   active,
@@ -102,7 +107,7 @@ export const CelebrationConfetti: React.FC<CelebrationConfettiProps> = ({
               },
             ]}
           >
-            <Text style={{ fontSize: 16 + (idx % 3) * 4, color }}>{shape}</Text>
+            <View style={[shape, { backgroundColor: color, transform: [{ scale: 1 + (idx % 3) * 0.25 }] }]} />
           </Animated.View>
         );
       })}

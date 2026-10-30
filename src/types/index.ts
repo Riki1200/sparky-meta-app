@@ -14,13 +14,16 @@ export interface WordToken {
   explanation?: string;
 }
 
+// Remote image URL, or a bundled asset from require() (a number on native, { uri, width, height } on web)
+export type ImageRef = string | number | { uri: string; width?: number; height?: number };
+
 export interface BookPage {
   id: string;
   title: string;
   source: string;
   language: SupportedLanguage;
   text: string;
-  imageUrl?: string;
+  imageUrl?: ImageRef;
   words: WordToken[];
   difficulty: 'Beginner' | 'Intermediate' | 'Advanced' | 'Principiante' | 'Intermedio' | 'Avanzado' | string;
   gradeLevel: string;

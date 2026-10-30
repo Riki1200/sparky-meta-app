@@ -29,14 +29,17 @@ interface OnboardingWizardModalProps {
   onSelectLanguage?: (lang: SupportedLanguage) => void;
 }
 
-const AVATAR_OPTIONS = [
-  { id: "star", emoji: "🌟", label: "Estrella" },
-  { id: "lion", emoji: "🦁", label: "Leoncito" },
-  { id: "rocket", emoji: "🚀", label: "Cosmonauta" },
-  { id: "owl", emoji: "🦉", label: "Búho Sabio" },
-  { id: "fox", emoji: "🦊", label: "Zorrito" },
-  { id: "unicorn", emoji: "🦄", label: "Unicornio" },
+// Reader avatars are Ionicons glyph names (persisted in the user profile)
+const AVATAR_OPTIONS: { id: string; icon: React.ComponentProps<typeof Ionicons>["name"] }[] = [
+  { id: "star", icon: "star" },
+  { id: "paw", icon: "paw" },
+  { id: "rocket", icon: "rocket" },
+  { id: "planet", icon: "planet" },
+  { id: "leaf", icon: "leaf" },
+  { id: "heart", icon: "heart" },
 ];
+const getAvatarIcon = (id: string) =>
+  (AVATAR_OPTIONS.find((a) => a.id === id) || AVATAR_OPTIONS[0]).icon;
 
 const I18N: Record<
   SupportedLanguage,
@@ -91,17 +94,17 @@ const I18N: Record<
     stepOf: "Paso {current} de {total}",
     next: "Siguiente",
     back: "Atrás",
-    finish: "¡Comenzar mi Aventura de Lectura! ✨",
-    step1Title: "¡Hola! Soy Sparky ✨",
+    finish: "¡Comenzar mi Aventura de Lectura!",
+    step1Title: "¡Hola! Soy Sparky",
     step1Subtitle: "Tu tutor inteligente de lectura con IA de Meta. ¿Cómo te llamas?",
     nameLabel: "¿Quién va a leer hoy?",
     namePlaceholder: "Escribe tu nombre o apodo...",
     levelLabel: "Selecciona tu nivel de lectura:",
-    levelBeginner: "🐣 Explorador (4 - 6 años)",
+    levelBeginner: "Explorador (4 - 6 años)",
     levelBeginnerDesc: "Letras, sonidos de vocales y palabras cortas ilustradas.",
-    levelIntermediate: "🌟 Aventurero (7 - 8 años)",
+    levelIntermediate: "Aventurero (7 - 8 años)",
     levelIntermediateDesc: "Cuentos completos, ritmo y pronunciación fluida.",
-    levelAdvanced: "🚀 Maestro Lector (9+ años)",
+    levelAdvanced: "Maestro Lector (9+ años)",
     levelAdvancedDesc: "Comprensión lectora, velocidad y vocabulario enriquecido.",
     step2Title: "¿Cómo Funciona Sparky?",
     step2Subtitle: "Lee libros reales de papel con la magia de la inteligencia artificial.",
@@ -126,9 +129,9 @@ const I18N: Record<
     step4Subtitle: "Fijemos tu primera meta diaria de lectura recomendada por UNESCO.",
     goalLabel: "Meta diaria recomendada:",
     minutesUnit: "min/día",
-    unescoBadge: "🏆 Meta UNESCO ERCE para fluidez lectora",
+    unescoBadge: "Meta UNESCO ERCE para fluidez lectora",
     welcomeGiftTitle: "¡Regalo de Bienvenida!",
-    welcomeGiftDesc: "Has recibido 45 Estrellas Mágicas 🌟 para desbloquear stickers y diplomas.",
+    welcomeGiftDesc: "Has recibido 45 Estrellas Mágicas para desbloquear stickers y diplomas.",
     readyTitle: "¿Listo para empezar a leer tu primer cuento?",
   },
   en: {
@@ -136,17 +139,17 @@ const I18N: Record<
     stepOf: "Step {current} of {total}",
     next: "Next",
     back: "Back",
-    finish: "Start My Reading Adventure! ✨",
-    step1Title: "Hi there! I am Sparky ✨",
+    finish: "Start My Reading Adventure!",
+    step1Title: "Hi there! I am Sparky",
     step1Subtitle: "Your Meta AI-powered smart reading tutor. What is your name?",
     nameLabel: "Who is reading today?",
     namePlaceholder: "Type your name or nickname...",
     levelLabel: "Select reading stage:",
-    levelBeginner: "🐣 Early Reader (Ages 4 - 6)",
+    levelBeginner: "Early Reader (Ages 4 - 6)",
     levelBeginnerDesc: "Letters, phonics sounds, and short picture words.",
-    levelIntermediate: "🌟 Story Adventurer (Ages 7 - 8)",
+    levelIntermediate: "Story Adventurer (Ages 7 - 8)",
     levelIntermediateDesc: "Full storybooks, rhythm, and fluent pronunciation.",
-    levelAdvanced: "🚀 Fluent Master (Ages 9+)",
+    levelAdvanced: "Fluent Master (Ages 9+)",
     levelAdvancedDesc: "Comprehension, reading speed, and rich vocabulary.",
     step2Title: "How Sparky Works",
     step2Subtitle: "Read real physical paper books with the magic of artificial intelligence.",
@@ -171,9 +174,9 @@ const I18N: Record<
     step4Subtitle: "Set your daily reading habit backed by UNESCO literacy benchmarks.",
     goalLabel: "Daily practice goal:",
     minutesUnit: "min/day",
-    unescoBadge: "🏆 UNESCO ERCE recommended habit",
+    unescoBadge: "UNESCO ERCE recommended habit",
     welcomeGiftTitle: "Welcome Gift!",
-    welcomeGiftDesc: "You earned 45 Magic Stars 🌟 to unlock collectible stickers and badges.",
+    welcomeGiftDesc: "You earned 45 Magic Stars to unlock collectible stickers and badges.",
     readyTitle: "Ready to dive into your first story?",
   },
   fr: {
@@ -181,17 +184,17 @@ const I18N: Record<
     stepOf: "Étape {current} sur {total}",
     next: "Suivant",
     back: "Retour",
-    finish: "Commencer l'Aventure de Lecture ! ✨",
-    step1Title: "Bonjour ! Je suis Sparky ✨",
+    finish: "Commencer l'Aventure de Lecture !",
+    step1Title: "Bonjour ! Je suis Sparky",
     step1Subtitle: "Ton tuteur de lecture intelligent propulsé par Meta AI.",
     nameLabel: "Comment t'appelles-tu ?",
     namePlaceholder: "Entre ton prénom...",
     levelLabel: "Niveau de lecture :",
-    levelBeginner: "🐣 Débutant (4 - 6 ans)",
+    levelBeginner: "Débutant (4 - 6 ans)",
     levelBeginnerDesc: "Lettres et sons élémentaires.",
-    levelIntermediate: "🌟 En progression (7 - 8 ans)",
+    levelIntermediate: "En progression (7 - 8 ans)",
     levelIntermediateDesc: "Contes illustrés et fluidité.",
-    levelAdvanced: "🚀 Lecteur confirmé (9+ ans)",
+    levelAdvanced: "Lecteur confirmé (9+ ans)",
     levelAdvancedDesc: "Compréhension et vocabulaire riche.",
     step2Title: "Comment fonctionne Sparky ?",
     step2Subtitle: "Lis de vrais livres papier avec l'aide de l'IA.",
@@ -216,9 +219,9 @@ const I18N: Record<
     step4Subtitle: "Fixe ton objectif quotidien de 10 minutes.",
     goalLabel: "Objectif quotidien :",
     minutesUnit: "min/jour",
-    unescoBadge: "🏆 Recommandation UNESCO",
+    unescoBadge: "Recommandation UNESCO",
     welcomeGiftTitle: "Cadeau de Bienvenue !",
-    welcomeGiftDesc: "45 Étoiles Magiques 🌟 offertes pour commencer.",
+    welcomeGiftDesc: "45 Étoiles Magiques offertes pour commencer.",
     readyTitle: "Prêt à lire ton premier conte ?",
   },
   pt: {
@@ -226,17 +229,17 @@ const I18N: Record<
     stepOf: "Passo {current} de {total}",
     next: "Avançar",
     back: "Voltar",
-    finish: "Começar Minha Aventura! ✨",
-    step1Title: "Olá! Eu sou o Sparky ✨",
+    finish: "Começar Minha Aventura!",
+    step1Title: "Olá! Eu sou o Sparky",
     step1Subtitle: "Seu tutor de leitura inteligente com IA da Meta.",
     nameLabel: "Quem vai ler hoje?",
     namePlaceholder: "Digite seu nome...",
     levelLabel: "Selecione o nível de leitura:",
-    levelBeginner: "🐣 Leitor Inicial (4 - 6 anos)",
+    levelBeginner: "Leitor Inicial (4 - 6 anos)",
     levelBeginnerDesc: "Letras, fonemas e primeiras palavras.",
-    levelIntermediate: "🌟 Aventureiro (7 - 8 anos)",
+    levelIntermediate: "Aventureiro (7 - 8 anos)",
     levelIntermediateDesc: "Histórias completas e ritmo de voz.",
-    levelAdvanced: "🚀 Mestre Leitor (9+ anos)",
+    levelAdvanced: "Mestre Leitor (9+ anos)",
     levelAdvancedDesc: "Velocidade, vocabulário e compreensão.",
     step2Title: "Como Funciona o Sparky?",
     step2Subtitle: "Leia livros reais de papel com auxílio de inteligência artificial.",
@@ -261,9 +264,9 @@ const I18N: Record<
     step4Subtitle: "Estabeleça sua meta diária recomendada pela UNESCO.",
     goalLabel: "Meta diária:",
     minutesUnit: "min/dia",
-    unescoBadge: "🏆 Padrão UNESCO ERCE",
+    unescoBadge: "Padrão UNESCO ERCE",
     welcomeGiftTitle: "Presente de Boas-vindas!",
-    welcomeGiftDesc: "Você ganhou 45 Estrelas Mágicas 🌟 para colecionar adesivos.",
+    welcomeGiftDesc: "Você ganhou 45 Estrelas Mágicas para colecionar adesivos.",
     readyTitle: "Pronto para ler a primeira história?",
   },
   de: {
@@ -271,17 +274,17 @@ const I18N: Record<
     stepOf: "Schritt {current} von {total}",
     next: "Weiter",
     back: "Zurück",
-    finish: "Leseabenteuer starten! ✨",
-    step1Title: "Hallo! Ich bin Sparky ✨",
+    finish: "Leseabenteuer starten!",
+    step1Title: "Hallo! Ich bin Sparky",
     step1Subtitle: "Dein intelligenter Lesetutor mit Meta KI.",
     nameLabel: "Wer liest heute?",
     namePlaceholder: "Name eingeben...",
     levelLabel: "Lesestufe auswählen:",
-    levelBeginner: "🐣 Leseanfänger (4 - 6 Jahre)",
+    levelBeginner: "Leseanfänger (4 - 6 Jahre)",
     levelBeginnerDesc: "Buchstaben und erste Wörter.",
-    levelIntermediate: "🌟 Fortgeschritten (7 - 8 Jahre)",
+    levelIntermediate: "Fortgeschritten (7 - 8 Jahre)",
     levelIntermediateDesc: "Ganze Geschichten und flüssiges Lesen.",
-    levelAdvanced: "🚀 Leseprofi (9+ Jahre)",
+    levelAdvanced: "Leseprofi (9+ Jahre)",
     levelAdvancedDesc: "Leseverständnis und Wortschatz.",
     step2Title: "So funktioniert Sparky",
     step2Subtitle: "Echte Papierbücher mit KI-Begleitung lesen.",
@@ -306,9 +309,9 @@ const I18N: Record<
     step4Subtitle: "Tägliches Leseziel nach UNESCO-Empfehlung.",
     goalLabel: "Tägliches Ziel:",
     minutesUnit: "Min/Tag",
-    unescoBadge: "🏆 UNESCO ERCE Standard",
+    unescoBadge: "UNESCO ERCE Standard",
     welcomeGiftTitle: "Willkommensgeschenk!",
-    welcomeGiftDesc: "Du hast 45 Zaubersterne 🌟 erhalten.",
+    welcomeGiftDesc: "Du hast 45 Zaubersterne erhalten.",
     readyTitle: "Bereit für deine erste Geschichte?",
   },
   it: {
@@ -316,17 +319,17 @@ const I18N: Record<
     stepOf: "Passo {current} di {total}",
     next: "Avanti",
     back: "Indietro",
-    finish: "Inizia l'Avventura di Lettura! ✨",
-    step1Title: "Ciao! Sono Sparky ✨",
+    finish: "Inizia l'Avventura di Lettura!",
+    step1Title: "Ciao! Sono Sparky",
     step1Subtitle: "Il tuo tutor intelligente di lettura con Meta AI.",
     nameLabel: "Chi legge oggi?",
     namePlaceholder: "Scrivi il tuo nome...",
     levelLabel: "Seleziona il livello:",
-    levelBeginner: "🐣 Primi Passi (4 - 6 anni)",
+    levelBeginner: "Primi Passi (4 - 6 anni)",
     levelBeginnerDesc: "Lettere, suoni e parole brevi.",
-    levelIntermediate: "🌟 Avventuriero (7 - 8 anni)",
+    levelIntermediate: "Avventuriero (7 - 8 anni)",
     levelIntermediateDesc: "Storie illustrate e ritmo.",
-    levelAdvanced: "🚀 Lettore Esperto (9+ anni)",
+    levelAdvanced: "Lettore Esperto (9+ anni)",
     levelAdvancedDesc: "Comprensione e lessico arricchito.",
     step2Title: "Come Funziona Sparky?",
     step2Subtitle: "Leggi veri libri di carta con la magia dell'IA.",
@@ -351,9 +354,9 @@ const I18N: Record<
     step4Subtitle: "Imposta il tuo obiettivo giornaliero UNESCO.",
     goalLabel: "Obiettivo:",
     minutesUnit: "min/giorno",
-    unescoBadge: "🏆 Raccomandazione UNESCO",
+    unescoBadge: "Raccomandazione UNESCO",
     welcomeGiftTitle: "Regalo di Benvenuto!",
-    welcomeGiftDesc: "Hai ricevuto 45 Stelle Magiche 🌟.",
+    welcomeGiftDesc: "Hai ricevuto 45 Stelle Magiche.",
     readyTitle: "Pronto a leggere la tua prima storia?",
   },
   nl: {
@@ -361,17 +364,17 @@ const I18N: Record<
     stepOf: "Stap {current} van {total}",
     next: "Volgende",
     back: "Terug",
-    finish: "Start Leesavontuur! ✨",
-    step1Title: "Hallo! Ik ben Sparky ✨",
+    finish: "Start Leesavontuur!",
+    step1Title: "Hallo! Ik ben Sparky",
     step1Subtitle: "Jouw slimme leestutor met Meta AI.",
     nameLabel: "Wie leest er vandaag?",
     namePlaceholder: "Typ je naam...",
     levelLabel: "Kies leesniveau:",
-    levelBeginner: "🐣 Beginner (4 - 6 jaar)",
+    levelBeginner: "Beginner (4 - 6 jaar)",
     levelBeginnerDesc: "Letters en eerste woorden.",
-    levelIntermediate: "🌟 Lezer (7 - 8 jaar)",
+    levelIntermediate: "Lezer (7 - 8 jaar)",
     levelIntermediateDesc: "Verhalen en vlotheid.",
-    levelAdvanced: "🚀 Gevorderd (9+ jaar)",
+    levelAdvanced: "Gevorderd (9+ jaar)",
     levelAdvancedDesc: "Begrip en woordenschat.",
     step2Title: "Hoe werkt Sparky?",
     step2Subtitle: "Lees echte papieren boeken met slimme AI.",
@@ -396,9 +399,9 @@ const I18N: Record<
     step4Subtitle: "Kies je dagelijkse leesdoel.",
     goalLabel: "Dagelijks doel:",
     minutesUnit: "min/dag",
-    unescoBadge: "🏆 UNESCO richtlijn",
+    unescoBadge: "UNESCO richtlijn",
     welcomeGiftTitle: "Welkomstcadeau!",
-    welcomeGiftDesc: "Je hebt 45 Magische Sterren 🌟 ontvangen.",
+    welcomeGiftDesc: "Je hebt 45 Magische Sterren ontvangen.",
     readyTitle: "Klaar voor je eerste verhaal?",
   },
   pl: {
@@ -406,17 +409,17 @@ const I18N: Record<
     stepOf: "Krok {current} z {total}",
     next: "Dalej",
     back: "Wstecz",
-    finish: "Rozpocznij Przygodę! ✨",
-    step1Title: "Cześć! Jestem Sparky ✨",
+    finish: "Rozpocznij Przygodę!",
+    step1Title: "Cześć! Jestem Sparky",
     step1Subtitle: "Twój inteligentny korepetytor czytania z Meta AI.",
     nameLabel: "Kto dzisiaj czyta?",
     namePlaceholder: "Wpisz imię...",
     levelLabel: "Poziom czytania:",
-    levelBeginner: "🐣 Początkujący (4 - 6 lat)",
+    levelBeginner: "Początkujący (4 - 6 lat)",
     levelBeginnerDesc: "Litery i proste słowa.",
-    levelIntermediate: "🌟 Odkrywca (7 - 8 lat)",
+    levelIntermediate: "Odkrywca (7 - 8 lat)",
     levelIntermediateDesc: "Opowiadania i płynność.",
-    levelAdvanced: "🚀 Mistrz Czytania (9+ lat)",
+    levelAdvanced: "Mistrz Czytania (9+ lat)",
     levelAdvancedDesc: "Szybkość i bogate słownictwo.",
     step2Title: "Jak działa Sparky?",
     step2Subtitle: "Czytaj prawdziwe książki papierowe z pomocą AI.",
@@ -441,9 +444,9 @@ const I18N: Record<
     step4Subtitle: "Ustal dzienny cel czytania UNESCO.",
     goalLabel: "Dzienny cel:",
     minutesUnit: "min/dzień",
-    unescoBadge: "🏆 Standard UNESCO ERCE",
+    unescoBadge: "Standard UNESCO ERCE",
     welcomeGiftTitle: "Prezent Powitalny!",
-    welcomeGiftDesc: "Otrzymujesz 45 Magicznych Gwiazdek 🌟.",
+    welcomeGiftDesc: "Otrzymujesz 45 Magicznych Gwiazdek.",
     readyTitle: "Gotowy na pierwsze opowiadanie?",
   },
   tr: {
@@ -451,17 +454,17 @@ const I18N: Record<
     stepOf: "Adım {current} / {total}",
     next: "İleri",
     back: "Geri",
-    finish: "Okuma Macerasına Başla! ✨",
-    step1Title: "Merhaba! Ben Sparky ✨",
+    finish: "Okuma Macerasına Başla!",
+    step1Title: "Merhaba! Ben Sparky",
     step1Subtitle: "Meta AI destekli akıllı okuma arkadaşın.",
     nameLabel: "Bugün kim okuyor?",
     namePlaceholder: "İsmini yaz...",
     levelLabel: "Okuma seviyesi:",
-    levelBeginner: "🐣 Başlangıç (4 - 6 yaş)",
+    levelBeginner: "Başlangıç (4 - 6 yaş)",
     levelBeginnerDesc: "Harfler, sesler ve kısa sözcükler.",
-    levelIntermediate: "🌟 Gelişen Okur (7 - 8 yaş)",
+    levelIntermediate: "Gelişen Okur (7 - 8 yaş)",
     levelIntermediateDesc: "Resimli hikayeler ve akıcı tonlama.",
-    levelAdvanced: "🚀 Usta Okur (9+ yaş)",
+    levelAdvanced: "Usta Okur (9+ yaş)",
     levelAdvancedDesc: "Anlama, okuma hızı ve zengin kelimeler.",
     step2Title: "Sparky Nasıl Çalışır?",
     step2Subtitle: "Yapay zeka büyüsüyle gerçek basılı kitapları oku.",
@@ -486,9 +489,9 @@ const I18N: Record<
     step4Subtitle: "UNESCO önerili günlük okuma hedefini belirle.",
     goalLabel: "Günlük hedef:",
     minutesUnit: "dk/gün",
-    unescoBadge: "🏆 UNESCO ERCE Standardı",
+    unescoBadge: "UNESCO ERCE Standardı",
     welcomeGiftTitle: "Hoş Geldin Hediyesi!",
-    welcomeGiftDesc: "Koleksiyon için 45 Sihirli Yıldız 🌟 kazandın.",
+    welcomeGiftDesc: "Koleksiyon için 45 Sihirli Yıldız kazandın.",
     readyTitle: "İlk hikayene başlamaya hazır mısın?",
   },
 };
@@ -506,7 +509,7 @@ export const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({
 
   // Profile setup state
   const [readerName, setReaderName] = useState<string>("");
-  const [selectedAvatar, setSelectedAvatar] = useState<string>("🌟");
+  const [selectedAvatar, setSelectedAvatar] = useState<string>("star");
   const [readingLevel, setReadingLevel] = useState<"beginner" | "intermediate" | "advanced">("intermediate");
   const [selectedFont, setSelectedFont] = useState<"lexend" | "comic" | "dyslexic">("lexend");
   const [dailyGoalMinutes, setDailyGoalMinutes] = useState<number>(10);
@@ -524,7 +527,8 @@ export const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({
     try {
       const p = await getUserProfile();
       if (p.name) setReaderName(p.name);
-      if (p.avatar) setSelectedAvatar(p.avatar);
+      // Older profiles stored an emoji here; fall back to the default avatar id
+      if (p.avatar) setSelectedAvatar(AVATAR_OPTIONS.some((a) => a.id === p.avatar) ? p.avatar : "star");
       if (p.level) setReadingLevel(p.level);
       if (p.dailyGoalMinutes) setDailyGoalMinutes(p.dailyGoalMinutes);
     } catch {}
@@ -635,7 +639,7 @@ export const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({
                   colors={theme.gradients.sparkyMascot}
                   style={styles.mascotBigBadge}
                 >
-                  <Text style={styles.mascotBigEmoji}>{selectedAvatar || "✨"}</Text>
+                  <Ionicons name={getAvatarIcon(selectedAvatar)} size={40} color="#ffffff" />
                 </LinearGradient>
 
                 <Text style={[styles.stepTitle, { color: theme.text }]}>{t.step1Title}</Text>
@@ -646,13 +650,13 @@ export const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({
                 {/* Avatar Picker */}
                 <View style={styles.avatarRow}>
                   {AVATAR_OPTIONS.map((item) => {
-                    const isSelected = selectedAvatar === item.emoji;
+                    const isSelected = selectedAvatar === item.id;
                     return (
                       <TouchableOpacity
                         key={item.id}
                         onPress={() => {
                           playChime("tap");
-                          setSelectedAvatar(item.emoji);
+                          setSelectedAvatar(item.id);
                         }}
                         style={[
                           styles.avatarOption,
@@ -662,7 +666,7 @@ export const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({
                           },
                         ]}
                       >
-                        <Text style={styles.avatarOptionEmoji}>{item.emoji}</Text>
+                        <Ionicons name={item.icon} size={24} color={isSelected ? theme.primary : theme.textSecondary} />
                       </TouchableOpacity>
                     );
                   })}
@@ -740,7 +744,7 @@ export const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({
             {currentStep === 2 && (
               <View style={styles.stepContainer}>
                 <View style={[styles.iconCircleBig, { backgroundColor: theme.badges.kpiAccuracyBg }]}>
-                  <Text style={styles.iconCircleBigEmoji}>📖</Text>
+                  <Ionicons name="book" size={32} color={theme.badges.kpiAccuracyText} />
                 </View>
 
                 <Text style={[styles.stepTitle, { color: theme.text }]}>{t.step2Title}</Text>
@@ -756,7 +760,7 @@ export const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({
                       colors={theme.gradients.btnSparkyReads}
                       style={styles.howCardIconBadge}
                     >
-                      <Text style={styles.howCardIconText}>📸</Text>
+                      <Ionicons name="camera" size={20} color="#ffffff" />
                     </LinearGradient>
                     <View style={styles.howCardContent}>
                       <Text style={[styles.howCardTitle, { color: theme.text }]}>
@@ -774,7 +778,7 @@ export const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({
                       colors={theme.gradients.starPill}
                       style={styles.howCardIconBadge}
                     >
-                      <Text style={styles.howCardIconText}>🎙️</Text>
+                      <Ionicons name="mic" size={20} color="#ffffff" />
                     </LinearGradient>
                     <View style={styles.howCardContent}>
                       <Text style={[styles.howCardTitle, { color: theme.text }]}>
@@ -792,7 +796,7 @@ export const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({
                       colors={theme.gradients.sparkyMascot}
                       style={styles.howCardIconBadge}
                     >
-                      <Text style={styles.howCardIconText}>💡</Text>
+                      <Ionicons name="bulb" size={20} color="#ffffff" />
                     </LinearGradient>
                     <View style={styles.howCardContent}>
                       <Text style={[styles.howCardTitle, { color: theme.text }]}>
@@ -811,7 +815,7 @@ export const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({
             {currentStep === 3 && (
               <View style={styles.stepContainer}>
                 <View style={[styles.iconCircleBig, { backgroundColor: theme.badges.kpiSpeedBg }]}>
-                  <Text style={styles.iconCircleBigEmoji}>🔤</Text>
+                  <Ionicons name="text" size={32} color={theme.badges.kpiSpeedText} />
                 </View>
 
                 <Text style={[styles.stepTitle, { color: theme.text }]}>{t.step3Title}</Text>
@@ -897,7 +901,7 @@ export const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({
                   >
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.toggleRowTitle, { color: theme.text }]}>
-                        📏 {t.featureRuler}
+                        {t.featureRuler}
                       </Text>
                       <Text style={[styles.toggleRowDesc, { color: theme.textSecondary }]}>
                         {t.featureRulerDesc}
@@ -922,7 +926,7 @@ export const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({
                   >
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.toggleRowTitle, { color: theme.text }]}>
-                        🧩 {t.featureSyllables}
+                        {t.featureSyllables}
                       </Text>
                       <Text style={[styles.toggleRowDesc, { color: theme.textSecondary }]}>
                         {t.featureSyllablesDesc}
@@ -945,7 +949,7 @@ export const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({
                   colors={theme.gradients.sparkyMascot}
                   style={styles.mascotBigBadge}
                 >
-                  <Text style={styles.mascotBigEmoji}>🎉</Text>
+                  <Ionicons name="trophy" size={40} color="#ffffff" />
                 </LinearGradient>
 
                 <Text style={[styles.stepTitle, { color: theme.text }]}>{t.step4Title}</Text>
@@ -1013,7 +1017,7 @@ export const OnboardingWizardModal: React.FC<OnboardingWizardModalProps> = ({
                   colors={theme.gradients.starPill}
                   style={styles.welcomeGiftCard}
                 >
-                  <Text style={styles.giftEmoji}>🎁</Text>
+                  <Ionicons name="gift" size={30} color="#f59e0b" />
                   <View style={{ flex: 1 }}>
                     <Text style={styles.giftTitle}>{t.welcomeGiftTitle}</Text>
                     <Text style={styles.giftDesc}>{t.welcomeGiftDesc}</Text>
@@ -1155,9 +1159,6 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 8,
   },
-  mascotBigEmoji: {
-    fontSize: 40,
-  },
   iconCircleBig: {
     width: 72,
     height: 72,
@@ -1165,9 +1166,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 12,
-  },
-  iconCircleBigEmoji: {
-    fontSize: 34,
   },
   stepTitle: {
     fontSize: 22,
@@ -1197,9 +1195,6 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     justifyContent: "center",
     alignItems: "center",
-  },
-  avatarOptionEmoji: {
-    fontSize: 24,
   },
   inputWrap: {
     width: "100%",
@@ -1262,9 +1257,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
-  },
-  howCardIconText: {
-    fontSize: 20,
   },
   howCardContent: {
     flex: 1,
@@ -1378,9 +1370,6 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 14,
     gap: 12,
-  },
-  giftEmoji: {
-    fontSize: 32,
   },
   giftTitle: {
     fontSize: 15,
