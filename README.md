@@ -105,7 +105,7 @@ What leaves the device, exactly:
 - 🎙️ **Live reading audio: handled by the platform speech service.** Word-by-word recognition uses the device/browser Web Speech API (in some browsers, e.g. Chrome, the browser vendor processes it). Sparky never stores recordings.
 - ☁️ **Meta Muse Voice: only with parent permission.** Off by default. A parent can enable it in the Privacy Shield; then a session's audio (or a spoken question) is sent to `muse-voice-transcribe-1.0` to double-check the reading. Without permission, *Ask Sparky* uses the device speech service instead.
 - 💬 **Meta Muse Spark: text by default.** The page text, single vocabulary words and anonymous scores, to create explanations, quizzes and feedback. No names or audio. Book page photos are sent only if a parent turns on *Meta Muse Spark page reading*.
-- 🖼️ **Picture dictionary:** single vocabulary words (never page text) go to an external illustration service.
+- 🖼️ **Picture dictionary:** only bundled or curated photos; no images are generated on the fly and no word is sent to an image service.
 - 🔑 **API key stays on the server**: in production a Firebase Function proxies Meta calls (`functions/index.js`); for local development use `server/meta-proxy.mjs`.
 
 ---

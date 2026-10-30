@@ -24,7 +24,7 @@ import { speakText, speakWordPhonetically, playChime, stopSpeaking, getSparkyVoi
 import { addStars, getCloudVoiceConsent } from '../services/storageService';
 import { SpeechRecognitionController } from '../services/speechService';
 import { getTranslation } from '../i18n/translations';
-import { getWordIllustrationUrl, toImageSource } from '../services/imageService';
+import { getWordIllustration, toImageSource } from '../services/imageService';
 import { useTheme } from '../context/ThemeContext';
 import { ThemeColors, DISPLAY_FONT } from '../styles/theme';
 import { SparkyMascot } from './SparkyMascot';
@@ -63,6 +63,7 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
   const [loadingWord, setLoadingWord] = useState(false);
   const [activeSyllable, setActiveSyllable] = useState<string | null>(null);
   const [imageError, setImageError] = useState(false);
+  const wordPicture = selectedWord ? getWordIllustration(selectedWord) : null;
 
   // Spoken feedback state
   const [spokenFeedback, setSpokenFeedback] = useState<string>('');
@@ -453,10 +454,10 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
                 </View>
 
                 {/* Visual Picture Dictionary / AI Storybook Illustration Card */}
-                {selectedWord && !imageError && (
+                {wordPicture && !imageError && (
                   <View style={[styles.illustrationCard, { backgroundColor: theme.surfaceSecondary, borderColor: theme.border }]}>
                     <Image
-                      source={toImageSource(getWordIllustrationUrl(selectedWord, language, sentenceContext).url)}
+                      source={toImageSource(wordPicture)}
                       style={styles.illustrationImage}
                       resizeMode="cover"
                       onError={() => setImageError(true)}

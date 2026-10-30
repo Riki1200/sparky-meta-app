@@ -21,7 +21,7 @@ import {
 import { speakText, stopSpeaking, playChime } from '../services/ttsService';
 import { saveReadingSession, addStars, getCloudVoiceConsent } from '../services/storageService';
 import { getTranslation } from '../i18n/translations';
-import { getStorySceneIllustrationUrl, toImageSource } from '../services/imageService';
+import { toImageSource } from '../services/imageService';
 import { SparkyMascot } from './SparkyMascot';
 import { CelebrationConfetti } from './CelebrationConfetti';
 import { useTheme } from '../context/ThemeContext';
@@ -479,7 +479,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
     </TouchableOpacity>
   );
 
-  const sceneSource = toImageSource(getStorySceneIllustrationUrl(page.title, page.imageUrl));
+  const sceneSource = page.imageUrl ? toImageSource(page.imageUrl) : null;
   const hasStarted = isReadingActive || currentIndex > 0;
 
   return (
@@ -495,7 +495,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
         <SparkyMascot size="small" mood={getMascotMood()} speechBubbleText={getMascotPrompt()} language={language} />
 
         {/* Story illustration, framed like a picture book plate */}
-        {showSceneIllustration ? (
+        {!sceneSource ? null : showSceneIllustration ? (
           <TouchableOpacity
             style={[styles.sceneCard, { borderColor: theme.border, height: isCompact ? 170 : 300 }]}
             onPress={() => setIsImageZoomed(true)}
@@ -755,7 +755,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
           <TouchableOpacity style={styles.lightboxCloseBtn} onPress={() => setIsImageZoomed(false)} activeOpacity={0.8}>
             <Ionicons name="close" size={26} color="#ffffff" />
           </TouchableOpacity>
-          <Image source={sceneSource} style={styles.lightboxImage} resizeMode="contain" />
+          {sceneSource && <Image source={sceneSource} style={styles.lightboxImage} resizeMode="contain" />}
           <Text style={[styles.lightboxTitle, Platform.OS === 'web' ? { fontFamily: FONTS.display } : null]}>
             {page.title}
           </Text>

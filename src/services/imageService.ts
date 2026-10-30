@@ -4,10 +4,8 @@ import { ImageRef, SupportedLanguage } from '../types';
 /**
  * Image & Illustration Service for Sparky AI Reading Tutor.
  *
- * Integrates:
- * 1. Meta Imagine / Multimodal Vision API (via EXPO_PUBLIC_META_IMAGINE_URL or Meta Model API).
- * 2. On-demand AI Storybook Illustration Generator (whimsical watercolor style tailored for children 6-10).
- * 3. Curated High-Definition Picture Dictionary for early literacy vocabulary.
+ * Only bundled or curated images are used: no on-the-fly generation,
+ * so a picture never fails with a rate-limit placeholder.
  */
 
 const HUMMINGBIRD_ART = require('../../assets/stories/hummingbird.jpg');
@@ -40,38 +38,11 @@ function cleanWord(raw: string): string {
 }
 
 /**
- * Returns a child-friendly visual illustration URL for any vocabulary word.
- * If a curated HD photo exists, returns it immediately.
- * Otherwise, synthesizes an AI watercolor children's book illustration prompt.
+ * Returns a verified picture for a vocabulary word, or null when none is curated.
+ * Words without a curated picture show no image rather than a guessed one.
  */
-export function getWordIllustrationUrl(
-  word: string,
-  language: SupportedLanguage = 'en',
-  context?: string
-): { url: ImageRef; isCurated: boolean; alt: string } {
-  const cleaned = cleanWord(word);
-
-  if (CURATED_WORD_ILLUSTRATIONS[cleaned]) {
-    return {
-      url: CURATED_WORD_ILLUSTRATIONS[cleaned],
-      isCurated: true,
-      alt: `Ilustración de ${cleaned}`,
-    };
-  }
-
-  // Generate a safe, gentle, watercolor children's storybook illustration prompt
-  const safePrompt = encodeURIComponent(
-    `cute colorful whimsical children book illustration of ${cleaned}, friendly storybook watercolor art, clear simple focus for kids, bright sunny colors, no text, no words`
-  );
-
-  // Pollinations Flux / Stable Diffusion endpoint for child-safe, on-the-fly storybook visuals
-  const aiGeneratedUrl = `https://image.pollinations.ai/prompt/${safePrompt}?width=600&height=400&nologo=true&seed=42`;
-
-  return {
-    url: aiGeneratedUrl,
-    isCurated: false,
-    alt: `Ilustración generada por IA para ${cleaned}`,
-  };
+export function getWordIllustration(word: string): ImageRef | null {
+  return CURATED_WORD_ILLUSTRATIONS[cleanWord(word)] ?? null;
 }
 
 /**
@@ -79,23 +50,6 @@ export function getWordIllustrationUrl(
  */
 export function toImageSource(ref?: ImageRef): ImageSourcePropType {
   return typeof ref === 'string' || ref === undefined ? { uri: ref } : ref;
-}
-
-/**
- * Generates an enchanting full-scene storybook illustration for a book page.
- * Only the title goes to the external illustration service, never the page text a child is reading.
- */
-export function getStorySceneIllustrationUrl(
-  title: string,
-  customImageUrl?: ImageRef
-): ImageRef {
-  if (customImageUrl) return customImageUrl;
-
-  const prompt = encodeURIComponent(
-    `children storybook watercolor illustration for "${title}", magical warm daylight, charming picture book style, vibrant colors, gentle, uplifting, no text`
-  );
-
-  return `https://image.pollinations.ai/prompt/${prompt}?width=800&height=480&nologo=true&seed=99`;
 }
 
 /**
