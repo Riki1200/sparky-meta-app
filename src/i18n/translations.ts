@@ -136,6 +136,12 @@ export interface Translations {
   cloudVoiceOn: string;
   cloudVoiceOff: string;
   quizScoreResult: string;
+  dockRestart: string;
+  dockListen: string;
+  dockRead: string;
+  dockStop: string;
+  dockDemo: string;
+  dockAsk: string;
 
   // Reading Settings Modal
   settingsModalTitle: string;
@@ -375,7 +381,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Translations> = {
 
     promptSparkyReads: 'Listen carefully to how each word is pronounced...',
     promptListening: 'I am listening! Read aloud with confidence...',
-    promptIdle: "Tap any word to hear it or tap 'Sparky Reads' / 'Read Aloud'",
+    promptIdle: 'Tap the microphone and read aloud. Tap any word to hear it.',
     promptCelebration: 'Incredible reading! You earned 10 stars!',
 
     tutorialBtnLabel: 'How Sparky Works & Setup Tour',
@@ -460,6 +466,12 @@ export const TRANSLATIONS: Record<SupportedLanguage, Translations> = {
     cloudVoiceOn: 'Allowed',
     cloudVoiceOff: 'Off',
     quizScoreResult: 'You scored {score} out of {total}!',
+    dockRestart: 'Restart',
+    dockListen: 'Listen',
+    dockRead: 'Read',
+    dockStop: 'Stop',
+    dockDemo: 'Demo',
+    dockAsk: 'Ask',
 
     settingsModalTitle: 'Reading & Accessibility Settings',
     settingsModalSubtitle: 'Customize typography, contrast & size for child comfort',
@@ -608,7 +620,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Translations> = {
 
     promptSparkyReads: 'Escucha con atención cómo suena cada palabra...',
     promptListening: '¡Te escucho! Lee con voz clara y tranquila...',
-    promptIdle: "Toca cualquier palabra para escucharla o pulsa 'Sparky Lee' / 'Leer en Voz Alta'",
+    promptIdle: 'Toca el micrófono y lee en voz alta. Toca cualquier palabra para escucharla.',
     promptCelebration: '¡Excelente lectura! ¡Ganaste 10 estrellas!',
 
     tutorialBtnLabel: 'Cómo funciona Sparky y Guía de Inicio',
@@ -693,6 +705,12 @@ export const TRANSLATIONS: Record<SupportedLanguage, Translations> = {
     cloudVoiceOn: 'Permitido',
     cloudVoiceOff: 'Desactivado',
     quizScoreResult: '¡Acertaste {score} de {total}!',
+    dockRestart: 'Reiniciar',
+    dockListen: 'Escuchar',
+    dockRead: 'Leer',
+    dockStop: 'Parar',
+    dockDemo: 'Demo',
+    dockAsk: 'Preguntar',
 
     settingsModalTitle: 'Ajustes de Lectura y Accesibilidad',
     settingsModalSubtitle: 'Personaliza la fuente, tamaño y contraste para el niño',
@@ -841,7 +859,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Translations> = {
 
     promptSparkyReads: 'Écoute bien la prononciation de chaque mot...',
     promptListening: 'Je t’écoute ! Lis d’une voix claire et sereine...',
-    promptIdle: "Touche un mot pour l'écouter ou clique sur 'Sparky Lit' / 'Lire à voix haute'",
+    promptIdle: 'Touche le micro et lis à voix haute. Touche un mot pour l\'écouter.',
     promptCelebration: 'Lecture remarquable ! Tu as gagné 10 étoiles !',
 
     tutorialBtnLabel: 'Guide d’utilisation Sparky',
@@ -926,6 +944,12 @@ export const TRANSLATIONS: Record<SupportedLanguage, Translations> = {
     cloudVoiceOn: 'Autorisé',
     cloudVoiceOff: 'Désactivé',
     quizScoreResult: 'Tu as {score} bonnes réponses sur {total} !',
+    dockRestart: 'Réessayer',
+    dockListen: 'Écouter',
+    dockRead: 'Lire',
+    dockStop: 'Arrêter',
+    dockDemo: 'Démo',
+    dockAsk: 'Demander',
 
     settingsModalTitle: "Paramètres de Lecture & d'Accessibilité",
     settingsModalSubtitle: 'Personnalise la police, la taille et le contraste pour le confort de lecture',
@@ -1074,7 +1098,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Translations> = {
 
     promptSparkyReads: 'Ouça com atenção como soa cada palavra...',
     promptListening: 'Estou ouvindo! Leia com voz clara e calma...',
-    promptIdle: "Toque em qualquer palavra ou aperte 'Sparky Lê' / 'Ler em Voz Alta'",
+    promptIdle: 'Toque no microfone e leia em voz alta. Toque em qualquer palavra para ouvi-la.',
     promptCelebration: 'Leitura incrível! Você ganhou 10 estrelas!',
 
     tutorialBtnLabel: 'Como o Sparky Funciona e Tour',
@@ -1159,6 +1183,12 @@ export const TRANSLATIONS: Record<SupportedLanguage, Translations> = {
     cloudVoiceOn: 'Permitido',
     cloudVoiceOff: 'Desativado',
     quizScoreResult: 'Você acertou {score} de {total}!',
+    dockRestart: 'Reiniciar',
+    dockListen: 'Ouvir',
+    dockRead: 'Ler',
+    dockStop: 'Parar',
+    dockDemo: 'Demo',
+    dockAsk: 'Perguntar',
 
     settingsModalTitle: 'Ajustes de Leitura e Acessibilidade',
     settingsModalSubtitle: 'Personalize a fonte, tamanho e contraste para a criança',
@@ -1307,7 +1337,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Translations> = {
 
     promptSparkyReads: 'Höre aufmerksam zu, wie jedes Wort klingt...',
     promptListening: 'Ich höre zu! Lies mit klarer Stimme...',
-    promptIdle: "Tippe auf ein Wort oder starte 'Sparky Liest' / 'Laut Vorlesen'",
+    promptIdle: 'Tippe auf das Mikrofon und lies laut vor. Tippe auf ein Wort, um es zu hören.',
     promptCelebration: 'Unglaublich toll gelesen! Du hast 10 Sterne erhalten!',
 
     tutorialBtnLabel: 'Wie Sparky funktioniert & Tour',
@@ -1392,6 +1422,12 @@ export const TRANSLATIONS: Record<SupportedLanguage, Translations> = {
     cloudVoiceOn: 'Erlaubt',
     cloudVoiceOff: 'Aus',
     quizScoreResult: 'Du hast {score} von {total} richtig!',
+    dockRestart: 'Neu',
+    dockListen: 'Anhören',
+    dockRead: 'Lesen',
+    dockStop: 'Stopp',
+    dockDemo: 'Demo',
+    dockAsk: 'Fragen',
 
     settingsModalTitle: 'Lese- und Barrierefreiheitseinstellungen',
     settingsModalSubtitle: 'Schriftart, Größe und Kontrast für entspanntes Lesen anpassen',
@@ -1540,7 +1576,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Translations> = {
 
     promptSparkyReads: 'Ascolta con attenzione il suono di ogni parola...',
     promptListening: 'Ti ascolto! Leggi con voce chiara e tranquilla...',
-    promptIdle: "Tocca una parola per ascoltarla o premi 'Sparky Legge' / 'Leggi ad Alta Voce'",
+    promptIdle: 'Tocca il microfono e leggi ad alta voce. Tocca una parola per ascoltarla.',
     promptCelebration: 'Lettura fantastica! Hai conquistato 10 stelle!',
 
     tutorialBtnLabel: 'Come funziona Sparky e Guida',
@@ -1625,6 +1661,12 @@ export const TRANSLATIONS: Record<SupportedLanguage, Translations> = {
     cloudVoiceOn: 'Consentito',
     cloudVoiceOff: 'Disattivato',
     quizScoreResult: 'Hai risposto bene a {score} domande su {total}!',
+    dockRestart: 'Riprova',
+    dockListen: 'Ascolta',
+    dockRead: 'Leggi',
+    dockStop: 'Stop',
+    dockDemo: 'Demo',
+    dockAsk: 'Chiedi',
 
     settingsModalTitle: 'Impostazioni di Lettura e Accessibilità',
     settingsModalSubtitle: 'Personalizza font, dimensione e contrasto per il massimo comfort',
@@ -1773,7 +1815,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Translations> = {
 
     promptSparkyReads: 'Luister goed naar hoe elk woord klinkt...',
     promptListening: 'Ik luister! Lees rustig en duidelijk voor...',
-    promptIdle: "Tik op een woord of kies 'Sparky Leest' / 'Voorlezen'",
+    promptIdle: 'Tik op de microfoon en lees hardop. Tik op een woord om het te horen.',
     promptCelebration: 'Fantastisch gelezen! Je hebt 10 sterren verdiend!',
 
     tutorialBtnLabel: 'Uitleg over Sparky & Tour',
@@ -1858,6 +1900,12 @@ export const TRANSLATIONS: Record<SupportedLanguage, Translations> = {
     cloudVoiceOn: 'Toegestaan',
     cloudVoiceOff: 'Uit',
     quizScoreResult: 'Je had {score} van de {total} goed!',
+    dockRestart: 'Opnieuw',
+    dockListen: 'Luisteren',
+    dockRead: 'Lezen',
+    dockStop: 'Stop',
+    dockDemo: 'Demo',
+    dockAsk: 'Vragen',
 
     settingsModalTitle: 'Lees- & Toegankelijkheidsinstellingen',
     settingsModalSubtitle: 'Pas lettertype, grootte en contrast aan voor leesgemak',
@@ -2006,7 +2054,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Translations> = {
 
     promptSparkyReads: 'Słuchaj uważnie, jak brzmi każde słowo...',
     promptListening: 'Słucham! Czytaj wyraźnie i spokojnie...',
-    promptIdle: "Dotknij słowa lub włącz 'Sparky Czyta' / 'Czytaj na Głos'",
+    promptIdle: 'Dotknij mikrofonu i czytaj na głos. Dotknij słowa, aby je usłyszeć.',
     promptCelebration: 'Wspaniałe czytanie! Zdobywasz 10 gwiazdek!',
 
     tutorialBtnLabel: 'Jak działa Sparky & Przewodnik',
@@ -2091,6 +2139,12 @@ export const TRANSLATIONS: Record<SupportedLanguage, Translations> = {
     cloudVoiceOn: 'Dozwolone',
     cloudVoiceOff: 'Wyłączone',
     quizScoreResult: 'Masz {score} z {total} poprawnych odpowiedzi!',
+    dockRestart: 'Od nowa',
+    dockListen: 'Posłuchaj',
+    dockRead: 'Czytaj',
+    dockStop: 'Stop',
+    dockDemo: 'Demo',
+    dockAsk: 'Zapytaj',
 
     settingsModalTitle: 'Ustawienia Czytania i Dostępności',
     settingsModalSubtitle: 'Dostosuj czcionkę, rozmiar i kontrast dla wygody dziecka',
@@ -2239,7 +2293,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Translations> = {
 
     promptSparkyReads: 'Her kelimenin sesini dikkatle dinle...',
     promptListening: 'Dinliyorum! Rahat ve net bir sesle oku...',
-    promptIdle: "Kelimeye dokun veya 'Sparky Okur' / 'Sesli Oku' butonuna bas",
+    promptIdle: 'Mikrofona dokun ve sesli oku. Duymak için bir kelimeye dokun.',
     promptCelebration: 'Muhteşem okuma! 10 yıldız kazandın!',
 
     tutorialBtnLabel: 'Sparky Nasıl Çalışır ve Rehber',
@@ -2324,6 +2378,12 @@ export const TRANSLATIONS: Record<SupportedLanguage, Translations> = {
     cloudVoiceOn: 'İzin verildi',
     cloudVoiceOff: 'Kapalı',
     quizScoreResult: '{total} sorudan {score} tanesini bildin!',
+    dockRestart: 'Baştan',
+    dockListen: 'Dinle',
+    dockRead: 'Oku',
+    dockStop: 'Dur',
+    dockDemo: 'Demo',
+    dockAsk: 'Sor',
 
     settingsModalTitle: 'Okuma ve Erişilebilirlik Ayarları',
     settingsModalSubtitle: 'Çocuğun rahat okuması için yazı tipi, boyut ve kontrastı ayarla',

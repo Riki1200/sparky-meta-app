@@ -9,6 +9,7 @@ import {
   useWindowDimensions,
   Image,
   Modal,
+  Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -418,43 +419,49 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
   const progressPercent = tokens.length > 0 ? (currentIndex / tokens.length) * 100 : 0;
   const isReadingActive = isListening || isSimulating;
 
+  // Pulsing ring around the mic so children can see Sparky is listening
+  const micPulse = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (!isReadingActive) {
+      micPulse.setValue(0);
+      return;
+    }
+    const loop = Animated.loop(
+      Animated.timing(micPulse, { toValue: 1, duration: 1400, useNativeDriver: Platform.OS !== 'web' })
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [isReadingActive]);
+
   const renderDockAction = (action: {
     icon: React.ComponentProps<typeof Ionicons>['name'];
     label: string;
+    accessibilityLabel: string;
     onPress: () => void;
     colors: [string, string, ...string[]];
     tint: string;
     borderColor: string;
-    showLabel?: boolean;
-  }) => {
-    const showLabel = !isCompact && action.showLabel !== false;
-    return (
-      <TouchableOpacity
-        style={styles.dockButtonTouch}
-        onPress={action.onPress}
-        activeOpacity={0.75}
-        accessibilityLabel={action.label}
+  }) => (
+    <TouchableOpacity
+      style={styles.dockItem}
+      onPress={action.onPress}
+      activeOpacity={0.75}
+      accessibilityRole="button"
+      accessibilityLabel={action.accessibilityLabel}
+    >
+      <LinearGradient
+        colors={action.colors}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[styles.dockIconCircle, { borderColor: action.borderColor }]}
       >
-        <LinearGradient
-          colors={action.colors}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[
-            styles.dockAction,
-            !showLabel && styles.dockActionIconOnly,
-            { borderColor: action.borderColor },
-          ]}
-        >
-          <Ionicons name={action.icon} size={showLabel ? 16 : 19} color={action.tint} />
-          {showLabel && (
-            <Text style={[styles.dockActionText, { color: action.tint }]} numberOfLines={1}>
-              {action.label}
-            </Text>
-          )}
-        </LinearGradient>
-      </TouchableOpacity>
-    );
-  };
+        <Ionicons name={action.icon} size={19} color={action.tint} />
+      </LinearGradient>
+      <Text style={[styles.dockLabel, { color: theme.textSecondary }]} numberOfLines={1}>
+        {action.label}
+      </Text>
+    </TouchableOpacity>
+  );
 
   return (
     <View style={[styles.container, { backgroundColor: theme.bg }]}>
@@ -472,14 +479,19 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
         </View>
 
         <View style={styles.hudRight}>
-          <View style={[styles.hudStatPill, { backgroundColor: theme.badges.kpiSpeedBg }]}>
-            <Ionicons name="speedometer-outline" size={12} color={theme.badges.kpiSpeedText} />
-            <Text style={[styles.hudStatText, { color: theme.badges.kpiSpeedText }]}>{wpm || '--'} WPM</Text>
-          </View>
-          <View style={[styles.hudStatPill, { backgroundColor: theme.badges.kpiAccuracyBg }]}>
-            <Ionicons name="checkmark-circle-outline" size={12} color={theme.badges.kpiAccuracyText} />
-            <Text style={[styles.hudStatText, { color: theme.badges.kpiAccuracyText }]}>{currentAccuracy}%</Text>
-          </View>
+          {/* Live stats only mean something once reading has started */}
+          {(isReadingActive || currentIndex > 0) && !isSparkyReading && (
+            <>
+              <View style={[styles.hudStatPill, { backgroundColor: theme.badges.kpiSpeedBg }]}>
+                <Ionicons name="speedometer-outline" size={12} color={theme.badges.kpiSpeedText} />
+                <Text style={[styles.hudStatText, { color: theme.badges.kpiSpeedText }]}>{wpm || '--'} WPM</Text>
+              </View>
+              <View style={[styles.hudStatPill, { backgroundColor: theme.badges.kpiAccuracyBg }]}>
+                <Ionicons name="checkmark-circle-outline" size={12} color={theme.badges.kpiAccuracyText} />
+                <Text style={[styles.hudStatText, { color: theme.badges.kpiAccuracyText }]}>{currentAccuracy}%</Text>
+              </View>
+            </>
+          )}
 
           {/* Direct Quick Aa Typography Button in HUD */}
           {onOpenSettings && (
@@ -734,11 +746,10 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
         <View style={{ height: 95 }} />
       </ScrollView>
 
-      {/* Modern Floating Action Dock: icon-only secondary actions on phones, labelled pills on wide screens */}
+      {/* Floating Action Dock: tab-bar layout, every action has an icon and a short label, mic in the center */}
       <View
         style={[
           styles.floatingDock,
-          isCompact && styles.floatingDockCompact,
           {
             backgroundColor: theme.dockBg,
             borderColor: theme.dockBorder,
@@ -749,7 +760,8 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
         {/* Reset / Restart */}
         {renderDockAction({
           icon: 'refresh',
-          label: t.resetBtn,
+          label: t.dockRestart,
+          accessibilityLabel: t.resetBtn,
           onPress: () => {
             playChime('tap');
             resetPageReading();
@@ -757,13 +769,13 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
           colors: [theme.surfaceSecondary, theme.surfaceSecondary],
           tint: theme.textSecondary,
           borderColor: theme.border,
-          showLabel: false,
         })}
 
         {/* Sparky Reads for Me (Echo Reading / Phonics Modeling) */}
         {renderDockAction({
-          icon: isSparkyReading ? 'stop-circle' : 'volume-high',
-          label: isSparkyReading ? t.pauseBtn : t.sparkyReadsBtn,
+          icon: isSparkyReading ? 'stop' : 'volume-high',
+          label: isSparkyReading ? t.dockStop : t.dockListen,
+          accessibilityLabel: isSparkyReading ? t.pauseBtn : t.sparkyReadsBtn,
           onPress: handleSparkyReadAloud,
           colors: isSparkyReading
             ? theme.gradients.btnSparkyReads
@@ -772,9 +784,9 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
           borderColor: isSparkyReading ? '#818CF8' : theme.border,
         })}
 
-        {/* Hero Mic Read-Aloud Button with Radiant Sunset Gradient */}
+        {/* Hero Mic: big raised button with a pulsing ring while listening */}
         <TouchableOpacity
-          style={[styles.heroMicTouch, isCompact && styles.heroMicTouchCompact]}
+          style={styles.dockItem}
           onPress={() => {
             if (isReadingActive) {
               stopReadingSession();
@@ -784,29 +796,45 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
             }
           }}
           activeOpacity={0.85}
+          accessibilityRole="button"
           accessibilityLabel={isReadingActive ? t.stopReadingBtn : t.startReadingBtn}
         >
-          <LinearGradient
-            colors={isReadingActive ? theme.gradients.btnMicListening : theme.gradients.btnMicIdle}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={[
-              styles.heroMicButton,
-              isReadingActive && styles.heroMicButtonActive,
-              isCompact && styles.heroMicButtonCompact,
-            ]}
+          <View style={styles.heroMicWrap}>
+            {isReadingActive && (
+              <Animated.View
+                pointerEvents="none"
+                style={[
+                  styles.heroMicPulse,
+                  {
+                    borderColor: theme.gradients.btnMicListening[0],
+                    opacity: micPulse.interpolate({ inputRange: [0, 1], outputRange: [0.6, 0] }),
+                    transform: [{ scale: micPulse.interpolate({ inputRange: [0, 1], outputRange: [1, 1.45] }) }],
+                  },
+                ]}
+              />
+            )}
+            <LinearGradient
+              colors={isReadingActive ? theme.gradients.btnMicListening : theme.gradients.btnMicIdle}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={[styles.heroMicButton, { borderColor: theme.dockBg }]}
+            >
+              <Ionicons name={isReadingActive ? 'stop' : 'mic'} size={28} color="#ffffff" />
+            </LinearGradient>
+          </View>
+          <Text
+            style={[styles.dockLabel, styles.heroMicLabel, { color: isReadingActive ? theme.gradients.btnMicListening[0] : theme.primary }]}
+            numberOfLines={1}
           >
-            <Ionicons name={isReadingActive ? 'stop-circle' : 'mic'} size={isCompact ? 20 : 22} color="#ffffff" />
-            <Text style={[styles.heroMicText, isCompact && styles.heroMicTextCompact]} numberOfLines={1}>
-              {isReadingActive ? t.stopReadingBtn : t.startReadingBtn}
-            </Text>
-          </LinearGradient>
+            {isReadingActive ? t.dockStop : t.dockRead}
+          </Text>
         </TouchableOpacity>
 
-        {/* 1-Click Simulation Demo with Amber Sunset Gradient */}
+        {/* 1-Click Simulation Demo */}
         {renderDockAction({
           icon: isSimulating ? 'pause' : 'play-forward',
-          label: isSimulating ? t.pauseBtn : t.simulateDemoBtn,
+          label: isSimulating ? t.dockStop : t.dockDemo,
+          accessibilityLabel: isSimulating ? t.pauseBtn : t.simulateDemoBtn,
           onPress: handleSimulateChildReading,
           colors: isSimulating
             ? theme.gradients.btnSimulate
@@ -815,17 +843,19 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
           borderColor: theme.borderActive,
         })}
 
-        {/* Ask Sparky Voice Q&A Button (Meta Muse Voice Transcribe) */}
+        {/* Ask Sparky Voice Q&A */}
         {onOpenVoiceAsk &&
           renderDockAction({
             icon: 'sparkles',
-            label: t.askVoiceBtnLabel,
+            label: t.dockAsk,
+            accessibilityLabel: t.askVoiceBtnLabel,
             onPress: onOpenVoiceAsk,
             colors: themeMode === 'dark' ? ['#312e81', '#1e1b4b'] : ['#e0e7ff', '#ede9fe'],
             tint: themeMode === 'dark' ? '#C7D2FE' : '#4f46e5',
             borderColor: '#818cf8',
           })}
       </View>
+
       {/* Fullscreen Illustration Lightbox Modal */}
       <Modal
         visible={isImageZoomed}
@@ -1059,102 +1089,85 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     maxWidth: 240,
   },
-  floatingDockCompact: {
-    left: 12,
-    right: 12,
-    maxWidth: undefined,
-    justifyContent: 'space-between',
-    gap: 5,
-    paddingHorizontal: 6,
-  },
   floatingDock: {
     position: 'absolute',
-    bottom: 16,
+    bottom: 12,
+    left: 12,
+    right: 12,
+    maxWidth: 460,
     alignSelf: 'center',
+    marginHorizontal: 'auto',
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingVertical: 7,
-    paddingHorizontal: 10,
-    borderRadius: 30,
+    alignItems: 'flex-end',
+    justifyContent: 'space-around',
+    paddingTop: 8,
+    paddingBottom: 6,
+    paddingHorizontal: 6,
+    borderRadius: 26,
     borderWidth: 1,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.16,
     shadowRadius: 16,
     elevation: 8,
-    maxWidth: '96%',
     ...(Platform.OS === 'web'
       ? {
           backdropFilter: 'blur(16px)',
         }
       : {}),
   },
+  dockItem: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 3,
+    minWidth: 0,
+  },
+  dockIconCircle: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dockLabel: {
+    fontSize: 11,
+    fontWeight: '800',
+    textAlign: 'center',
+  },
+  heroMicWrap: {
+    marginTop: -26,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroMicPulse: {
+    position: 'absolute',
+    width: 66,
+    height: 66,
+    borderRadius: 33,
+    borderWidth: 3,
+  },
+  heroMicButton: {
+    width: 66,
+    height: 66,
+    borderRadius: 33,
+    borderWidth: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#ea580c',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  heroMicLabel: {
+    fontSize: 12,
+    fontWeight: '900',
+  },
   magicBookRibbon: {
     height: 4,
     width: '100%',
     borderRadius: 2,
     marginBottom: 12,
-  },
-  dockButtonTouch: {
-    borderRadius: 22,
-    overflow: 'hidden',
-  },
-  dockAction: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 5,
-    height: 42,
-    paddingHorizontal: 12,
-    borderRadius: 22,
-    borderWidth: 1,
-  },
-  dockActionIconOnly: {
-    width: 40,
-    height: 40,
-    paddingHorizontal: 0,
-  },
-  dockActionText: {
-    fontSize: 12,
-    fontWeight: '800',
-  },
-  heroMicTouch: {
-    borderRadius: 28,
-    overflow: 'hidden',
-  },
-  heroMicTouchCompact: {
-    flex: 1,
-  },
-  heroMicButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    height: 50,
-    paddingHorizontal: 18,
-    borderRadius: 28,
-    shadowColor: '#ea580c',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 4,
-  },
-  heroMicButtonCompact: {
-    paddingHorizontal: 10,
-    gap: 5,
-  },
-  heroMicButtonActive: {
-    shadowColor: '#dc2626',
-  },
-  heroMicText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '900',
-    letterSpacing: -0.2,
-    flexShrink: 1,
-  },
-  heroMicTextCompact: {
-    fontSize: 12,
   },
   sceneToggleRow: {
     alignItems: 'center',
