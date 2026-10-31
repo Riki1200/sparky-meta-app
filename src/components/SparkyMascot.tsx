@@ -20,6 +20,8 @@ interface SparkyMascotProps {
   speechBubbleText?: string;
   onPress?: () => void;
   language?: SupportedLanguage;
+  // Story accent for the owl and its bubble; defaults to the app's primary color
+  accent?: string;
 }
 
 const MOTIVATIONAL_MESSAGES: Record<SupportedLanguage, string[]> = {
@@ -85,6 +87,7 @@ export const SparkyMascot: React.FC<SparkyMascotProps> = ({
   speechBubbleText,
   onPress,
   language = 'en',
+  accent,
 }) => {
   const { theme } = useTheme();
   const floatAnim = useRef(new Animated.Value(0)).current;
@@ -210,7 +213,7 @@ export const SparkyMascot: React.FC<SparkyMascotProps> = ({
               width: sizeDimensions.container,
               height: sizeDimensions.container,
               borderRadius: sizeDimensions.container / 2,
-              backgroundColor: theme.primary,
+              backgroundColor: accent ?? theme.primary,
             },
           ]}
         >
@@ -219,7 +222,14 @@ export const SparkyMascot: React.FC<SparkyMascotProps> = ({
       </Animated.View>
 
       {speechBubbleText !== undefined && (
-        <View style={[styles.bubbleCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+        <View
+          style={[
+            styles.bubbleCard,
+            accent
+              ? { backgroundColor: `${accent}14`, borderColor: `${accent}33` }
+              : { backgroundColor: theme.surface, borderColor: theme.border },
+          ]}
+        >
           <Text style={[styles.bubbleText, { color: theme.text }]}>{displayMessage}</Text>
         </View>
       )}

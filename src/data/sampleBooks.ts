@@ -10,6 +10,23 @@ const STORY_ART = {
   mango: require('../../assets/stories/mango.jpg'),
 };
 
+// Each story borrows its accent from its illustration, deep enough for white text on top
+const STORY_TINTS = new Map<unknown, string>([
+  [STORY_ART.hummingbird, '#2F6B4F'],
+  [STORY_ART.forestMoon, '#34406B'],
+  [STORY_ART.lighthouse, '#2C5D78'],
+  [STORY_ART.rooster, '#A9482A'],
+  [STORY_ART.turtle, '#2A6763'],
+  [STORY_ART.mango, '#A65A14'],
+]);
+
+/**
+ * The story's accent color, or undefined for pages without bundled art (e.g. scanned pages).
+ */
+export function getStoryTint(page: BookPage): string | undefined {
+  return STORY_TINTS.get(page.imageUrl);
+}
+
 /**
  * Splits text into clean word tokens while preserving display punctuation.
  */
