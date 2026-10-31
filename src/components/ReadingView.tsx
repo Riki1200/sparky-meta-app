@@ -12,6 +12,7 @@ import {
   Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { BookPage, WordToken, ReadingSessionResult, ReadingErrorDetail, SupportedLanguage } from '../types';
 import {
   SpeechRecognitionController,
@@ -22,10 +23,13 @@ import { speakText, stopSpeaking, playChime } from '../services/ttsService';
 import { saveReadingSession, addStars, getCloudVoiceConsent } from '../services/storageService';
 import { getTranslation } from '../i18n/translations';
 import { toImageSource } from '../services/imageService';
+import { getStoryTint } from '../data/sampleBooks';
 import { SparkyMascot } from './SparkyMascot';
 import { CelebrationConfetti } from './CelebrationConfetti';
 import { useTheme } from '../context/ThemeContext';
 import { FONTS } from '../styles/theme';
+
+const OWL_MARK = require('../../assets/brand/owl-mark.png');
 
 interface ReadingViewProps {
   page: BookPage;
@@ -437,6 +441,13 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
   const progressPercent = tokens.length > 0 ? (currentIndex / tokens.length) * 100 : 0;
   const isReadingActive = isListening || isSimulating;
 
+  // Sparky flies along the progress line as words are read
+  const flight = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(flight, { toValue: progressPercent, duration: 350, useNativeDriver: false }).start();
+  }, [progressPercent]);
+  const flightWidth = flight.interpolate({ inputRange: [0, 100], outputRange: ['0%', '100%'] });
+
   // Pulsing ring around the mic so children can see Sparky is listening
   const micPulse = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -480,6 +491,9 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
   );
 
   const sceneSource = page.imageUrl ? toImageSource(page.imageUrl) : null;
+  const showArt = !!sceneSource && showSceneIllustration;
+  const tint = getStoryTint(page) ?? theme.primary;
+  const displayFont = Platform.OS === 'web' ? { fontFamily: FONTS.display } : null;
   const hasStarted = isReadingActive || currentIndex > 0;
 
   return (
@@ -491,51 +505,72 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Sparky's one-line guidance */}
-        <SparkyMascot size="small" mood={getMascotMood()} speechBubbleText={getMascotPrompt()} language={language} />
-
-        {/* Story illustration, framed like a picture book plate */}
-        {!sceneSource ? null : showSceneIllustration ? (
-          <TouchableOpacity
-            style={[styles.sceneCard, { borderColor: theme.border, height: isCompact ? 170 : 300 }]}
-            onPress={() => setIsImageZoomed(true)}
-            activeOpacity={0.92}
-            accessibilityLabel={t.tapToEnlarge}
-          >
-            <Image source={sceneSource} style={styles.sceneImage} resizeMode="cover" />
+        {/* Story cover: the illustration with the title on it, tinted in the story's own color */}
+        <View style={[styles.hero, { backgroundColor: tint, height: showArt ? (isCompact ? 230 : 330) : undefined }]}>
+          {showArt && sceneSource && (
+            <TouchableOpacity
+              style={StyleSheet.absoluteFill}
+              onPress={() => setIsImageZoomed(true)}
+              activeOpacity={0.95}
+              accessibilityLabel={t.tapToEnlarge}
+            >
+              <Image source={sceneSource} style={styles.sceneImage} resizeMode="cover" />
+            </TouchableOpacity>
+          )}
+          {showArt && (
+            <LinearGradient
+              pointerEvents="none"
+              colors={['transparent', `${tint}F2`]}
+              start={{ x: 0, y: 0.35 }}
+              end={{ x: 0, y: 1 }}
+              style={StyleSheet.absoluteFill}
+            />
+          )}
+          {sceneSource && (
             <View style={styles.sceneActions}>
               <TouchableOpacity
                 style={styles.sceneIconButton}
                 onPress={() => {
                   playChime('tap');
-                  setShowSceneIllustration(false);
+                  setShowSceneIllustration(!showSceneIllustration);
                 }}
                 activeOpacity={0.8}
-                accessibilityLabel={t.hideSceneArt}
+                accessibilityLabel={showSceneIllustration ? t.hideSceneArt : t.viewSceneArt}
               >
-                <Ionicons name="eye-off-outline" size={16} color="#ffffff" />
+                <Ionicons name={showSceneIllustration ? 'eye-off-outline' : 'image-outline'} size={16} color="#ffffff" />
               </TouchableOpacity>
-              <View style={styles.sceneIconButton}>
-                <Ionicons name="expand-outline" size={16} color="#ffffff" />
-              </View>
+              {showArt && (
+                <TouchableOpacity
+                  style={styles.sceneIconButton}
+                  onPress={() => setIsImageZoomed(true)}
+                  activeOpacity={0.8}
+                  accessibilityLabel={t.tapToEnlarge}
+                >
+                  <Ionicons name="expand-outline" size={16} color="#ffffff" />
+                </TouchableOpacity>
+              )}
             </View>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity
-            style={styles.showArtLink}
-            onPress={() => {
-              playChime('tap');
-              setShowSceneIllustration(true);
-            }}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="image-outline" size={16} color={theme.textSecondary} />
-            <Text style={[styles.showArtText, { color: theme.textSecondary }]}>{t.viewSceneArt}</Text>
-          </TouchableOpacity>
-        )}
+          )}
+          <View pointerEvents="none" style={[styles.heroCaption, !showArt && styles.heroCaptionStatic]}>
+            <Text style={[styles.heroTitle, displayFont]} numberOfLines={2}>
+              {page.title}
+            </Text>
+            <Text style={styles.heroMeta} numberOfLines={1}>
+              {page.source}
+            </Text>
+          </View>
+        </View>
 
-        {/* The page: plain text on paper; words only take color once they are read */}
+        {/* The page: paper laid over the cover; words only take color once they are read */}
         <View style={[styles.page, { backgroundColor: theme.paperCardBg, borderColor: theme.paperCardBorder }]}>
+          <SparkyMascot
+            size="small"
+            mood={getMascotMood()}
+            speechBubbleText={getMascotPrompt()}
+            language={language}
+            accent={tint}
+          />
+
           <View style={styles.tokensContainer}>
             {tokens.map((token, idx) => {
               const isCurrent = idx === currentIndex && (isListening || isSimulating || isSparkyReading);
@@ -593,8 +628,16 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
 
           {/* Progress, with live stats once the child starts */}
           <View style={[styles.pageFooter, { borderTopColor: theme.borderLight }]}>
-            <View style={[styles.progressTrack, { backgroundColor: theme.surfaceSecondary }]}>
-              <View style={[styles.progressFill, { width: `${progressPercent}%`, backgroundColor: theme.primary }]} />
+            <View style={styles.flightPath}>
+              <View style={[styles.progressTrack, { backgroundColor: theme.surfaceSecondary }]}>
+                <Animated.View style={[styles.progressFill, { width: flightWidth, backgroundColor: tint }]} />
+              </View>
+              <Animated.View style={[styles.flightOwl, { left: flightWidth, backgroundColor: tint, borderColor: theme.paperCardBg }]}>
+                <Image source={OWL_MARK} style={styles.flightOwlImage} />
+              </Animated.View>
+              <View style={[styles.flightGoal, { borderColor: tint, backgroundColor: theme.paperCardBg }]}>
+                <Ionicons name="star" size={12} color={progressPercent >= 100 ? tint : theme.textMuted} />
+              </View>
             </View>
             <View style={styles.footerRow}>
               <Text style={[styles.footerText, { color: theme.textMuted }]}>
@@ -677,7 +720,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
               style={[
                 styles.micButton,
                 {
-                  backgroundColor: isReadingActive ? theme.gradients.btnMicListening[0] : theme.primary,
+                  backgroundColor: isReadingActive ? theme.gradients.btnMicListening[0] : tint,
                   borderColor: theme.bg,
                 },
               ]}
@@ -756,7 +799,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
             <Ionicons name="close" size={26} color="#ffffff" />
           </TouchableOpacity>
           {sceneSource && <Image source={sceneSource} style={styles.lightboxImage} resizeMode="contain" />}
-          <Text style={[styles.lightboxTitle, Platform.OS === 'web' ? { fontFamily: FONTS.display } : null]}>
+          <Text style={[styles.lightboxTitle, displayFont]}>
             {page.title}
           </Text>
         </View>
@@ -781,11 +824,11 @@ const styles = StyleSheet.create({
     width: '100%',
     alignSelf: 'center',
   },
-  sceneCard: {
+  hero: {
     width: '100%',
-    borderRadius: 20,
+    borderRadius: 28,
     overflow: 'hidden',
-    borderWidth: 1,
+    justifyContent: 'flex-end',
   },
   sceneImage: {
     width: '100%',
@@ -793,36 +836,54 @@ const styles = StyleSheet.create({
   },
   sceneActions: {
     position: 'absolute',
-    top: 10,
-    right: 10,
+    top: 12,
+    right: 12,
     flexDirection: 'row',
     gap: 8,
   },
   sceneIconButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(43, 38, 32, 0.45)',
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: 'rgba(20, 17, 14, 0.4)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  showArtLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    alignSelf: 'center',
-    paddingVertical: 4,
+  heroCaption: {
+    paddingHorizontal: 22,
+    paddingTop: 14,
+    paddingBottom: 52,
   },
-  showArtText: {
-    fontSize: 13,
+  heroCaptionStatic: {
+    paddingTop: 22,
+    paddingRight: 110,
+  },
+  heroTitle: {
+    color: '#FFFCF6',
+    fontSize: 28,
+    lineHeight: 33,
     fontWeight: '700',
   },
+  heroMeta: {
+    color: 'rgba(255, 252, 246, 0.82)',
+    fontSize: 13,
+    fontWeight: '700',
+    marginTop: 4,
+  },
   page: {
-    borderRadius: 20,
+    borderRadius: 24,
     borderWidth: 1,
     paddingHorizontal: 18,
-    paddingTop: 18,
+    paddingTop: 16,
     paddingBottom: 14,
+    gap: 16,
+    marginTop: -52,
+    marginHorizontal: 10,
+    shadowColor: '#2B2620',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 20,
+    elevation: 4,
   },
   tokensContainer: {
     flexDirection: 'row',
@@ -856,19 +917,47 @@ const styles = StyleSheet.create({
     opacity: 0.75,
   },
   pageFooter: {
-    marginTop: 14,
-    paddingTop: 12,
+    paddingTop: 10,
     borderTopWidth: 1,
     gap: 8,
   },
+  flightPath: {
+    height: 30,
+    justifyContent: 'center',
+    marginHorizontal: 13,
+  },
   progressTrack: {
-    height: 4,
-    borderRadius: 2,
+    height: 6,
+    borderRadius: 3,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    borderRadius: 2,
+    borderRadius: 3,
+  },
+  flightOwl: {
+    position: 'absolute',
+    width: 28,
+    height: 28,
+    marginLeft: -14,
+    borderRadius: 14,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  flightOwlImage: {
+    width: 20,
+    height: 20,
+  },
+  flightGoal: {
+    position: 'absolute',
+    right: -13,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   footerRow: {
     flexDirection: 'row',

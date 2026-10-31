@@ -6,7 +6,6 @@ import {
   ScrollView,
   TouchableOpacity,
   Image,
-  Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { BookPage, SupportedLanguage } from "../types";
@@ -15,7 +14,6 @@ import { getTranslation } from "../i18n/translations";
 import { playChime } from "../services/ttsService";
 import { toImageSource } from "../services/imageService";
 import { useTheme } from "../context/ThemeContext";
-import { FONTS } from "../styles/theme";
 
 interface PageSelectorProps {
   currentPageId: string;
@@ -37,19 +35,15 @@ export const PageSelector: React.FC<PageSelectorProps> = ({
   const filteredPages = SAMPLE_BOOK_PAGES.filter((p) => p.language === language);
   const displayPages = filteredPages.length > 0 ? filteredPages : SAMPLE_BOOK_PAGES.filter((p) => p.language === "en");
   const currentPage = displayPages.find((p) => p.id === currentPageId) || displayPages[0];
-  // Inline so the global UI font rule leaves the storybook heading font alone
-  const displayFont = Platform.OS === "web" ? { fontFamily: FONTS.display } : null;
 
   return (
     <View style={[styles.container, { borderBottomColor: theme.border }]}>
-      {/* Current book title */}
+      {/* The title lives on the story cover; this bar only opens the shelf */}
       <View style={styles.titleRow}>
         <View style={styles.titleCol}>
-          <Text style={[styles.bookTitle, displayFont, { color: theme.text }]} numberOfLines={2}>
-            {currentPage.title}
-          </Text>
-          <Text style={[styles.bookMeta, { color: theme.textMuted }]} numberOfLines={1}>
-            {currentPage.gradeLevel} · {currentPage.source}
+          <Ionicons name="library-outline" size={16} color={theme.textSecondary} />
+          <Text style={[styles.bookMeta, { color: theme.textSecondary }]} numberOfLines={1}>
+            {currentPage.gradeLevel}
           </Text>
         </View>
         <TouchableOpacity
@@ -125,8 +119,8 @@ export const PageSelector: React.FC<PageSelectorProps> = ({
 const styles = StyleSheet.create({
   container: {
     borderBottomWidth: 1,
-    paddingTop: 14,
-    paddingBottom: 12,
+    paddingTop: 8,
+    paddingBottom: 8,
   },
   titleRow: {
     flexDirection: "row",
@@ -139,16 +133,14 @@ const styles = StyleSheet.create({
   },
   titleCol: {
     flex: 1,
-  },
-  bookTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    lineHeight: 25,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
   bookMeta: {
-    fontSize: 12,
-    fontWeight: "600",
-    marginTop: 2,
+    flexShrink: 1,
+    fontSize: 13,
+    fontWeight: "700",
   },
   changeButton: {
     flexDirection: "row",
