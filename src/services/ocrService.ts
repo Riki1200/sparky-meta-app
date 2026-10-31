@@ -112,7 +112,7 @@ export async function recognizePageText(
 ): Promise<OCRResult> {
   const t = getTranslation(language);
   try {
-    // With parent permission, Meta Muse Spark reads the photo; on-device OCR is the fallback
+    // With the reader's permission, Meta Muse Spark reads the photo; on-device OCR is the fallback
     try {
       const uploadUri = await preprocessImage(imageUri, false);
       if (uploadUri.startsWith('data:')) {
@@ -159,15 +159,15 @@ export async function recognizePageText(
     console.error('OCR processing error:', error);
     // Graceful fallback for demonstration if worker encounters environment sandbox restriction
     const fallbackMap: Record<SupportedLanguage, string> = {
-      en: 'The child opened their favorite book and began reading with excitement. Every page unlocked an adventurous new journey.',
-      es: 'El niño abrió su libro favorito y comenzó a leer con entusiasmo. Cada página era una puerta a nuevos mundos y aprendizajes.',
-      fr: "L'enfant ouvrit son livre préféré et commença à lire avec enthousiasme. Chaque page était une porte vers de nouveaux mondes.",
-      pt: 'A criança abriu seu livro favorito e começou a ler com entusiasmo. Cada página era uma porta para novos mundos de aprendizado.',
-      de: 'Das Kind öffnete sein Lieblingsbuch und begann voller Freude zu lesen. Jede Seite öffnete die Tür zu einem neuen Abenteuer.',
-      it: 'Il bambino aprì il suo libro preferito e iniziò a leggere con gioia. Ogni pagina era una porta verso nuove avventure.',
-      nl: 'Het kind opende het favoriete boek en begon enthousiast te lezen. Elke bladzijde opende een nieuw magisch avontuur.',
-      pl: 'Dziecko otworzyło swoją ulubioną książkę i zaczęło czytać z uśmiechem. Każda strona była początkiem niezwykłej przygody.',
-      tr: 'Çocuk en sevdiği kitabı açtı ve heyecanla okumaya başladı. Her sayfa macera dolu yeni bir dünyaya kapı aralıyordu.',
+      en: "I opened the book and began to read slowly. Every page was a little easier than the one before.",
+      es: "Abrí el libro y empecé a leer despacio. Cada página fue un poco más fácil que la anterior.",
+      fr: "J'ai ouvert le livre et j'ai commencé à lire lentement. Chaque page était un peu plus facile que la précédente.",
+      pt: "Abri o livro e comecei a ler devagar. Cada página foi um pouco mais fácil que a anterior.",
+      de: "Ich öffnete das Buch und begann langsam zu lesen. Jede Seite war ein bisschen leichter als die davor.",
+      it: "Ho aperto il libro e ho iniziato a leggere piano. Ogni pagina era un po' più facile della precedente.",
+      nl: "Ik opende het boek en begon langzaam te lezen. Elke bladzijde was iets makkelijker dan de vorige.",
+      pl: "Otworzyłem książkę i zacząłem powoli czytać. Każda strona była trochę łatwiejsza od poprzedniej.",
+      tr: "Kitabı açtım ve yavaşça okumaya başladım. Her sayfa bir öncekinden biraz daha kolaydı.",
     };
 
     const fallbackText = fallbackMap[language] || fallbackMap.en;

@@ -184,7 +184,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
       return;
     }
 
-    // Stop child mic or simulation if active
+    // Stop the mic or simulation if active
     if (isListening) stopReadingSession();
     if (isSimulating) {
       clearTimeout(simulationTimerRef.current);
@@ -212,7 +212,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
     }
 
     setIsSparkyReading(false);
-    // Modeling is not the child's reading: restore a fresh page for their turn
+    // Modeling is not the reader's reading: restore a fresh page for their turn
     setTokens(page.words.map((w, idx) => ({ ...w, status: idx === 0 ? 'current' : 'pending' })));
     setCurrentIndex(0);
     if (!sparkyCancelRef.current) {
@@ -328,7 +328,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
     }, 1800);
   };
 
-  const handleSimulateChildReading = () => {
+  const handleSimulateReading = () => {
     if (isSimulating) {
       if (simulationTimerRef.current) clearTimeout(simulationTimerRef.current);
       setIsSimulating(false);
@@ -448,7 +448,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
   }, [progressPercent]);
   const flightWidth = flight.interpolate({ inputRange: [0, 100], outputRange: ['0%', '100%'] });
 
-  // Pulsing ring around the mic so children can see Sparky is listening
+  // Pulsing ring around the mic so the reader can see Sparky is listening
   const micPulse = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     if (!isReadingActive) {
@@ -626,7 +626,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
             })}
           </View>
 
-          {/* Progress, with live stats once the child starts */}
+          {/* Progress, with live stats once reading starts */}
           <View style={[styles.pageFooter, { borderTopColor: theme.borderLight }]}>
             <View style={styles.flightPath}>
               <View style={[styles.progressTrack, { backgroundColor: theme.surfaceSecondary }]}>
@@ -752,7 +752,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
         })}
       </View>
 
-      {/* More: secondary actions kept out of the child's way */}
+      {/* More: secondary actions kept out of the reader's way */}
       <Modal visible={moreVisible} transparent animationType="fade" onRequestClose={() => setMoreVisible(false)}>
         <TouchableOpacity
           style={[styles.sheetBackdrop, { backgroundColor: theme.modalBackdrop }]}
@@ -764,7 +764,7 @@ export const ReadingView: React.FC<ReadingViewProps> = ({
               {
                 icon: isSimulating ? ('pause' as const) : ('play-forward-outline' as const),
                 label: isSimulating ? t.pauseBtn : t.simulateDemoBtn,
-                onPress: handleSimulateChildReading,
+                onPress: handleSimulateReading,
               },
               {
                 icon: 'refresh' as const,

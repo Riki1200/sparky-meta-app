@@ -54,7 +54,7 @@ export function toImageSource(ref?: ImageRef): ImageSourcePropType {
 
 /**
  * Educational stickers for the Reading Reward Album.
- * Unlocked as children achieve reading milestones (stars & streak).
+ * Unlocked as readers reach milestones (stars & streak).
  */
 export interface ReadingBadgeSticker {
   id: string;

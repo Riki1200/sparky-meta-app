@@ -15,7 +15,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { BookPage, ImageRef, SupportedLanguage } from '../types';
 import { toImageSource } from '../services/imageService';
 
-// Bundled photo of an open children's picture book for the 1-click scan demo
+// Bundled photo of an open printed book for the 1-click scan demo
 const SAMPLE_BOOK_PHOTO = require('../../assets/stories/book-photo.jpg');
 import { recognizePageText, createBookPageFromCapture } from '../services/ocrService';
 import { playChime } from '../services/ttsService';
@@ -50,31 +50,31 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
   const samplePhotoMap: Record<SupportedLanguage, { title: string; sampleText: string; uri: ImageRef }[]> = {
     en: [
       {
-        title: 'Children’s Nature Reader',
+        title: 'Nature Reading',
         sampleText: 'A tiny hummingbird fluttered its colorful wings near the tall green trees. The morning breeze was fresh and gentle. With joyful courage, it found the sweetest flower.',
         uri: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=900&auto=format&fit=crop&q=80',
       },
       {
-        title: 'Bedtime Classic Story',
+        title: 'Evening Reading',
         sampleText: 'Deep in the enchanted forest, the ancient oak tree whispered secrets to the stars. The silver moon shone brightly through the peaceful branches.',
         uri: SAMPLE_BOOK_PHOTO,
       },
     ],
     es: [
       {
-        title: 'Libro de Primaria Dominicana',
+        title: 'Lectura Dominicana',
         sampleText: 'El gallito despertó antes de la madrugada. Subió a la cerca de madera y cantó con alegría. Sus plumas doradas brillaban con el resplandor del sol.',
         uri: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=900&auto=format&fit=crop&q=80',
       },
       {
-        title: 'Cuentos de Fábulas',
+        title: 'Fábulas',
         sampleText: 'La pequeña tortuga nadaba feliz en las aguas tibias de Samaná. Observaba las gigantescas ballenas jorobadas saltar sobre las olas azules con gran emoción.',
         uri: SAMPLE_BOOK_PHOTO,
       },
     ],
     fr: [
       {
-        title: 'Livre de Lecture Primaire',
+        title: 'Lecture Nature',
         sampleText: 'Un petit colibri agitait ses ailes colorées près des grands arbres verts. La brise du matin était douce et fraîche. Avec un courage joyeux, il trouva la plus douce des fleurs.',
         uri: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=900&auto=format&fit=crop&q=80',
       },
@@ -86,7 +86,7 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
     ],
     pt: [
       {
-        title: 'Livro Infantil Escolar',
+        title: 'Leitura da Natureza',
         sampleText: 'Um pequeno beija-flor bateu suas asas coloridas perto das árvores verdes. A brisa da manhã era suave e fresca. Com muita coragem e alegria, ele encontrou a flor mais doce.',
         uri: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=900&auto=format&fit=crop&q=80',
       },
@@ -98,7 +98,7 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
     ],
     de: [
       {
-        title: 'Deutsches Lesebuch für Kinder',
+        title: 'Deutsches Lesebuch',
         sampleText: 'Ein winziger Kolibri flatterte mit bunten Flügeln zwischen den grünen Bäumen. Die Morgenluft war frisch und friedlich. Mit frohem Mut fand er die süßeste Blume.',
         uri: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=900&auto=format&fit=crop&q=80',
       },
@@ -110,7 +110,7 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
     ],
     it: [
       {
-        title: 'Libro di Lettura per Bambini',
+        title: 'Libro di Lettura',
         sampleText: 'Un piccolo colibrì sbatteva le ali colorate vicino ai grandi alberi verdi. La brezza del mattino era fresca e dolce. Con gioioso coraggio, trovò il fiore più profumato.',
         uri: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=900&auto=format&fit=crop&q=80',
       },
@@ -122,7 +122,7 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
     ],
     nl: [
       {
-        title: 'Nederlands Leesboek voor Kinderen',
+        title: 'Nederlands Leesboek',
         sampleText: 'Een piepkleine kolibrie fladderde met kleurrijke vleugels tussen de hoge groene bomen. De ochtendbries was heerlijk fris en zacht. Met een vrolijk hart vond het vogeltje de zoetste bloem.',
         uri: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=900&auto=format&fit=crop&q=80',
       },
@@ -134,19 +134,19 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
     ],
     pl: [
       {
-        title: 'Elementarz dla Dzieci',
+        title: 'Czytanka Przyrodnicza',
         sampleText: 'Malutki koliber trzepotał barwnymi skrzydełkami wśród wysokich zielonych drzew. Poranny wietrzyk był świeży i delikatny. Z radosną odwagą ptaszek odnalazł najsłodszy kwiat.',
         uri: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=900&auto=format&fit=crop&q=80',
       },
       {
-        title: 'Morskie Bajki Ilustrowane',
+        title: 'Morskie Opowieści',
         sampleText: 'Jaś spacerował wzdłuż kamienistego brzegu o zachodzie słońca. Złota latarnia morska rzucała ciepłe żółte światło na błękitne fale oceanu.',
         uri: SAMPLE_BOOK_PHOTO,
       },
     ],
     tr: [
       {
-        title: 'İlkokul Masal Kitabı',
+        title: 'Doğa Okuması',
         sampleText: 'Minik bir sinek kuşu yeşil ağaçların arasında rengarenk kanatlarını neşeyle çırptı. Sabah rüzgarı tatlı ve serindi. Cesur minik kuş bahçedeki en tatlı çiçeği buldu.',
         uri: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=900&auto=format&fit=crop&q=80',
       },

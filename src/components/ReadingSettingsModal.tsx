@@ -231,7 +231,7 @@ export const ReadingSettingsModal: React.FC<ReadingSettingsModalProps> = ({
               </View>
             </View>
 
-            {/* Section 2: Child Font Selection */}
+            {/* Section 2: Font Selection */}
             <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: theme.text }]}>
                 {t.fontFamilyTitle}

@@ -36,7 +36,7 @@ if (Platform.OS === 'web' && typeof window !== 'undefined' && 'speechSynthesis' 
 }
 
 /**
- * Kid-friendly Text-to-Speech (TTS) engine.
+ * Text-to-Speech (TTS) engine.
  * Speaks naturally at a comfortable, warm pace for early readers.
  */
 export async function speakText(
@@ -51,7 +51,7 @@ export async function speakText(
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = langCode;
-    utterance.rate = rate; // Gentle, clear speed for kids
+    utterance.rate = rate; // Gentle, clear speed for beginning readers
     utterance.pitch = 1.08; // Slightly higher, warm and friendly
 
     // Prefer a warm, natural voice if available
@@ -103,7 +103,7 @@ export async function speakText(
 }
 
 /**
- * Kid-friendly voice sample preview for testing Sparky's voice.
+ * Voice sample preview for testing Sparky's voice.
  */
 export function getSparkyVoiceSample(language: SupportedLanguage = 'en'): string {
   const samples: Record<SupportedLanguage, string> = {
@@ -146,7 +146,7 @@ export function stopSpeaking(): void {
 }
 
 /**
- * Web Audio API synthesizer for child-friendly feedback chimes.
+ * Web Audio API synthesizer for gentle feedback chimes.
  * Generates sparkling tones without relying on external MP3 downloads.
  */
 export function playChime(type: 'correct' | 'complete' | 'sparkle' | 'hesitation' | 'tap'): void {

@@ -145,7 +145,7 @@ export const PrivacyBadgeModal: React.FC<PrivacyBadgeModalProps> = ({
               </View>
             ))}
 
-            {/* Parent controls: optional Meta cloud features, each off by default */}
+            {/* Reader controls: optional Meta cloud features, each off by default */}
             {renderConsent({
               icon: 'cloud-upload-outline',
               title: t.cloudVoiceTitle,

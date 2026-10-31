@@ -113,6 +113,24 @@ async function updateStreak() {
 
 const STORAGE_KEY_ONBOARDING = '@Sparky_onboarding_completed';
 const STORAGE_KEY_USER_PROFILE = '@Sparky_user_profile';
+const STORAGE_KEY_ADULT_CONFIRMED = '@Sparky_adult_confirmed';
+
+// Sparky is for adults only (18+), as required by the Meta Model API terms
+export async function hasConfirmedAdult(): Promise<boolean> {
+  try {
+    return (await AsyncStorage.getItem(STORAGE_KEY_ADULT_CONFIRMED)) === 'true';
+  } catch (e) {
+    return false;
+  }
+}
+
+export async function setAdultConfirmed(confirmed: boolean): Promise<void> {
+  try {
+    await AsyncStorage.setItem(STORAGE_KEY_ADULT_CONFIRMED, confirmed ? 'true' : 'false');
+  } catch (e) {
+    // ignore
+  }
+}
 
 export interface UserProfile {
   name: string;
@@ -138,15 +156,25 @@ export async function setOnboardingCompleted(completed: boolean = true): Promise
   }
 }
 
+const LEGACY_DEFAULT_NAMES = [
+  'Young Reader', 'Pequeño Lector', 'Jeune Lecteur', 'Pequeno Leitor', 'Kleiner Leser',
+  'Piccolo Lettore', 'Jonge Lezer', 'Młody Czytelnik', 'Genç Okur',
+];
+
 export async function getUserProfile(): Promise<UserProfile> {
   try {
     const raw = await AsyncStorage.getItem(STORAGE_KEY_USER_PROFILE);
-    if (raw) return JSON.parse(raw);
+    if (raw) {
+      const profile: UserProfile = JSON.parse(raw);
+      // Older versions saved a child-oriented placeholder as the name; treat it as no name
+      if (LEGACY_DEFAULT_NAMES.includes(profile.name)) profile.name = '';
+      return profile;
+    }
   } catch (e) {
     // fallback
   }
   return {
-    name: 'Young Reader',
+    name: '',
     level: 'intermediate',
     dailyGoalMinutes: 10,
     avatar: 'star',
@@ -167,7 +195,7 @@ export async function saveUserProfile(profile: Partial<UserProfile>): Promise<Us
 
 const STORAGE_KEY_CLOUD_VOICE_CONSENT = '@Sparky_cloud_voice_consent';
 
-// Parent permission to send child audio to Meta Muse Voice Transcribe (off by default)
+// Reader's permission to send reading audio to Meta Muse Voice Transcribe (off by default)
 export async function getCloudVoiceConsent(): Promise<boolean> {
   try {
     return (await AsyncStorage.getItem(STORAGE_KEY_CLOUD_VOICE_CONSENT)) === 'true';
@@ -186,7 +214,7 @@ export async function setCloudVoiceConsent(allowed: boolean): Promise<void> {
 
 const STORAGE_KEY_CLOUD_VISION_CONSENT = '@Sparky_cloud_vision_consent';
 
-// Parent permission to send book page photos to Meta Muse Spark for reading (off by default)
+// Reader's permission to send page photos to Meta Muse Spark for reading (off by default)
 export async function getCloudVisionConsent(): Promise<boolean> {
   try {
     return (await AsyncStorage.getItem(STORAGE_KEY_CLOUD_VISION_CONSENT)) === 'true';

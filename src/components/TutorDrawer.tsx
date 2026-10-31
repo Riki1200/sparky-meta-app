@@ -18,7 +18,7 @@ import {
   generateTutorSpokenFeedback,
   generateComprehensionQuiz,
   transcribeAudioWithMuseVoice,
-  answerChildVoiceQuestionWithSparky,
+  answerReaderVoiceQuestion,
 } from '../services/metaApi';
 import { speakText, speakWordPhonetically, playChime, stopSpeaking, getSparkyVoiceSample } from '../services/ttsService';
 import { addStars, getCloudVoiceConsent } from '../services/storageService';
@@ -236,7 +236,7 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
     setUserQuestionTranscript(transcribedText);
     setIsAnsweringQuestion(true);
 
-    const answer = await answerChildVoiceQuestionWithSparky(
+    const answer = await answerReaderVoiceQuestion(
       transcribedText,
       pageText || sentenceContext || selectedWord || '',
       language
@@ -252,7 +252,7 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
     setUserQuestionTranscript('');
     setSparkyAnswerText('');
 
-    // Without parent permission for Meta Muse Voice, the question is recognized by the
+    // Without the reader's permission for Meta Muse Voice, the question is recognized by the
     // device/browser speech service and no audio is sent to the cloud
     if (!(await getCloudVoiceConsent())) {
       const recognizer = new SpeechRecognitionController(language);
@@ -521,7 +521,7 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
                       </View>
                     </View>
 
-                    {/* Simple Kid Meaning */}
+                    {/* Plain meaning */}
                     <View style={styles.meaningCard}>
                       <View style={styles.iconHeadingRow}>
                         <View style={[styles.iconCircleMini, { backgroundColor: theme.surfaceSecondary }]}>
@@ -532,7 +532,8 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
                       <Text style={styles.meaningText}>{explanation.simpleMeaning}</Text>
                     </View>
 
-                    {/* Fun Example Analogy */}
+                    {/* Everyday example */}
+                    {!!explanation.funExample && (
                     <View style={styles.exampleCard}>
                       <View style={styles.iconHeadingRow}>
                         <View style={[styles.iconCircleMini, { backgroundColor: theme.surfaceSecondary }]}>
@@ -542,6 +543,7 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
                       </View>
                       <Text style={styles.exampleText}>"{explanation.funExample}"</Text>
                     </View>
+                    )}
 
                     {/* Warm Encouragement Card */}
                     <View style={styles.cheerCard}>
@@ -863,13 +865,13 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
                   {/* Dialogue Bubbles */}
                   {userQuestionTranscript ? (
                     <View style={styles.dialogueContainer}>
-                      {/* Child question bubble */}
-                      <View style={styles.childQuestionBubble}>
+                      {/* Reader question bubble */}
+                      <View style={styles.readerQuestionBubble}>
                         <View style={styles.bubbleTagRow}>
                           <Ionicons name="mic" size={13} color={theme.primary} />
                           <Text style={styles.bubbleAuthorTag}>{t.askVoiceYouAsked}</Text>
                         </View>
-                        <Text style={styles.childQuestionText}>"{userQuestionTranscript}"</Text>
+                        <Text style={styles.readerQuestionText}>"{userQuestionTranscript}"</Text>
                       </View>
 
                       {/* Sparky response bubble */}
@@ -934,7 +936,7 @@ export const TutorDrawer: React.FC<TutorDrawerProps> = ({
                               setUserQuestionTranscript(preset);
                               setIsAnsweringQuestion(true);
                               playChime('tap');
-                              const answer = await answerChildVoiceQuestionWithSparky(
+                              const answer = await answerReaderVoiceQuestion(
                                 preset,
                                 pageText || sentenceContext || selectedWord || '',
                                 language
@@ -1694,7 +1696,7 @@ const createStyles = (theme: ThemeColors) => {
     marginTop: 16,
     gap: 12,
   },
-  childQuestionBubble: {
+  readerQuestionBubble: {
     backgroundColor: theme.surface,
     borderRadius: 16,
     padding: 14,
@@ -1713,7 +1715,7 @@ const createStyles = (theme: ThemeColors) => {
     color: theme.primary,
     textTransform: 'uppercase',
   },
-  childQuestionText: {
+  readerQuestionText: {
     fontSize: 15,
     fontWeight: '700',
     color: theme.text,
