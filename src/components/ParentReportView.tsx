@@ -61,7 +61,7 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
     setHistory(hist);
     setStats(st);
     // The stored default name is English; show the localized default instead
-    if (profile.name && profile.name !== 'Young Reader') setReaderName(profile.name);
+    if (profile.name) setReaderName(profile.name);
   };
 
   // Only real sessions are reported; with none yet the parent sees an empty state
@@ -250,7 +250,7 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
         </TouchableOpacity>
       </View>
 
-      {/* 1 Phone in the Family: Student Profile Switcher & Shared Device Banner */}
+      {/* One phone, several readers */}
       <View style={[styles.studentSharedCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
         <View style={styles.studentSharedHeader}>
           <View style={styles.studentSharedLeft}>
@@ -293,7 +293,7 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
         </View>
       </View>
 
-      {/* Fluency Benchmark Banner (Hasbrouck & Tindal 2017 oral reading fluency norms) */}
+      {/* Reading pace summary */}
       <View style={[styles.benchmarkBanner, { backgroundColor: evalInfo.bg, borderColor: evalInfo.color }]}>
         <View style={styles.benchmarkLeft}>
           <Text style={[styles.benchmarkLevel, { color: evalInfo.color }]}>
@@ -302,10 +302,6 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
           <Text style={[styles.benchmarkDesc, { color: theme.textSecondary }]}>
             {activeSession.wordsPerMinute} WPM — {evalInfo.note}
           </Text>
-        </View>
-        <View style={[styles.benchmarkTargetChip, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-          <Text style={[styles.benchmarkTargetText, { color: theme.text }]}>{t.benchmarkGoal}</Text>
-          <Text style={[styles.benchmarkSourceText, { color: theme.textMuted }]}>Hasbrouck & Tindal, 2017</Text>
         </View>
       </View>
 
@@ -646,7 +642,7 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
         )}
       </View>
 
-      {/* Meta AI Pedagogical Advice Card */}
+      {/* Practice tip */}
       <View style={styles.pedagogicalCard}>
         <View style={styles.pedagogicalHeaderRow}>
           <Ionicons name="bulb" size={24} color={theme.badges.starBadgeText} />
@@ -654,7 +650,6 @@ export const ParentReportView: React.FC<ParentReportViewProps> = ({
             <Text style={styles.pedagogicalTitle}>
               {t.parentPedagogicalTipTitle}
             </Text>
-            <Text style={styles.pedagogicalSub}>Meta Muse Spark 1.3</Text>
           </View>
         </View>
         <Text style={styles.pedagogicalText}>
@@ -945,18 +940,6 @@ const createStyles = (theme: ThemeColors) => {
     color: theme.textSecondary,
     marginTop: 1,
   },
-  benchmarkTargetChip: {
-    backgroundColor: theme.surface,
-    paddingHorizontal: 9,
-    paddingVertical: 4,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: theme.border,
-  },
-  benchmarkSourceText: {
-    fontSize: 9,
-    marginTop: 2,
-  },
   metaCheckCard: {
     borderRadius: 16,
     borderWidth: 1.5,
@@ -1024,11 +1007,6 @@ const createStyles = (theme: ThemeColors) => {
     color: '#ffffff',
     fontSize: 14,
     fontWeight: '800',
-  },
-  benchmarkTargetText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: theme.text,
   },
   kpiGrid: {
     flexDirection: 'row',
@@ -1287,10 +1265,6 @@ const createStyles = (theme: ThemeColors) => {
     fontSize: 13,
     fontWeight: '800',
     color: theme.text,
-  },
-  pedagogicalSub: {
-    fontSize: 10,
-    color: theme.primary,
   },
   pedagogicalText: {
     fontSize: 11,

@@ -18,6 +18,22 @@ const isMetaApiConfigured = () => usesProxy || !!META_API_CONFIG.apiKey;
 const authHeaders = (): Record<string, string> =>
   META_API_CONFIG.apiKey ? { Authorization: `Bearer ${META_API_CONFIG.apiKey}` } : {};
 
+const LANGUAGE_NAMES: Record<SupportedLanguage, string> = {
+  en: 'English',
+  es: 'Spanish',
+  fr: 'French',
+  pt: 'Portuguese',
+  de: 'German',
+  it: 'Italian',
+  nl: 'Dutch',
+  pl: 'Polish',
+  tr: 'Turkish',
+};
+
+// Sparky coaches adults (18+): people learning to read, or reading in a new language
+const sparkyPersona = (language: SupportedLanguage) =>
+  `You are "Sparky", a patient and respectful Meta Muse Spark reading coach for adults who are learning to read or are reading in a new language. Speak to them as capable adults: warm and encouraging, never childish or condescending. Write your whole answer in ${LANGUAGE_NAMES[language]}.`;
+
 /**
  * The UI uses vector icons only, and TTS reads emoji names aloud, so model output is kept emoji-free.
  */
@@ -72,111 +88,23 @@ async function callMuseSpark(
 }
 
 /**
- * Explain a difficult word to a child using Muse Spark.
+ * Explain a difficult word to the reader using Muse Spark.
  */
 export async function explainWordWithMuseSpark(
   word: string,
   sentenceContext: string,
   language: SupportedLanguage = 'en'
 ): Promise<WordExplanation> {
-  const systemPromptMap: Record<SupportedLanguage, string> = {
-    en: `You are "Sparky", a patient, warm, and playful Meta Muse Spark AI reading tutor for 6-10 year old children.
-Your job is to explain difficult words simply, with fun metaphors and examples a child immediately grasps.
-IMPORTANT: Respond ONLY with valid JSON with these keys:
+  const systemPrompt = `${sparkyPersona(language)}
+Explain difficult words in plain, everyday language, with practical examples from adult life (work, home, shopping, health, family).
+IMPORTANT: Respond ONLY with valid JSON with these keys (keep the keys in English):
 {
-  "simpleMeaning": "1 or 2 sentence simple explanation for a kid",
-  "funExample": "A fun or funny real-life example using the word",
+  "simpleMeaning": "1 or 2 plain sentences explaining the word",
+  "funExample": "A natural sentence from everyday adult life that uses the word",
   "syllables": "The word broken into syllables with hyphens (e.g. won-der-ful)",
-  "encouragement": "A short, cheerful encouraging cheer for the child"
-}`,
-    es: `Eres "Sparky", un tutor de lectura con inteligencia artificial de Meta Muse Spark, paciente, cariñoso y divertido para niños de 6 a 10 años en República Dominicana y Latinoamérica.
-Tu misión es explicar palabras difíciles de manera súper simple, usando analogías divertidas y ejemplos que un niño entienda al instante.
-IMPORTANTE: Responde ÚNICAMENTE en formato JSON válido con las siguientes claves:
-{
-  "simpleMeaning": "Explicación en 1 o 2 oraciones muy claras para un niño",
-  "funExample": "Un ejemplo divertido o gracioso con la palabra",
-  "syllables": "La palabra dividida en sílabas separadas por guiones (ej. a-som-bro-so)",
-  "encouragement": "Una frase corta de ánimo con cariño dominicano o latino (ej. ¡Lo estás haciendo súper bien, campeón!)"
-}`,
-    fr: `Tu es "Sparky", un tuteur de lecture bienveillant propulsé par Meta Muse Spark pour enfants de 6 à 10 ans.
-Ta mission est d'expliquer les mots difficiles simplement avec des métaphores joyeuses.
-IMPORTANT : Réponds UNIQUEMENT en format JSON valide avec ces clés :
-{
-  "simpleMeaning": "Explication simple en 1 ou 2 phrases pour un enfant",
-  "funExample": "Un exemple amusant et concret avec ce mot",
-  "syllables": "Le mot découpé en syllabes avec des tirets (ex. mer-veil-leux)",
-  "encouragement": "Une petite phrase joyeuse d'encouragement"
-}`,
-    pt: `Você é "Sparky", um tutor de leitura carinhoso e paciente da Meta Muse Spark para crianças de 6 a 10 anos.
-Sua missão é explicar palavras difíceis de forma simples e divertida.
-IMPORTANTE: Responda SOMENTE em formato JSON válido com estas chaves:
-{
-  "simpleMeaning": "Explicação simples em 1 ou 2 frases para a criança",
-  "funExample": "Um exemplo divertido do dia a dia com a palavra",
-  "syllables": "A palavra dividida em sílabas com hifens (ex. a-leg-ri-a)",
-  "encouragement": "Uma frase curta e calorosa de incentivo"
-}`,
-    de: `Du bist "Sparky", ein herzlicher und geduldiger KI-Lesetutor von Meta Muse Spark für Kinder von 6 bis 10 Jahren.
-Erkläre schwierige Wörter kinderleicht mit fröhlichen Vergleichen.
-WICHTIG: Antworte NUR in gültigem JSON mit diesen Schlüsseln:
-{
-  "simpleMeaning": "Einfache Erklärung in 1-2 Sätzen für ein Kind",
-  "funExample": "Ein lustiges, alltägliches Beispiel mit diesem Wort",
-  "syllables": "Das Wort in Silben getrennt mit Bindestrich (z.B. wun-der-voll)",
-  "encouragement": "Ein fröhlicher kurzer Anfeuerungsruf"
-}`,
-    it: `Sei "Sparky", un affettuoso e paziente tutor di lettura IA di Meta Muse Spark per bambini di 6-10 anni.
-Spiega le parole difficili in modo semplicissimo e giocoso.
-IMPORTANTE: Rispondi SOLO in formato JSON valido con queste chiavi:
-{
-  "simpleMeaning": "Spiegazione semplice in 1 o 2 frasi adatta a un bambino",
-  "funExample": "Un esempio divertente e reale con questa parola",
-  "syllables": "La parola divisa in sillabe con trattini (es. splen-di-do)",
-  "encouragement": "Un breve e caloroso incoraggiamento"
-}`,
-    nl: `Je bent "Sparky", een warme en geduldige AI-leestutor van Meta Muse Spark voor kinderen van 6 tot 10 jaar.
-Leg moeilijke woorden eenvoudig uit met vrolijke voorbeelden.
-BELANGRIJK: Antwoord UITSLUITEND in geldig JSON met deze velden:
-{
-  "simpleMeaning": "Eenvoudige uitleg in 1 of 2 zinnen voor een kind",
-  "funExample": "Een leuk herkenbaar voorbeeld met dit woord",
-  "syllables": "Het woord verdeeld in lettergrepen met koppeltekens (bijv. vlin-der)",
-  "encouragement": "Een enthousiaste bemoedigende kreet"
-}`,
-    pl: `Jesteś "Sparky", ciepłym i cierpliwym korepetytorem czytania AI Meta Muse Spark dla dzieci w wieku 6-10 lat.
-Wyjaśniaj trudne słowa w prosty, bajkowy sposób.
-WAŻNE: Odpowiedz WYŁĄCZNIE w poprawnym formacie JSON z następującymi polami:
-{
-  "simpleMeaning": "Proste wyjaśnienie w 1-2 zdaniach dla dziecka",
-  "funExample": "Zabawny, ciekawy przykład z życia z tym słowem",
-  "syllables": "Słowo podzielone na sylaby myślnikami (np. cu-dow-nie)",
-  "encouragement": "Krótkie, radosne słowa pochwały"
-}`,
-    tr: `Sen 6-10 yaş arası çocuklar için Meta Muse Spark ile güçlendirilmiş sevecen ve sabırlı okuma eğitmeni "Sparky"sin.
-Zor kelimeleri çocukların hemen anlayacağı eğlenceli örneklerle açıkla.
-ÖNEMLİ: YALNIZCA şu anahtarları içeren geçerli bir JSON formatında yanıt ver:
-{
-  "simpleMeaning": "Bir çocuk için 1-2 cümlelik basit ve net açıklama",
-  "funExample": "Bu kelimeyi içeren eğlenceli ve gerçekçi bir örnek",
-  "syllables": "Kelimenin tirelerle ayrılmış heceli hali (ör. ke-le-bek)",
-  "encouragement": "Çocuk için neşeli ve motive edici bir tebrik"
-}`,
-  };
-
-  const userPromptMap: Record<SupportedLanguage, string> = {
-    en: `Explain the word "${word}" to the child.\nContext sentence: "${sentenceContext}".\nRespond strictly with the required JSON.`,
-    es: `Explícale al niño la palabra "${word}".\nAparece en esta oración: "${sentenceContext}".\nResponde solo con el JSON requerido.`,
-    fr: `Explique à l'enfant le mot "${word}".\nContexte : "${sentenceContext}".\nRéponds strictement avec le JSON requis.`,
-    pt: `Explique para a criança a palavra "${word}".\nContexto: "${sentenceContext}".\nResponda estritamente com o JSON solicitado.`,
-    de: `Erkläre dem Kind das Wort "${word}".\nKontext: "${sentenceContext}".\nAntworte strikt im geforderten JSON-Format.`,
-    it: `Spiega al bambino la parola "${word}".\nContesto: "${sentenceContext}".\nRispondi rigorosamente nel formato JSON richiesto.`,
-    nl: `Leg aan het kind het woord "${word}" uit.\nContext: "${sentenceContext}".\nAntwoord strikt in het gevraagde JSON-formaat.`,
-    pl: `Wyjaśnij dziecku słowo "${word}".\nKontekst: "${sentenceContext}".\nOdpowiedz ściśle w wymaganym formacie JSON.`,
-    tr: `Çocuğa "${word}" kelimesini açıkla.\nBağlam: "${sentenceContext}".\nYalnızca istenen JSON formatında yanıt ver.`,
-  };
-
-  const systemPrompt = systemPromptMap[language] || systemPromptMap.en;
-  const userPrompt = userPromptMap[language] || userPromptMap.en;
+  "encouragement": "A short, sincere and respectful note of encouragement"
+}`;
+  const userPrompt = `Explain the word "${word}".\nContext sentence: "${sentenceContext}".\nRespond strictly with the required JSON.`;
 
   try {
     const rawResponse = await callMuseSpark(
@@ -193,9 +121,9 @@ Zor kelimeleri çocukların hemen anlayacağı eğlenceli örneklerle açıkla.
     return {
       word,
       simpleMeaning: parsed.simpleMeaning || `A special and meaningful word in this story.`,
-      funExample: parsed.funExample || `Like discovering a sparkling treasure!`,
+      funExample: parsed.funExample || '',
       syllables: parsed.syllables || word.split('').join('-'),
-      encouragement: parsed.encouragement || `Keep shining, reading superstar!`,
+      encouragement: parsed.encouragement || 'Keep going, you are making progress.',
     };
   } catch (err) {
     console.warn('Falling back to local dictionary for word explanation:', err);
@@ -211,81 +139,20 @@ export async function generateTutorSpokenFeedback(
 ): Promise<string> {
   const lang = session.language;
 
-  const systemPromptMap: Record<SupportedLanguage, string> = {
-    en: `You are "Sparky", a warm and patient Meta Muse Spark AI reading tutor speaking directly to a young reader who just finished reading aloud.
-Keep it warm, energetic, and concise (3-4 sentences max so it sounds great spoken aloud):
-1. Cheer for their effort and accuracy (${session.accuracyPercent}%).
-2. Mention their reading speed (${session.wordsPerMinute} WPM).
-3. Gently encourage practicing tricky words if any (${session.errors.slice(0, 2).map(e => e.word).join(', ') || 'none'}).
-4. End with a joyful cheer!`,
-    es: `Eres "Sparky", el tutor de lectura paciente de Meta Muse Spark. Estás hablando directamente al niño después de que terminó de leer una página en voz alta.
-Hablas con un tono cálido, entusiasta, cariñoso y motivador (estilo amigable caribeño/latino: "¡Mi querido lector!", "¡Qué orgullo!").
-Mantén el mensaje CORTO (3 a 4 oraciones máximo):
-1. Felicita con alegría su esfuerzo y porcentaje de precisión (${session.accuracyPercent}%).
-2. Menciona algo positivo de su velocidad (${session.wordsPerMinute} palabras por minuto).
-3. Si tuvo palabras difíciles (${session.errors.length > 0 ? session.errors.map(e => e.word).slice(0, 2).join(', ') : 'ninguna'}), anímalo con dulzura a repasarlas.
-4. Termina con una gran porra de ánimo.`,
-    fr: `Tu es "Sparky", le tuteur de lecture bienveillant de Meta Muse Spark. Tu parles directement à l'enfant qui vient de lire à voix haute.
-Reste chaleureux, dynamique et court (3-4 phrases max) :
-1. Félicite ses efforts et sa précision (${session.accuracyPercent}%).
-2. Mentionne sa vitesse de lecture (${session.wordsPerMinute} mots/minute).
-3. Encourage avec douceur la pratique des mots difficiles s'il y en a.
-4. Conclus avec un encouragement très positif !`,
-    pt: `Você é "Sparky", o tutor de leitura acolhedor da Meta Muse Spark falando com a criança que acabou de ler em voz alta.
-Fale com entusiasmo e carinho (3 a 4 frases curtas):
-1. Parabenize pelo esforço e pela precisão (${session.accuracyPercent}%).
-2. Elogie a velocidade de leitura (${session.wordsPerMinute} palavras por minuto).
-3. Incentive com doçura a praticar as palavras mais difíceis.
-4. Termine com uma mensagem muito alegre!`,
-    de: `Du bist "Sparky", der liebevolle KI-Lesetutor von Meta Muse Spark, der direkt mit dem Kind spricht.
-Sprich fröhlich und motivierend (3-4 kurze Sätze):
-1. Lobe den Fleiß und die Genauigkeit (${session.accuracyPercent}%).
-2. Erwähne das Lesetempo (${session.wordsPerMinute} Wörter pro Minute).
-3. Ermutige sanft zum Wiederholen schwieriger Wörter.
-4. Schließe mit einem herzlichen Hurra!`,
-    it: `Sei "Sparky", il caloroso tutor di lettura di Meta Muse Spark che parla direttamente al bambino.
-Usa un tono entusiasta e affettuoso (3-4 frasi brevi):
-1. Congratulati per l'impegno e la precisione (${session.accuracyPercent}%).
-2. Loda la velocità di lettura (${session.wordsPerMinute} parole al minuto).
-3. Incoraggia con dolcezza a ripassare le parole più impegnative.
-4. Concludi con un grande evviva!`,
-    nl: `Je bent "Sparky", de vrolijke AI-leestutor van Meta Muse Spark die tegen het kind praat.
-Blijf warm en enthousiast (3-4 korte zinnen):
-1. Feliciteer met de inzet en nauwkeurigheid (${session.accuracyPercent}%).
-2. Noem de mooie leessnelheid (${session.wordsPerMinute} woorden per minuut).
-3. Moedig zachtjes aan om even te oefenen met lastige woorden.
-4. Sluit af met een blije aanmoediging!`,
-    pl: `Jesteś "Sparky", serdecznym korepetytorem czytania Meta Muse Spark rozmawiającym bezpośrednio z dzieckiem.
-Mów ciepło i z radością (3-4 krótkie zdania):
-1. Pogratuluj wielkiego wysiłku i dokładności (${session.accuracyPercent}%).
-2. Pochwal tempo czytania (${session.wordsPerMinute} słów na minutę).
-3. Zachęć z uśmiechem do powtórzenia trudniejszych słówek.
-4. Zakończ radosnym zawołaniem!`,
-    tr: `Sen sesli okumayı yeni tamamlamış minik okurla konuşan sevecen Meta Muse Spark okuma eğitmeni "Sparky"sin.
-Neşeli ve cesaretlendirici bir tonla konuş (en fazla 3-4 cümle):
-1. Çocuğun çabasını ve doğruluk oranını (%${session.accuracyPercent}) coşkuyla tebrik et.
-2. Okuma hızını (${session.wordsPerMinute} kelime/dakika) öv.
-3. Varsa zorlandığı kelimeleri tekrar etmesi için tatlı bir cesaret ver.
-4. Neşeli bir tebrikle bitir!`,
-  };
+  const systemPrompt = `${sparkyPersona(lang)}
+The reader just finished reading a page aloud. Speak directly to them in 3-4 short sentences, plain text that sounds natural spoken aloud:
+1. Acknowledge their effort and accuracy (${session.accuracyPercent}%).
+2. Mention their reading pace (${session.wordsPerMinute} words per minute).
+3. If there were difficult words (${session.errors.slice(0, 2).map(e => e.word).join(', ') || 'none'}), suggest practicing them, without pressure.
+4. End with a brief, sincere note of encouragement.`;
 
-  const userPromptMap: Record<SupportedLanguage, string> = {
-    en: `The child read ${session.totalWords} words from "${session.pageTitle}". Accuracy was ${session.accuracyPercent}%. Give them your warm spoken feedback.`,
-    es: `El niño leyó ${session.totalWords} palabras del libro "${session.pageTitle}". Precisión ${session.accuracyPercent}%. Dale su mensaje de voz alentador.`,
-    fr: `L'enfant a lu ${session.totalWords} mots de "${session.pageTitle}". Précision ${session.accuracyPercent}%. Donne-lui ton retour vocal bienveillant.`,
-    pt: `A criança leu ${session.totalWords} palavras de "${session.pageTitle}". Precisão de ${session.accuracyPercent}%. Dê seu feedback carinhoso em voz alta.`,
-    de: `Das Kind hat ${session.totalWords} Wörter aus "${session.pageTitle}" gelesen. Genauigkeit war ${session.accuracyPercent}%. Gib dein herzliches Feedback.`,
-    it: `Il bambino ha letto ${session.totalWords} parole da "${session.pageTitle}". Precisione del ${session.accuracyPercent}%. Dagli il tuo incoraggiamento.`,
-    nl: `Het kind las ${session.totalWords} woorden uit "${session.pageTitle}". Nauwkeurigheid was ${session.accuracyPercent}%. Geef je gesproken aanmoediging.`,
-    pl: `Dziecko przeczytało ${session.totalWords} słów z książki "${session.pageTitle}". Dokładność ${session.accuracyPercent}%. Przekaż mu głosową pochwałę.`,
-    tr: `Çocuk "${session.pageTitle}" kitabından ${session.totalWords} kelime okudu. Doğruluk %${session.accuracyPercent}. Ona sesli tebriğini ilet.`,
-  };
+  const userPrompt = `The reader read ${session.totalWords} words from "${session.pageTitle}". Accuracy was ${session.accuracyPercent}%. Give your spoken feedback.`;
 
   try {
     const feedback = await callMuseSpark(
       [
-        { role: 'system', content: systemPromptMap[lang] || systemPromptMap.en },
-        { role: 'user', content: userPromptMap[lang] || userPromptMap.en },
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
       ],
       1800
     );
@@ -293,130 +160,39 @@ Neşeli ve cesaretlendirici bir tonla konuş (en fazla 3-4 cümle):
   } catch (err) {
     console.warn('Fallback tutor feedback due to error:', err);
     const fallbacks: Record<SupportedLanguage, string> = {
-      en: `What a wonderful reading session! You showed so much courage and reached ${session.accuracyPercent}% accuracy. Every day you practice, your reading superpowers grow stronger!`,
-      es: `¡Qué lectura tan maravillosa, amiguito! Leíste con mucha valentía y alcanzaste un ${session.accuracyPercent}% de precisión. ¡Cada día lees más fluido! Vamos a seguir descubriendo historias juntos.`,
-      fr: `Quelle magnifique lecture ! Tu as fait preuve de beaucoup de courage et atteint ${session.accuracyPercent}% de précision. Chaque jour, tu deviens un lecteur encore plus extraordinaire !`,
-      pt: `Que leitura maravilhosa! Você mostrou muita dedicação e alcançou ${session.accuracyPercent}% de precisão. A cada página, sua leitura fica mais fluida e confiante!`,
-      de: `Was für eine tolle Lesestunde! Du hast so fleißig geübt und ${session.accuracyPercent}% Genauigkeit erreicht. Jeden Tag wirst du noch ein bisschen besser!`,
-      it: `Che lettura fantastica! Hai dimostrato tanta passione raggiungendo il ${session.accuracyPercent}% di precisione. Continua così, sei un vero campione!`,
-      nl: `Wat een prachtige leessessie! Je deed geweldig je best en behaalde ${session.accuracyPercent}% nauwkeurigheid. Elke dag wordt jouw leessupertalent groter!`,
-      pl: `Co za wspaniałe czytanie! Pokazałeś wielką odwagę i osiągnąłeś ${session.accuracyPercent}% dokładności. Z każdym dniem czytasz coraz piękniej!`,
-      tr: `Harika bir okuma oldu! Çok cesurca okudun ve %${session.accuracyPercent} doğruluk oranına ulaştın. Her gün çalıştıkça okuma süper gücün daha da artıyor!`,
+      en: `Good work on this page. You reached ${session.accuracyPercent}% accuracy. A few minutes of practice each day makes reading easier and faster.`,
+      es: `Buen trabajo con esta página. Llegaste a un ${session.accuracyPercent}% de precisión. Unos minutos de práctica cada día hacen que leer sea más fácil y rápido.`,
+      fr: `Beau travail sur cette page. Vous avez atteint ${session.accuracyPercent}% de précision. Quelques minutes de pratique par jour rendent la lecture plus facile et plus rapide.`,
+      pt: `Bom trabalho nesta página. Você chegou a ${session.accuracyPercent}% de precisão. Alguns minutos de prática por dia deixam a leitura mais fácil e rápida.`,
+      de: `Gute Arbeit auf dieser Seite. Sie haben ${session.accuracyPercent}% Genauigkeit erreicht. Ein paar Minuten Übung am Tag machen das Lesen leichter und schneller.`,
+      it: `Buon lavoro su questa pagina. Hai raggiunto il ${session.accuracyPercent}% di precisione. Pochi minuti di pratica al giorno rendono la lettura più facile e veloce.`,
+      nl: `Goed gedaan met deze bladzijde. Je haalde ${session.accuracyPercent}% nauwkeurigheid. Elke dag een paar minuten oefenen maakt lezen makkelijker en sneller.`,
+      pl: `Dobra robota z tą stroną. Osiągnięto ${session.accuracyPercent}% dokładności. Kilka minut ćwiczeń dziennie sprawia, że czytanie staje się łatwiejsze i szybsze.`,
+      tr: `Bu sayfada iyi iş çıkardınız. %${session.accuracyPercent} doğruluğa ulaştınız. Her gün birkaç dakikalık pratik okumayı daha kolay ve hızlı hale getirir.`,
     };
     return fallbacks[lang] || fallbacks.en;
   }
 }
 
 /**
- * Generate 2-3 interactive comprehension questions about what the child just read using Muse Spark.
+ * Generate 2-3 interactive comprehension questions about what the reader just read using Muse Spark.
  */
 export async function generateComprehensionQuiz(
   pageText: string,
   language: SupportedLanguage = 'en'
 ): Promise<ComprehensionQuestion[]> {
-  const systemPromptMap: Record<SupportedLanguage, string> = {
-    en: `You are "Sparky", a Meta Muse Spark educational reading tutor. Create 2 fun, simple reading comprehension questions based ONLY on what the child just read.
-Respond STRICTLY with a valid JSON array:
+  const systemPrompt = `${sparkyPersona(language)}
+Create 2 clear reading comprehension questions based ONLY on the page the reader just read.
+Respond STRICTLY with a valid JSON array (keep the keys in English):
 [
   {
     "id": "q1",
-    "question": "Clear and engaging question?",
+    "question": "Clear question about the text?",
     "options": ["Option A", "Option B", "Option C"],
     "correctIndex": 0,
-    "explanation": "Short cheerful explanation why this answer is right"
+    "explanation": "Short explanation of why this answer is right"
   }
-]`,
-    es: `Eres "Sparky", un tutor pedagógico de Meta Muse Spark. Crea 2 preguntas divertidas y sencillas de comprensión lectora basadas ÚNICAMENTE en el texto que leyó el niño.
-Responde ESTRICTAMENTE con un arreglo JSON válido:
-[
-  {
-    "id": "q1",
-    "question": "¿Pregunta clara y entretenida?",
-    "options": ["Opción A", "Opción B", "Opción C"],
-    "correctIndex": 0,
-    "explanation": "Explicación breve y alegre de por qué es la correcta"
-  }
-]`,
-    fr: `Tu es "Sparky", tuteur pédagogique Meta Muse Spark. Crée 2 questions simples et amusantes basées UNIQUEMENT sur le texte lu par l'enfant.
-Réponds STRICTEMENT avec un tableau JSON valide :
-[
-  {
-    "id": "q1",
-    "question": "Question claire et amusante ?",
-    "options": ["Option A", "Option B", "Option C"],
-    "correctIndex": 0,
-    "explanation": "Courte explication chaleureuse"
-  }
-]`,
-    pt: `Você é "Sparky", tutor pedagógico da Meta Muse Spark. Crie 2 perguntas simples e divertidas baseadas APENAS no texto que a criança acabou de ler.
-Responda ESTRITAMENTE com um array JSON válido:
-[
-  {
-    "id": "q1",
-    "question": "Pergunta clara e divertida?",
-    "options": ["Opção A", "Opção B", "Opção C"],
-    "correctIndex": 0,
-    "explanation": "Breve explicação calorosa"
-  }
-]`,
-    de: `Du bist "Sparky", pädagogischer Lesetutor von Meta Muse Spark. Erstelle 2 kindgerechte Verständnisfragen basierend NUR auf dem gelesenen Text.
-Antworte STRIKT mit einem gültigen JSON-Array:
-[
-  {
-    "id": "q1",
-    "question": "Klare und kindgerechte Frage?",
-    "options": ["Option A", "Option B", "Option C"],
-    "correctIndex": 0,
-    "explanation": "Kurze fröhliche Erklärung, warum diese Antwort richtig ist"
-  }
-]`,
-    it: `Sei "Sparky", tutor pedagogico di Meta Muse Spark. Crea 2 domande semplici di comprensione basate ESCLUSIVAMENTE sul testo appena letto.
-Rispondi RIGOROSAMENTE con un array JSON valido:
-[
-  {
-    "id": "q1",
-    "question": "Domanda chiara e coinvolgente?",
-    "options": ["Opzione A", "Opzione B", "Opzione C"],
-    "correctIndex": 0,
-    "explanation": "Breve spiegazione calorosa del perché è esatta"
-  }
-]`,
-    nl: `Je bent "Sparky", educatieve leestutor van Meta Muse Spark. Bedenk 2 leuke begripsvragen die ALLEEN gebaseerd zijn op de zojuist gelezen tekst.
-Antwoord STRIKT met een geldige JSON-array:
-[
-  {
-    "id": "q1",
-    "question": "Duidelijke en leuke vraag?",
-    "options": ["Optie A", "Optie B", "Optie C"],
-    "correctIndex": 0,
-    "explanation": "Korte bemoedigende uitleg waarom dit klopt"
-  }
-]`,
-    pl: `Jesteś "Sparky", pedagogicznym korepetytorem czytania Meta Muse Spark. Utwórz 2 proste pytania ze zrozumienia tekstu oparte WYŁĄCZNIE na przeczytanej stronie.
-Odpowiedz ŚCIŚLE w formacie tablicy JSON:
-[
-  {
-    "id": "q1",
-    "question": "Jasne i angażujące pytanie?",
-    "options": ["Opcja A", "Opcja B", "Opcja C"],
-    "correctIndex": 0,
-    "explanation": "Krótkie radosne wyjaśnienie, dlaczego to poprawna odpowiedź"
-  }
-]`,
-    tr: `Sen Meta Muse Spark eğitici okuma koçu "Sparky"sin. Çocuğun az önce okuduğu metne dayanarak 2 eğlenceli ve anlaşılır anlama sorusu oluştur.
-KESİNLİKLE geçerli bir JSON dizisi ile yanıt ver:
-[
-  {
-    "id": "q1",
-    "question": "Net ve sevimli soru?",
-    "options": ["Seçenek A", "Seçenek B", "Seçenek C"],
-    "correctIndex": 0,
-    "explanation": "Bu cevabın neden doğru olduğuna dair neşeli kısa açıklama"
-  }
-]`,
-  };
-
-  const systemPrompt = systemPromptMap[language] || systemPromptMap.en;
+]`;
   const userPrompt = `Page text:\n"${pageText}"\nGenerate the 2 comprehension questions in JSON format.`;
 
   try {
@@ -453,7 +229,7 @@ export async function transcribeAudioWithMuseVoice(
     console.warn('transcribeAudioWithMuseVoice skipped: Meta API not configured');
     return '';
   }
-  // Child audio only leaves the device when a parent has allowed it in the Privacy Shield
+  // Reading audio only leaves the device when the reader has allowed it in the Privacy Shield
   if (!(await getCloudVoiceConsent())) {
     return '';
   }
@@ -503,45 +279,17 @@ export async function transcribeAudioWithMuseVoice(
 }
 
 /**
- * Answer a child's curious voice question about the story using Muse Spark.
+ * Answer the reader's voice question about the text using Muse Spark.
  */
-export async function answerChildVoiceQuestionWithSparky(
+export async function answerReaderVoiceQuestion(
   question: string,
   storyContext: string,
   language: SupportedLanguage = 'en'
 ): Promise<string> {
-  const systemPromptMap: Record<SupportedLanguage, string> = {
-    en: `You are "Sparky", a warm, playful, and patient Meta Muse Spark AI reading tutor for children aged 6 to 10.
-A child just asked you a question with their own voice about the story they are reading.
-Answer in 2-3 enthusiastic, clear, and age-appropriate sentences. Encourage their curiosity!`,
-    es: `Eres "Sparky", el tutor de lectura paciente, cariñoso y divertido de Meta Muse Spark para niños de 6 a 10 años.
-Un niño te acaba de hacer una pregunta con su propia voz sobre el cuento que está leyendo.
-Respóndele en 2 o 3 oraciones muy claras, entusiastas, con ternura y adaptadas a su edad. ¡Felicita su curiosidad!`,
-    fr: `Tu es "Sparky", le tuteur de lecture bienveillant et joyeux de Meta Muse Spark pour enfants de 6 à 10 ans.
-Un enfant vient de te poser une question avec sa voix sur l'histoire.
-Réponds en 2-3 phrases simples, chaleureuses et enthousiastes. Félicite sa curiosité !`,
-    pt: `Você é "Sparky", o tutor de leitura carinhoso e alegre da Meta Muse Spark para crianças de 6 a 10 anos.
-Uma criança acabou de fazer uma pergunta com a voz dela sobre a história.
-Responda em 2 a 3 frases claras, calorosas e fáceis de entender. Elogie a curiosidade dela!`,
-    de: `Du bist "Sparky", der herzliche und spielerische KI-Lesetutor von Meta Muse Spark für Kinder von 6 bis 10 Jahren.
-Ein Kind hat dir gerade mit seiner Stimme eine Frage zur Geschichte gestellt.
-Antworte in 2-3 einfachen, fröhlichen und kindgerechten Sätzen. Lobe seine Neugier!`,
-    it: `Sei "Sparky", il tutor di lettura affettuoso e giocoso di Meta Muse Spark per bambini di 6-10 anni.
-Un bambino ti ha appena fatto una domanda a voce sulla storia.
-Rispondi in 2-3 frasi semplici, incoraggianti e adatte alla sua età. Premia la sua curiosità!`,
-    nl: `Je bent "Sparky", de lieve en vrolijke AI-leestutor van Meta Muse Spark voor kinderen van 6 tot 10 jaar.
-Een kind heeft zojuist met eigen stem een vraag gesteld over het verhaal.
-Antwoord in 2-3 eenvoudige, warme en enthousiaste zinnen. Prijs de nieuwsgierigheid!`,
-    pl: `Jesteś "Sparky", ciepłym i radosnym korepetytorem czytania Meta Muse Spark dla dzieci w wieku 6-10 lat.
-Dziecko zadało ci właśnie głosowo pytanie o czytaną bajkę.
-Odpowiedz w 2-3 prostych, pogodnych zdaniach dopasowanych do dziecka. Pochwal jego ciekawość!`,
-    tr: `Sen 6-10 yaş arası çocuklar için sevecen ve neşeli Meta Muse Spark okuma eğitmeni "Sparky"sin.
-Bir çocuk okuduğu masal hakkında sana kendi sesiyle bir soru sordu.
-Çocuğun anlayacağı 2-3 tatlı, net ve cesaretlendirici cümleyle yanıt ver. Merakını kutla!`,
-  };
-
-  const systemPrompt = systemPromptMap[language] || systemPromptMap.en;
-  const userPrompt = `Story context: "${storyContext}"\nChild's voice question: "${question}"`;
+  const systemPrompt = `${sparkyPersona(language)}
+The reader just asked you a question, with their own voice, about the text they are reading.
+Answer in 2-3 clear, friendly sentences.`;
+  const userPrompt = `Text context: "${storyContext}"\nReader's voice question: "${question}"`;
 
   try {
     const answer = await callMuseSpark(
@@ -556,15 +304,15 @@ Bir çocuk okuduğu masal hakkında sana kendi sesiyle bir soru sordu.
   } catch (err) {
     console.warn('Sparky voice Q&A fallback:', err);
     const fallbacks: Record<SupportedLanguage, string> = {
-      en: `That's a wonderful question! In our story, every page holds secrets to explore. Keep reading to see what happens next!`,
-      es: `¡Qué gran pregunta! En esta historia cada página tiene sorpresas mágicas. ¡Sigamos leyendo para descubrir más juntos!`,
-      fr: `Quelle belle question ! Dans cette histoire, chaque page réserve des surprises. Continuons à lire pour tout découvrir !`,
-      pt: `Que pergunta fantástica! Nessa história cada página guarda surpresas mágicas. Vamos continuar lendo juntos!`,
-      de: `Was für eine tolle Frage! In dieser Geschichte hält jede Seite neue Geheimnisse bereit. Lass uns weiterlesen!`,
-      it: `Che bella domanda! In questa storia ogni pagina racchiude segreti magici. Continuiamo a leggere insieme!`,
-      nl: `Wat een prachtige vraag! In dit verhaal heeft elke bladzijde leuke verrassingen. Laten we snel verder lezen!`,
-      pl: `Wspaniałe pytanie! W tej opowieści każda strona kryje niezwykłe niespodzianki. Czytajmy dalej, by odkryć więcej!`,
-      tr: `Ne harika bir soru! Bu masalda her sayfa sihirli sürprizlerle dolu. Neler olacağını görmek için okumaya devam edelim!`,
+      en: `Good question. I could not reach the tutor right now; try again in a moment, or keep reading and ask me again later.`,
+      es: `Buena pregunta. Ahora mismo no pude conectar con el tutor; inténtalo de nuevo en un momento o sigue leyendo y vuelve a preguntarme.`,
+      fr: `Bonne question. Je n'ai pas pu joindre le tuteur pour le moment ; réessayez dans un instant ou continuez à lire et reposez-la plus tard.`,
+      pt: `Boa pergunta. Não consegui falar com o tutor agora; tente de novo em instantes ou continue lendo e pergunte depois.`,
+      de: `Gute Frage. Ich konnte den Tutor gerade nicht erreichen; versuchen Sie es gleich noch einmal oder lesen Sie weiter und fragen Sie später.`,
+      it: `Bella domanda. Non sono riuscito a contattare il tutor in questo momento; riprova tra poco o continua a leggere e chiedimelo più tardi.`,
+      nl: `Goede vraag. Ik kon de tutor nu niet bereiken; probeer het zo opnieuw, of lees verder en vraag het later nog eens.`,
+      pl: `Dobre pytanie. Nie udało się teraz połączyć z tutorem; spróbuj ponownie za chwilę albo czytaj dalej i zapytaj później.`,
+      tr: `Güzel soru. Şu anda eğitmene ulaşamadım; birazdan tekrar deneyin ya da okumaya devam edip daha sonra yeniden sorun.`,
     };
     return fallbacks[language] || fallbacks.en;
   }
@@ -582,7 +330,7 @@ function getLocalWordExplanation(word: string, language: SupportedLanguage = 'en
       madrugada: { meaning: 'El momento más temprano del día, cuando el sol apenas empieza a despertar.', example: 'El gallo canta en la madrugada para despertar al campo.', syl: 'ma-dru-ga-da' },
       resplandor: { meaning: 'Una luz muy brillante y bonita que ilumina todo a su alrededor.', example: 'El resplandor de las estrellas iluminaba el camino.', syl: 'res-plan-dor' },
       valentía: { meaning: 'Tener ánimo y fuerza en el corazón para intentar cosas difíciles.', example: 'Tuviste mucha valentía al leer esta página tan larga.', syl: 'va-len-tí-a' },
-      curioso: { meaning: 'Tener muchas ganas de aprender, explorar y descubrir secretos.', example: 'El niño curioso siempre hace preguntas divertidas.', syl: 'cu-rio-so' },
+      curioso: { meaning: 'Tener muchas ganas de aprender, explorar y descubrir secretos.', example: 'Una persona curiosa siempre hace preguntas.', syl: 'cu-rio-so' },
     };
 
     const entry = spanishDict[clean] || {
@@ -659,10 +407,10 @@ function getLocalWordExplanation(word: string, language: SupportedLanguage = 'en
   // English fallback (default)
   return {
     word,
-    simpleMeaning: `A wonderful word that helps make the story exciting and colorful!`,
-    funExample: `You can use "${word}" when telling your friends about this adventure.`,
+    simpleMeaning: `I could not load an explanation for "${word}" right now. Tap the speaker to hear it, and try again in a moment.`,
+    funExample: '',
     syllables: word.split('').join('-'),
-    encouragement: 'Keep shining, you are doing fantastic!',
+    encouragement: 'Keep going, you are making progress.',
   };
 }
 
@@ -827,21 +575,9 @@ function getLocalComprehensionQuestions(pageText: string, language: SupportedLan
   ];
 }
 
-const PAGE_LANGUAGE_NAMES: Record<SupportedLanguage, string> = {
-  en: 'English',
-  es: 'Spanish',
-  fr: 'French',
-  pt: 'Portuguese',
-  de: 'German',
-  it: 'Italian',
-  nl: 'Dutch',
-  pl: 'Polish',
-  tr: 'Turkish',
-};
-
 /**
  * Reads the story text from a photo of a physical book page with Muse Spark vision.
- * Only runs when a parent allowed it; returns '' so callers fall back to on-device OCR.
+ * Only runs when the reader allowed it; returns '' so callers fall back to on-device OCR.
  */
 export async function readBookPageWithMuseSpark(
   imageDataUrl: string,
@@ -858,8 +594,8 @@ export async function readBookPageWithMuseSpark(
         {
           type: 'text',
           text:
-            `This is a photo of a children's book page written in ${PAGE_LANGUAGE_NAMES[language] || 'English'}. ` +
-            'Transcribe exactly the main story text in reading order, keeping punctuation. ' +
+            `This is a photo of a printed page (a book, letter, notice or similar) written in ${LANGUAGE_NAMES[language] || 'English'}. ` +
+            'Transcribe exactly the main text in reading order, keeping punctuation. ' +
             'Ignore page numbers, headers and any words inside illustrations. ' +
             'Reply with only the text. If there is no readable text, reply NONE.',
         },

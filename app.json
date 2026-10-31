@@ -22,7 +22,7 @@
       "favicon": "./assets/favicon.png",
       "name": "Sparky Reader - AI reading tutor",
       "shortName": "Sparky",
-      "description": "A patient Meta AI reading tutor for children who read real, physical books.",
+      "description": "A patient Meta AI reading coach for adults learning to read real printed pages (18+).",
       "themeColor": "#f7f1e6",
       "backgroundColor": "#f7f1e6",
       "display": "standalone",

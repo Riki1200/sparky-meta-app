@@ -1,7 +1,7 @@
 {
   "name": "Sparky Reader - AI reading tutor",
   "short_name": "Sparky",
-  "description": "A patient Meta AI reading tutor for children who read real, physical books.",
+  "description": "A patient Meta AI reading coach for adults learning to read real printed pages (18+).",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

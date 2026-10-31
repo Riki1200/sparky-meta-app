@@ -12,7 +12,7 @@ import { ReadingSettingsModal } from './src/components/ReadingSettingsModal';
 import { OnboardingWizardModal } from './src/components/OnboardingWizardModal';
 import { BookPage, ReadingSessionResult, SupportedLanguage } from './src/types';
 import { SAMPLE_BOOK_PAGES } from './src/data/sampleBooks';
-import { getReadingStats, getStarsCount, hasCompletedOnboarding } from './src/services/storageService';
+import { getReadingStats, getStarsCount, hasCompletedOnboarding, hasConfirmedAdult } from './src/services/storageService';
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 
 function MainApp() {
@@ -40,8 +40,9 @@ function MainApp() {
   }, []);
 
   const checkFirstLaunch = async () => {
-    const done = await hasCompletedOnboarding();
-    if (!done) {
+    // Readers who have not confirmed they are 18+ go through the welcome flow first
+    const [done, adult] = await Promise.all([hasCompletedOnboarding(), hasConfirmedAdult()]);
+    if (!done || !adult) {
       setOnboardingVisible(true);
     }
   };

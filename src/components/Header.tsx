@@ -189,7 +189,7 @@ export const Header: React.FC<HeaderProps> = ({
         </View>
       </View>
 
-      {/* Child / family sections, plus the book scanner */}
+      {/* Reading and progress sections, plus the page scanner */}
       <View style={styles.tabsRow}>
         <View style={styles.tabs}>
           {renderTab("reading", t.navReading)}

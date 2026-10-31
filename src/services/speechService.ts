@@ -128,7 +128,7 @@ export class SpeechRecognitionController {
       }
     }
 
-    // Record audio for the Meta Muse Voice check only when a parent allowed cloud voice
+    // Record audio for the Meta Muse Voice check only when the reader allowed cloud voice
     if (typeof navigator !== 'undefined' && navigator.mediaDevices?.getUserMedia) {
       getCloudVoiceConsent()
         .then((allowed) => (allowed && this.isListening ? navigator.mediaDevices.getUserMedia({ audio: true }) : null))
@@ -357,11 +357,11 @@ export function matchSpokenWordToTokens(
     }
   }
 
-  // 2. Check if the child skipped ahead (matched next word or 2 words ahead)
+  // 2. Check if the reader skipped ahead (matched next word or 2 words ahead)
   if (currentIndex + 1 < tokens.length) {
     const nextSim = calculateSimilarity(tokens[currentIndex + 1].word, lastSpoken);
     if (nextSim >= 0.8) {
-      // Child skipped current word!
+      // Reader skipped the current word
       updated[currentIndex] = {
         ...targetToken,
         status: 'skipped',
@@ -385,7 +385,7 @@ export function matchSpokenWordToTokens(
     }
   }
 
-  // 3. Child attempted word but mispronounced it (similarity between 0.35 and 0.77)
+  // 3. Reader attempted the word but mispronounced it (similarity between 0.35 and 0.77)
   if (similarity >= 0.35 && lastSpoken.length >= 2) {
     updated[currentIndex] = {
       ...targetToken,
